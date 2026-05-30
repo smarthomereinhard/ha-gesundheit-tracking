@@ -1,0 +1,145 @@
+default_config:
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+homeassistant:
+  packages: !include_dir_named packages
+
+automation: !include automations.yaml
+
+script: !include scripts.yaml
+
+scene: !include scenes.yaml
+
+shell_command:
+  restlos_update: "python3 /Users/andreasreinhard/.openclaw/workspace/restlos_html_generator_iphone.py && python3 /Users/andreasreinhard/.openclaw/workspace/restlos_shopping_list.py && python3 /Users/andreasreinhard/.openclaw/workspace/restlos_csv_export.py && python3 /Users/andreasreinhard/.openclaw/workspace/restlos_ha_sensors.py"
+
+input_number:
+  bestand_aktuell:
+    name: "Bestand (aktuell)"
+    icon: mdi:package
+    unit_of_measurement: "Stk"
+    min: 0
+    max: 999
+    step: 1
+  spuelmaschine_start_kwh:
+    name: "Spülmaschine Start kWh"
+    min: 0
+    max: 99999
+    step: 0.001
+    unit_of_measurement: "kWh"
+    icon: mdi:dishwasher
+  waschmaschine_start_kwh:
+    name: "Waschmaschine Start kWh"
+    min: 0
+    max: 99999
+    step: 0.001
+    unit_of_measurement: "kWh"
+    icon: mdi:washing-machine
+  ipad_plug_energie_start:
+    name: "iPad Plug Energie Start"
+    min: 0
+    max: 99999
+    step: 0.001
+    unit_of_measurement: "kWh"
+    icon: mdi:tablet-cellphone
+  kaffeemaschine_entkalkung_bezuege_max:
+    name: "Kaffeemaschine Entkalkung Bezüge Max"
+    min: 0
+    max: 9999
+    step: 1
+    icon: mdi:coffee-maker
+  kaffeemaschine_reinigung_bezuege_max:
+    name: "Kaffeemaschine Reinigung Bezüge Max"
+    min: 0
+    max: 9999
+    step: 1
+    icon: mdi:coffee-maker
+  kaffeemaschine_bezuege_bei_entkalkung:
+    name: "Kaffeemaschine Bezüge bei Entkalkung"
+    min: 0
+    max: 99999
+    step: 1
+    icon: mdi:coffee-maker
+  kaffeemaschine_bezuege_bei_reinigung:
+    name: "Kaffeemaschine Bezüge bei Reinigung"
+    min: 0
+    max: 99999
+    step: 1
+    icon: mdi:coffee-maker
+
+input_boolean:
+  hund_gefuettert_morgens:
+    name: "Hund gefüttert (Morgens)"
+    icon: mdi:dog
+  hund_gefuettert_abends:
+    name: "Hund gefüttert (Abends)"
+    icon: mdi:dog
+  sonos_tts_aktiv:
+    name: "Sonos TTS (Master)"
+    icon: mdi:speaker-off
+    initial: true
+  hund_erinnerung_tts:
+    name: "Hund Erinnerung TTS"
+    icon: mdi:volume-high
+    initial: true
+  inventar_tts:
+    name: "Inventar Ansage"
+    icon: mdi:barcode-scan
+    initial: true
+
+input_datetime:
+  ipad_plug_ladestart:
+    name: "iPad Ladestart"
+    has_date: true
+    has_time: true
+    icon: mdi:tablet-cellphone
+
+input_text:
+  barcode_scan:
+    name: "Barcode Scan"
+    max: 255
+    icon: mdi:barcode-scan
+  spulmaschine_letzte_kosten:
+    name: "Spülmaschine letzte Kosten"
+    max: 20
+    icon: mdi:dishwasher
+
+input_select:
+  energie_ansicht:
+    name: Energie Ansicht
+    icon: mdi:swap-horizontal
+    options:
+      - Verbrauch
+      - Kosten
+    initial: Verbrauch
+  aktuelles_produkt:
+    name: "Aktuelles Produkt"
+    icon: mdi:package-variant
+    options:
+      - "Keine Auswahl"
+  db_anzeigetafel_bahnhof:
+    name: DB Anzeigetafel Bahnhof
+    icon: mdi:train
+    options:
+      - Mannheim Hbf
+      - Mannheim Arena
+      - Heidelberg Hbf
+      - Eberbach
+    initial: Mannheim Hbf
+  db_anzeigetafel_zeitfenster:
+    name: DB Zeitfenster
+    icon: mdi:clock-outline
+    options:
+      - 30 Minuten
+      - 1 Stunde
+      - 2 Stunden
+      - 6 Stunden
+      - 24 Stunden
+    initial: 2 Stunden

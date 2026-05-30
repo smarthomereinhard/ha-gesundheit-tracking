@@ -1,0 +1,10 @@
+entity: climate.shellywalldisplay_000822894f04_thermostat_0
+features:
+- hvac_modes:
+  - heat
+  - 'off'
+  style: icons
+  type: climate-hvac-modes
+name: "Fu\xDFbodenheizung "
+show_current_as_primary: true
+type: thermostat

@@ -1,0 +1,513 @@
+binary_sensor.shelly_192_168_2_39_channel_2_overpowering:
+  hidden: true
+binary_sensor.shelly_192_168_2_39_channel_1_overpowering:
+  hidden: true
+binary_sensor.shellyplugsg3_8cbfea9829f4_cloud:
+  hidden: true
+binary_sensor.shellyplugsg3_8cbfea9829f4_switch_0_overpowering:
+  hidden: true
+binary_sensor.shellyplugsg3_8cbfea9829f4_switch_0_overheating:
+  hidden: true
+binary_sensor.shellyplugsg3_8cbfea9829f4_restart_required:
+  hidden: true
+binary_sensor.shellyplugsg3_8cbfea90bfd8_switch_0_overpowering:
+  hidden: true
+automation.appel_tv_play_licht_aus:
+  sort_order: 3
+binary_sensor.wohnzimmer_microphone:
+  sort_order: 2
+binary_sensor.shellywalldisplay_000822894f04_external_power:
+  sort_order: 4
+binary_sensor.192_168_2_35_switch_0_overheating:
+  sort_order: 4
+  hidden: true
+binary_sensor.192_168_2_35_switch_0_overpowering:
+  sort_order: 5
+binary_sensor.192_168_2_35_switch_0_overvoltage:
+  sort_order: 6
+binary_sensor.192_168_2_35_switch_0_overcurrent:
+  sort_order: 7
+button.shellywalldisplay_000822894f04_reboot:
+  sort_order: 8
+button.192_168_2_35_reboot:
+  sort_order: 9
+climate.shellywalldisplay_000822894f04_thermostat_0:
+  sort_order: 1
+  custom_card: false
+  custom_popup: false
+  disabled: false
+  hidden: false
+  excluded: false
+  friendly_name: ''
+  col_span: '1'
+  row_span: '1'
+  col_span_lg: '1'
+  row_span_lg: '1'
+  col_span_xl: '1'
+  row_span_xl: '1'
+input_button.couchsensor:
+  sort_order: 2
+light.stehlampe_rechts:
+  sort_order: 10
+light.hue_go_1:
+  sort_order: 11
+light.hue_go_2:
+  sort_order: 12
+light.stehlampe_links:
+  sort_order: 13
+light.ambilight:
+  sort_order: 14
+light.deckenlampe:
+  sort_order: 15
+light.wohnzimmer:
+  sort_order: 16
+media_player.wohnzimmer:
+  sort_order: 19
+media_player.wohnzimmer_2:
+  sort_order: 17
+media_player.wohnzimmer_3:
+  sort_order: 18
+media_player.samsung_the_frame_55:
+  sort_order: 19
+media_player.tv_samsung_the_frame_55:
+  sort_order: 20
+media_player.samsung_the_frame_55_2:
+  sort_order: 24
+number.wohnzimmer_audio_delay:
+  sort_order: 25
+number.wohnzimmer_bass:
+  sort_order: 26
+number.wohnzimmer_balance:
+  sort_order: 27
+number.wohnzimmer_treble:
+  sort_order: 28
+number.wohnzimmer_sub_gain:
+  sort_order: 29
+number.wohnzimmer_surround_level:
+  sort_order: 30
+number.wohnzimmer_music_surround_level:
+  sort_order: 31
+remote.wohnzimmer:
+  sort_order: 21
+remote.wohnzimmer_3:
+  sort_order: 22
+remote.samsung_the_frame_55:
+  sort_order: 23
+sensor.wohnzimmer_audio_input_format:
+  sort_order: 35
+sensor.strom_verbrauch:
+  sort_order: 24
+sensor.samsung_the_frame_55_fernsehsender:
+  sort_order: 37
+sensor.samsung_the_frame_55_fernsehsender_name:
+  sort_order: 38
+sensor.shellywalldisplay_000822894f04_illuminance:
+  sort_order: 25
+sensor.shellywalldisplay_000822894f04_temperature:
+  sort_order: 26
+sensor.shellywalldisplay_000822894f04_humidity:
+  sort_order: 27
+sensor.192_168_2_35_switch_0_power:
+  sort_order: 28
+sensor.192_168_2_35_switch_0_energy:
+  sort_order: 29
+switch.wohnzimmer_crossfade:
+  sort_order: 44
+switch.wohnzimmer_loudness:
+  sort_order: 45
+switch.wohnzimmer_surround_music_full_volume:
+  sort_order: 46
+switch.wohnzimmer_night_sound:
+  sort_order: 47
+switch.wohnzimmer_speech_enhancement:
+  sort_order: 48
+switch.wohnzimmer_subwoofer_enabled:
+  sort_order: 49
+switch.wohnzimmer_surround_enabled:
+  sort_order: 50
+switch.steckdose_ipad:
+  sort_order: 30
+update.shellywalldisplay_000822894f04_firmware:
+  sort_order: 31
+update.192_168_2_35_firmware:
+  sort_order: 32
+sensor.shell_wallstadter_str_72_super_e10:
+  hidden: false
+  excluded: false
+  disabled: false
+  friendly_name: Super
+  col_span: '1'
+  row_span: '1'
+  col_span_lg: '1'
+  row_span_lg: '1'
+  col_span_xl: '1'
+  row_span_xl: '1'
+  custom_card: false
+  custom_popup: false
+  sort_order: 4
+binary_sensor.shell_wallstadter_str_72_status:
+  sort_order: 1
+binary_sensor.esso_bruckenstr_3_status:
+  sort_order: 2
+binary_sensor.globus_sb_warenhaus_spreewaldallee_44_50_status:
+  sort_order: 3
+sensor.shell_wallstadter_str_72_diesel:
+  sort_order: 10
+  hidden: false
+  excluded: false
+  disabled: false
+  friendly_name: Shell Diesel
+  col_span: '1'
+  row_span: '1'
+  col_span_lg: '1'
+  row_span_lg: '1'
+  col_span_xl: '1'
+  row_span_xl: '1'
+  custom_card: false
+  custom_popup: false
+sensor.esso_bruckenstr_3_super_e10:
+  sort_order: 11
+sensor.shell_wallstadter_str_72_super:
+  sort_order: 7
+sensor.esso_bruckenstr_3_super:
+  sort_order: 8
+  hidden: false
+  excluded: false
+  disabled: false
+  friendly_name: ''
+  col_span: '1'
+  row_span: '1'
+  col_span_lg: '1'
+  row_span_lg: '1'
+  col_span_xl: '1'
+  row_span_xl: '1'
+  custom_card: false
+  custom_popup: false
+sensor.esso_bruckenstr_3_diesel:
+  sort_order: 5
+sensor.globus_sb_warenhaus_spreewaldallee_44_50_super_e10:
+  sort_order: 6
+sensor.globus_sb_warenhaus_spreewaldallee_44_50_super:
+  sort_order: 9
+sensor.globus_sb_warenhaus_spreewaldallee_44_50_diesel:
+  sort_order: 12
+event.sbht_003c_9590_button:
+  sort_order: 33
+sensor.sbht_003c_9590_battery:
+  sort_order: 34
+sensor.sbht_003c_9590_humidity:
+  sort_order: 35
+sensor.sbht_003c_9590_temperature:
+  sort_order: 36
+camera.camera_hub_g2h_38a4_camera_stream_management0:
+  sort_order: 1
+automation.steckdose:
+  sort_order: 11
+automation.steckdose_aus:
+  sort_order: 13
+automation.sensor_schublade_auf:
+  sort_order: 14
+automation.schublade_zu:
+  sort_order: 15
+binary_sensor.camera_hub_g2h_38a4_motion_sensor:
+  sort_order: 16
+binary_sensor.wall_display_fusbodenheizung_external_power:
+  sort_order: 17
+binary_sensor.shelly_192_168_2_39_overheating:
+  sort_order: 18
+binary_sensor.shellyplugsg3_8cbfea9829f4_switch_0_overvoltage:
+  sort_order: 19
+binary_sensor.shellyplugsg3_8cbfea9829f4_switch_0_overcurrent:
+  sort_order: 20
+button.camera_hub_g2h_38a4_identify:
+  sort_order: 21
+button.wall_display_fusbodenheizung_reboot:
+  sort_order: 22
+button.shelly_192_168_2_39_reboot:
+  sort_order: 23
+button.shellyplugsg3_8cbfea9829f4_reboot:
+  sort_order: 24
+climate.wall_display_fusbodenheizung_thermostat_0:
+  sort_order: 25
+  grouped_sort_order: 1
+event.hue_dimmer_switch_3_taste_1:
+  sort_order: 26
+event.hue_dimmer_switch_3_taste_2:
+  sort_order: 27
+event.hue_dimmer_switch_3_taste_3:
+  sort_order: 28
+event.hue_dimmer_switch_3_taste_4:
+  sort_order: 29
+event.sbht_003c_ef81_button:
+  sort_order: 30
+light.deckenlampe_kuche:
+  sort_order: 31
+light.unterschrank:
+  sort_order: 32
+light.schranke:
+  sort_order: 33
+light.kuche:
+  sort_order: 34
+sensor.hue_dimmer_switch_3_batterie:
+  sort_order: 35
+sensor.sbht_003c_ef81_battery:
+  sort_order: 36
+  hidden: true
+sensor.sbht_003c_ef81_humidity:
+  sort_order: 37
+sensor.sbht_003c_ef81_temperature:
+  sort_order: 38
+sensor.kuhlschrank_steckdose:
+  sort_order: 39
+sensor.wall_display_fusbodenheizung_illuminance:
+  sort_order: 40
+  hidden: true
+sensor.wall_display_fusbodenheizung_temperature:
+  sort_order: 41
+sensor.wall_display_fusbodenheizung_humidity:
+  sort_order: 42
+sensor.wall_display_fusbodenheizung_battery:
+  sort_order: 43
+sensor.shelly_192_168_2_39_channel_2_power:
+  sort_order: 44
+sensor.shelly_192_168_2_39_channel_2_energy:
+  sort_order: 45
+sensor.shelly_25_voltage:
+  sort_order: 46
+sensor.shellyplugsg3_8cbfea9829f4_switch_0_power:
+  sort_order: 47
+sensor.shellyplugsg3_8cbfea9829f4_switch_0_voltage:
+  sort_order: 48
+sensor.shellyplugsg3_8cbfea9829f4_switch_0_current:
+  sort_order: 49
+sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy:
+  sort_order: 50
+sensor.shelly_plug_g_3_kaffeemaschine_kaffeemaschine_returned_energy:
+  sort_order: 51
+sensor.shellyplugsg3_8cbfea9829f4_switch_0_frequency:
+  sort_order: 52
+sensor.shellyplugsg3_8cbfea9829f4_switch_0_device_temperature:
+  sort_order: 53
+sensor.shellyplugsg3_8cbfea9829f4_rssi:
+  sort_order: 10
+  hidden: true
+sensor.shellyplugsg3_8cbfea9829f4_uptime:
+  sort_order: 6
+switch.camera_hub_g2h_38a4_mute:
+  sort_order: 54
+  excluded: true
+  hidden: true
+switch.camera_hub_g2h_38a4_mute_2:
+  sort_order: 55
+  hidden: true
+switch.camera_hub_g2h_38a4_pairing_mode:
+  sort_order: 56
+switch.channel_2:
+  sort_order: 8
+switch.shellyplugsg3_8cbfea9829f4_switch_0:
+  sort_order: 2
+switch.shelly_plug_g_3_kuhlschrank_aioshelly_ble_integration:
+  sort_order: 57
+update.wall_display_fusbodenheizung_firmware:
+  sort_order: 58
+update.shellyplugsg3_8cbfea9829f4_firmware:
+  sort_order: 59
+update.shellyplugsg3_8cbfea9829f4_beta_firmware:
+  sort_order: 60
+device_tracker.philips_sonicare_karo:
+  excluded: true
+  hidden: true
+device_tracker.philips_sonicare_1d97:
+  hidden: true
+sensor.sbht_003c_ac5e_packet_id:
+  hidden: true
+switch.shellyplugsg3_8cbfea90bfd8_switch_0:
+  sort_order: 5
+  hidden: false
+  excluded: false
+  disabled: false
+  friendly_name: ''
+  col_span: '1'
+  row_span: '1'
+  col_span_lg: '1'
+  row_span_lg: '1'
+  col_span_xl: '1'
+  row_span_xl: '1'
+  custom_card: false
+  custom_popup: false
+binary_sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_overheating:
+  sort_order: 61
+binary_sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_overpowering:
+  sort_order: 62
+binary_sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_overvoltage:
+  sort_order: 63
+binary_sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_overcurrent:
+  sort_order: 64
+binary_sensor.shelly1pmminig3_34b7da8ffb90_overheating:
+  sort_order: 65
+binary_sensor.shelly1pmminig3_34b7da8ffb90_overpowering:
+  sort_order: 66
+binary_sensor.shelly1pmminig3_34b7da8ffb90_overvoltage:
+  sort_order: 67
+binary_sensor.shelly1pmminig3_34b7da8ffb90_overcurrent:
+  sort_order: 68
+binary_sensor.shellyplugsg3_8cbfea90bfd8_switch_0_overheating:
+  sort_order: 69
+binary_sensor.shellyplugsg3_8cbfea90bfd8_switch_0_overvoltage:
+  sort_order: 70
+binary_sensor.shellyplugsg3_8cbfea90bfd8_switch_0_overcurrent:
+  sort_order: 71
+button.shellyplus1pm_b0b21c1b4a6c_reboot:
+  sort_order: 72
+button.shelly1pmminig3_34b7da8ffb90_reboot:
+  sort_order: 73
+button.shellyplugsg3_8cbfea90bfd8_reboot:
+  sort_order: 74
+sensor.shelly_192_168_2_39_channel_1_power:
+  sort_order: 75
+sensor.shelly_192_168_2_39_channel_1_energy:
+  sort_order: 76
+sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_power:
+  sort_order: 77
+sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_energy:
+  sort_order: 78
+sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_device_temperature:
+  sort_order: 79
+sensor.shelly1pmminig3_34b7da8ffb90_power:
+  sort_order: 80
+sensor.shelly1pmminig3_34b7da8ffb90_energy:
+  sort_order: 7
+sensor.shellyplugsg3_8cbfea90bfd8_switch_0_power:
+  sort_order: 81
+sensor.shellyplugsg3_8cbfea90bfd8_switch_0_energy:
+  sort_order: 12
+switch.channel_1:
+  sort_order: 4
+switch.shellyplus1pm_b0b21c1b4a6c_switch_0:
+  sort_order: 9
+switch.shelly1pmminig3_34b7da8ffb90:
+  sort_order: 3
+update.shellyplus1pm_b0b21c1b4a6c_firmware:
+  sort_order: 82
+update.shelly1pmminig3_34b7da8ffb90_firmware:
+  sort_order: 83
+update.shellyplugsg3_8cbfea90bfd8_firmware:
+  sort_order: 84
+switch.plus1pm_switch_0:
+  sort_order: 1
+  hidden: false
+  excluded: false
+  disabled: false
+  friendly_name: ''
+  col_span: '1'
+  row_span: '1'
+  col_span_lg: '1'
+  row_span_lg: '1'
+  col_span_xl: '1'
+  row_span_xl: '1'
+  custom_card: false
+  custom_popup: false
+binary_sensor.ikea_sensor_09_tur:
+  sort_order: 2
+binary_sensor.shellywalldisplay_000822519e87_external_power:
+  sort_order: 3
+binary_sensor.plus1pm_switch_0_overheating:
+  sort_order: 4
+binary_sensor.plus1pm_switch_0_overpowering:
+  sort_order: 5
+binary_sensor.plus1pm_switch_0_overvoltage:
+  sort_order: 6
+binary_sensor.plus1pm_switch_0_overcurrent:
+  sort_order: 7
+button.ikea_sensor_09_identifizieren_2:
+  sort_order: 8
+button.shellywalldisplay_000822519e87_reboot:
+  sort_order: 9
+button.plus1pm_reboot:
+  sort_order: 10
+climate.shellywalldisplay_000822519e87_thermostat_0:
+  sort_order: 11
+media_player.badezimmer:
+  sort_order: 12
+remote.badezimmer:
+  sort_order: 13
+sensor.philips_sonicare_fca6_geschatzte_entfernung:
+  sort_order: 14
+sensor.philips_sonicare_1d97_geschatzte_entfernung:
+  sort_order: 15
+sensor.philips_sonicare_1d97_hersteller:
+  sort_order: 16
+sensor.sbht_003c_ac5e_battery:
+  sort_order: 17
+sensor.sbht_003c_ac5e_humidity:
+  sort_order: 18
+sensor.sbht_003c_ac5e_temperature:
+  sort_order: 19
+sensor.badezimmer_licht:
+  sort_order: 20
+sensor.ikea_sensor_09_batterie:
+  sort_order: 21
+sensor.shellywalldisplay_000822519e87_illuminance:
+  sort_order: 22
+sensor.shellywalldisplay_000822519e87_temperature:
+  sort_order: 23
+sensor.shellywalldisplay_000822519e87_humidity:
+  sort_order: 24
+sensor.shellywalldisplay_000822519e87_battery:
+  sort_order: 25
+sensor.plus1pm_switch_0_power:
+  sort_order: 26
+sensor.plus1pm_switch_0_energy:
+  sort_order: 27
+update.shellywalldisplay_000822519e87_firmware:
+  sort_order: 28
+update.plus1pm_firmware:
+  sort_order: 29
+binary_sensor.hurensohn_mopp_angebracht:
+  hidden: true
+sensor.hurensohn_flache_gereinigt:
+  hidden: true
+sensor.hurensohn_reinigungsdauer:
+  hidden: true
+sensor.hurensohn_gesamtflache_gereinigt:
+  hidden: true
+sensor.hurensohn_reinigungen_insgesamt:
+  hidden: true
+sensor.hurensohn_lebensdauer_der_hauptburste:
+  hidden: true
+sensor.hurensohn_gesamtdauer_der_reinigung:
+  hidden: true
+sensor.hurensohn_batterie:
+  hidden: true
+sensor.hurensohn_lebensdauer_des_filters:
+  hidden: true
+sensor.hurensohn_lebensdauer_des_rundwischers:
+  hidden: true
+sensor.hurensohn_lebensdauer_der_pflegeeinheit:
+  hidden: true
+sensor.hurensohn_lebensdauer_der_seitenburste:
+  hidden: true
+vacuum.hurensohn:
+  hidden: true
+button.hurensohn_verlegen:
+  hidden: true
+light.abstelkammer_2:
+  sort_order: 1
+binary_sensor.ikea_sensor_05_tur:
+  sort_order: 2
+  custom_card: true
+button.ikea_sensor_05_identifizieren_2:
+  sort_order: 3
+  hidden: true
+button.abstelkammer_identifizieren:
+  sort_order: 4
+  hidden: true
+number.abstelkammer_ein_level_2:
+  sort_order: 5
+  hidden: true
+select.abstelkammer_wiedereinschaltverhalten:
+  sort_order: 6
+  hidden: true
+sensor.ikea_sensor_05_batterie:
+  sort_order: 7
+  hidden: true

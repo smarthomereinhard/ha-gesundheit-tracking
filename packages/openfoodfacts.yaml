@@ -1,0 +1,2102 @@
+# ════════════════════════════════════════════════════════════
+# OpenFoodFacts Inventar-Tracker für Home Assistant
+# ────────────────────────────────────────────────────────────
+# KORRIGIERTE FASSUNG — Änderungen ggü. Original siehe unten am
+# Ende dieser Header-Sektion.
+#
+# Scanne Barcodes mit dem iPhone → Produkte werden automatisch
+# in Inventarlisten gebucht (Vorratskammer / Kühlschrank /
+# Gefrierschrank / Schrank / Sonstiges). Niedrigbestand-Items
+# landen automatisch auf der Einkaufsliste.
+#
+# Multi-DB-Lookup: OFF → OBF → OPF → eigenes Google Sheet → manuell.
+# Eigene DB wird automatisch gepflegt: jedes manuell eingebuchte
+# Produkt landet via Apps Script in deinem Google Sheet und wird
+# beim nächsten Scan automatisch wieder vorbefüllt.
+#
+# Einbinden:
+#   1. Datei nach /config/packages/openfoodfacts.yaml legen
+#   2. In configuration.yaml einbinden (falls noch nicht):
+#        homeassistant:
+#          packages: !include_dir_named packages
+#   3. Voraussetzungen anlegen (siehe unten)
+#   4. HA neu starten
+#
+# ────────────────────────────────────────────────────────────
+# ÄNDERUNGEN GEGENÜBER DER ORIGINAL-FASSUNG
+# ────────────────────────────────────────────────────────────
+#
+# [BUG-FIX 1 — KRITISCH] script.off_buchen, "vorhandenes_item":
+#   Bisher per Substring-Match `code in summary or code in description`.
+#   Das kann das FALSCHE Item finden und entfernen, wenn ein anderer
+#   Eintrag den Barcode als Substring enthält (z. B. durch verschiedene
+#   Barcode-Längen oder Zufallstreffer). Jetzt: explizit auf
+#   "EAN: <code>" bzw. "Barcode: <code>" matchen.
+#
+# [BUG-FIX 2] automation.inventar_niedrigbestand, "schon_drauf":
+#   Gleicher Substring-Bug. Zusätzlich Fallback: wenn kein Barcode
+#   vorhanden ist, jetzt Match auf den Produktnamen (statt: Item wird
+#   bei jedem State-Change neu auf die Einkaufsliste gesetzt).
+#
+# [VERBESSERUNG 1] automation.inventar_niedrigbestand:
+#   - condition: automationen_ein_aus = on (globaler Kill-Switch)
+#   - zusätzlicher time_pattern Trigger alle 30 Minuten als
+#     Sicherheitsnetz, falls Items manuell in der UI editiert wurden
+#     (state-Trigger feuert nur bei Add/Remove, nicht bei UI-Edits).
+#
+# [VERBESSERUNG 2] script.off_barcode_lookup, Lookup-Delay:
+#   Von 800 ms auf 1500 ms erhöht — Apps Script Cold Starts brauchen
+#   teilweise länger.
+#
+# [VERBESSERUNG 3] Format-Robustheit:
+#   Alle Item-Parser akzeptieren jetzt zusätzlich "1 Stk " ohne Punkt
+#   (für versehentlich manuell editierte Items).
+#
+# ────────────────────────────────────────────────────────────
+# Voraussetzungen (manuell anlegen):
+#   - 6 Todo-Listen (lokal):
+#       todo.inventar_vorratskammer
+#       todo.inventar_kuehlschrank
+#       todo.inventar_gefrierschrank
+#       todo.inventar_schrank
+#       todo.inventar_sonstiges
+#       todo.einkaufsliste_2
+#     → Einstellungen → Geräte & Dienste → Aufgaben hinzufügen
+#
+#   - input_boolean.automationen_ein_aus (globaler Kill-Switch)
+#
+#   - Google Apps Script Web-App als Stammdaten-DB:
+#       Sheet "eigene_produkte" mit Spalten:
+#         Barcode | Produkt | Marke | Menge | Erstellt | Kategorie
+#       Apps Script mit doGet (Lookup) + doPost (Upsert).
+#       Deployment-URL in den rest_command-Block unten eintragen.
+#
+# Anpassen (einmalig):
+#   - Keine externen Notifications mehr. Status-Feedback gibt es nur
+#     im HA-Log und im Dashboard (Scan-Status-Karte). Falls du später
+#     wieder Notifications möchtest: an den ehemals gepatchten Stellen
+#     "telegram_bot.send_message" oder "notify.send_message" einfügen.
+#
+# Optional:
+#   - HACS browser_mod (für Barcode-Kopieren-Button im Dashboard)
+#   - iOS Kurzbefehle mit POST auf /api/webhook/barcode_einbuchen
+#     bzw. /api/webhook/barcode_ausbuchen
+# ════════════════════════════════════════════════════════════
+
+# packages/openfoodfacts.yaml
+
+# ════════════════════════════════════════════════════════════
+# HELPER
+# ════════════════════════════════════════════════════════════
+
+input_text:
+  off_barcode_eingabe:
+    name: OFF Barcode
+    icon: mdi:barcode
+
+  off_menge:
+    name: "Menge / Größe"
+    icon: mdi:scale
+    max: 100
+
+  # Manuelle Eingabe — wird vom Template-Sensor als 4./5. Quelle
+  # ("lokal" oder "manuell") genutzt, falls keine API einen Treffer hat.
+  off_manuell_name:
+    name: "Produktname (manuell)"
+    icon: mdi:pencil
+    max: 100
+
+  off_manuell_marke:
+    name: "Marke (manuell)"
+    icon: mdi:tag-outline
+    max: 100
+
+  # Manuelle Kategorie — wird genutzt, wenn OFF keine liefert oder
+  # du sie korrigieren möchtest. Wird beim Lookup aus dem Apps-Script-
+  # Sheet vorbefüllt, falls vorhanden.
+  off_manuell_kategorie:
+    name: "Kategorie (manuell)"
+    icon: mdi:shape
+    max: 50
+
+input_select:
+  off_modus:
+    name: "Modus"
+    icon: mdi:swap-horizontal
+    options:
+      - "Einbuchen"
+      - "Ausbuchen"
+    initial: "Einbuchen"
+
+  off_lagerplatz:
+    name: "Lagerplatz"
+    icon: mdi:warehouse
+    options:
+      - "Vorratskammer"
+      - "Kühlschrank"
+      - "Gefrierschrank"
+      - "Schrank"
+      - "Sonstiges"
+    initial: "Vorratskammer"
+
+  off_dashboard_seite:
+    name: Dashboard Seite
+    options:
+      - Übersicht
+      - Produkt buchen
+      - Inventar
+      - Einkaufsliste
+    initial: Übersicht
+
+  # Mengen-Einheit zum Auswählen — wird beim Buchen mit der Zahl aus
+  # input_text.off_menge kombiniert (z. B. "250" + "g" → "250 g").
+  # Wenn auf "—" gelassen, wird input_text.off_menge direkt als
+  # komplette Mengenangabe übernommen (z. B. wenn Sheet-Lookup
+  # "1000g" als Ganzes geladen hat).
+  off_menge_einheit:
+    name: "Mengen-Einheit"
+    icon: mdi:scale
+    options:
+      - "—"
+      - g
+      - kg
+      - ml
+      - cl
+      - l
+      - Stk.
+      - Pkg.
+      - Rolle
+      - Beutel
+      - m
+      - cm
+    initial: "—"
+
+input_number:
+  off_anzahl:
+    name: Anzahl
+    icon: mdi:counter
+    initial: 1
+    min: 1
+    max: 50
+    step: 1
+    mode: box
+
+# Marker: wurden die manuellen Felder gerade automatisch aus der
+# lokalen Produkt-DB befüllt? Steuert nur, ob im Dashboard
+# "Lokale DB" oder "Manuell" angezeigt wird.
+input_boolean:
+  off_aus_lokaler_db:
+    name: "Marker: aus lokaler DB"
+    icon: mdi:database-check
+
+  # Marker: liegt gerade ein Produkt zum Buchen im Buffer?
+  # Wird in off_barcode_lookup am Ende automatisch gesetzt, wenn
+  # ein Produkt erkannt wurde. Wird in off_buchen / nach Buchen
+  # via Lagerort- oder Müll-Code wieder zurückgesetzt.
+  # Steuert das Auto-Buchen bei Lagerort-/Müll-Scan.
+  off_produkt_im_buffer:
+    name: "Marker: Produkt im Buffer"
+    icon: mdi:basket-fill
+
+# ════════════════════════════════════════════════════════════
+# CSV / EXCEL EXPORT
+# ════════════════════════════════════════════════════════════
+
+shell_command:
+
+  # Booking-Log (jede Buchung wird angehängt)
+  off_excel_log: >-
+    bash -c '
+    FILE="/config/www/off_inventar.csv";
+
+    if [ ! -f "$FILE" ]; then
+      echo "Datum;Modus;Produkt;Marke;Menge;Barcode;Lagerplatz;Anzahl" > "$FILE";
+    fi;
+
+    echo "{{ datum }};{{ modus }};{{ produkt }};{{ marke }};{{ menge }};{{ code }};{{ lagerplatz }};{{ anzahl }}" >> "$FILE";
+    '
+
+  # Vorratskammer-Snapshot: Header anlegen (überschreibt alte Datei)
+  inventar_vorratskammer_csv_init: >-
+    bash -c 'echo "Stk;Produkt;Marke;Barcode;Lagerplatz" > /config/www/inventar_vorratskammer.csv'
+
+  # Vorratskammer-Snapshot: eine Zeile anhängen
+  inventar_vorratskammer_csv_zeile: >-
+    bash -c 'echo "{{ stk }};{{ produkt }};{{ marke }};{{ barcode }};{{ lagerplatz }}" >> /config/www/inventar_vorratskammer.csv'
+
+# ════════════════════════════════════════════════════════════
+# REST COMMAND: Google Apps Script (Stammdaten-DB)
+# ────────────────────────────────────────────────────────────
+# Ersetzt die früher genutzte todo.eigene_produkte komplett.
+# Das Apps Script bietet GET (Lookup) + POST (Upsert).
+# Sheet-Spalten: Barcode | Produkt | Marke | Menge | Erstellt | Kategorie
+#
+# Hier deine Deployment-URL einsetzen (endet auf /exec).
+# ════════════════════════════════════════════════════════════
+
+rest_command:
+
+  # Lookup: Barcode im Sheet suchen
+  off_sheet_lookup:
+    url: >-
+      https://script.google.com/macros/s/AKfycbxK3gFwtzbqtYK8jXkXgzVImmisYb9sIh-rtcFSj1ZakoGJRfKLj7i_47MVLREx01AKuw/exec?barcode={{ barcode }}
+    method: GET
+
+  # Upsert: Produkt anlegen oder aktualisieren
+  # Sheet-Schema:
+  #   A: Position | B: Barcode | C: Bestand | D: Kategorie | E: Marke
+  #   F: Menge | G: Produktname | H: Lagerplatz | I: Erstellt | J: Aktualisiert
+  # Position, Erstellt und Aktualisiert werden vom Apps Script automatisch
+  # gesetzt — nicht aus HA mitschicken.
+  off_sheet_anlegen:
+    url: >-
+      https://script.google.com/macros/s/AKfycbxK3gFwtzbqtYK8jXkXgzVImmisYb9sIh-rtcFSj1ZakoGJRfKLj7i_47MVLREx01AKuw/exec
+    method: POST
+    content_type: 'application/json'
+    payload: >-
+      {{ {
+        "barcode": barcode,
+        "bestand": bestand,
+        "kategorie": kategorie,
+        "marke": marke,
+        "menge": menge,
+        "produkt": produkt,
+        "lagerplatz": lagerplatz
+      } | tojson }}
+
+  # List-All: alle Items aus dem Sheet zurückbekommen
+  # Genutzt von script.inventar_resync_aus_sheet
+  off_sheet_list:
+    url: >-
+      https://script.google.com/macros/s/AKfycbxK3gFwtzbqtYK8jXkXgzVImmisYb9sIh-rtcFSj1ZakoGJRfKLj7i_47MVLREx01AKuw/exec?action=list
+    method: GET
+    timeout: 60
+
+# ════════════════════════════════════════════════════════════
+# REST SENSOR (Multi-DB: OFF + OBF + OPF)
+# ════════════════════════════════════════════════════════════
+
+rest:
+
+  # ─── OFF: Lebensmittel ───
+  - resource_template: >-
+      https://de.openfoodfacts.org/api/v2/product/{{ states('input_text.off_barcode_eingabe') }}.json?fields=product_name,product_name_de,brands,quantity,categories
+    scan_interval: 86400
+    headers:
+      User-Agent: "HomeAssistant-OFF/1.0"
+      Accept-Language: "de"
+    sensor:
+      - name: OFF Last Lookup
+        unique_id: off_last_lookup
+        value_template: "{{ value_json.status_verbose | default('unbekannt') }}"
+        json_attributes:
+          - status
+          - product
+          - code
+
+  # ─── OBF: Beauty / Kosmetik / Deo / Shampoo / Duschzeug ───
+  - resource_template: >-
+      https://world.openbeautyfacts.org/api/v2/product/{{ states('input_text.off_barcode_eingabe') }}.json?fields=product_name,product_name_de,brands,quantity,categories
+    scan_interval: 86400
+    headers:
+      User-Agent: "HomeAssistant-OFF/1.0"
+      Accept-Language: "de"
+    sensor:
+      - name: OBF Last Lookup
+        unique_id: obf_last_lookup
+        value_template: "{{ value_json.status_verbose | default('unbekannt') }}"
+        json_attributes:
+          - status
+          - product
+          - code
+
+  # ─── OPF: Allgemeine Produkte / Toilettenpapier / Putzmittel ───
+  - resource_template: >-
+      https://world.openproductsfacts.org/api/v2/product/{{ states('input_text.off_barcode_eingabe') }}.json?fields=product_name,product_name_de,brands,quantity,categories
+    scan_interval: 86400
+    headers:
+      User-Agent: "HomeAssistant-OFF/1.0"
+      Accept-Language: "de"
+    sensor:
+      - name: OPF Last Lookup
+        unique_id: opf_last_lookup
+        value_template: "{{ value_json.status_verbose | default('unbekannt') }}"
+        json_attributes:
+          - status
+          - product
+          - code
+
+# ════════════════════════════════════════════════════════════
+# TEMPLATE SENSOR (Cascade: OFF → OBF → OPF → Lokal → Manuell)
+# ════════════════════════════════════════════════════════════
+
+template:
+
+  - sensor:
+
+      # ─── Welche Quelle hat den Treffer? ───
+      - name: OFF Quelle
+        unique_id: off_quelle
+        icon: mdi:database-search
+        state: >-
+          {% set ns = namespace(value='none') %}
+          {% for src in ['off', 'obf', 'opf'] %}
+            {% if ns.value == 'none' %}
+              {% set product = state_attr('sensor.' ~ src ~ '_last_lookup', 'product') %}
+              {% if product is mapping %}
+                {% set pn = (product.product_name | default('') | string) | trim %}
+                {% set pn_de = (product.product_name_de | default('') | string) | trim %}
+                {% if (pn | length > 0) or (pn_de | length > 0) %}
+                  {% set ns.value = src %}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.value == 'none' %}
+            {% set manuell = states('input_text.off_manuell_name') | string | trim %}
+            {% if manuell | length > 0
+               and manuell | lower not in ['unknown','unavailable','none'] %}
+              {% if is_state('input_boolean.off_aus_lokaler_db', 'on') %}
+                {% set ns.value = 'lokal' %}
+              {% else %}
+                {% set ns.value = 'manuell' %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+          {{ ns.value }}
+
+      # ─── Produkt-Name (immer Deutsch) ───
+      # Logik: prüfe product_name_de QUER durch alle 3 API-Quellen (off, obf, opf).
+      # Erst wenn nirgends ein deutsches product_name_de vorhanden ist, fällt's
+      # auf product_name der ersten Quelle zurück (kann dann fremdsprachig sein).
+      - name: OFF Product Name
+        unique_id: off_product_name
+        icon: mdi:food
+        state: >-
+          {% set quelle = states('sensor.off_quelle') %}
+          {% if quelle in ['off', 'obf', 'opf'] %}
+            {% set ns = namespace(name_de='', name_fallback='') %}
+            {% for src in ['off', 'obf', 'opf'] %}
+              {% set product = state_attr('sensor.' ~ src ~ '_last_lookup', 'product') %}
+              {% if product is mapping %}
+                {% if ns.name_de == '' %}
+                  {% set pn_de = (product.product_name_de | default('') | string) | trim %}
+                  {% if pn_de | length > 0 %}
+                    {% set ns.name_de = pn_de %}
+                  {% endif %}
+                {% endif %}
+                {% if ns.name_fallback == '' %}
+                  {% set pn = (product.product_name | default('') | string) | trim %}
+                  {% if pn | length > 0 %}
+                    {% set ns.name_fallback = pn %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {% if ns.name_de | length > 0 %}
+              {{ ns.name_de }}
+            {% elif ns.name_fallback | length > 0 %}
+              {{ ns.name_fallback }}
+            {% else %}
+              unknown
+            {% endif %}
+          {% elif quelle in ['manuell', 'lokal'] %}
+            {{ states('input_text.off_manuell_name') }}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          quelle: "{{ states('sensor.off_quelle') }}"
+          quelle_label: >-
+            {% set q = states('sensor.off_quelle') %}
+            {% set names = {
+              'off': 'OpenFoodFacts',
+              'obf': 'OpenBeautyFacts',
+              'opf': 'OpenProductsFacts',
+              'lokal': 'Lokale Datenbank',
+              'manuell': 'Manuell eingetragen',
+              'none': 'Nicht gefunden'
+            } %}
+            {{ names.get(q, 'Unbekannt') }}
+          marke: >-
+            {% set quelle = states('sensor.off_quelle') %}
+            {% if quelle in ['off', 'obf', 'opf'] %}
+              {% set product = state_attr('sensor.' ~ quelle ~ '_last_lookup', 'product') %}
+              {{ product.brands | default('unknown') }}
+            {% elif quelle in ['manuell', 'lokal'] %}
+              {{ states('input_text.off_manuell_marke') | default('unknown') }}
+            {% else %}
+              unknown
+            {% endif %}
+          menge_off: >-
+            {% set quelle = states('sensor.off_quelle') %}
+            {% if quelle in ['off', 'obf', 'opf'] %}
+              {% set product = state_attr('sensor.' ~ quelle ~ '_last_lookup', 'product') %}
+              {{ product.quantity | default('unknown') }}
+            {% else %}
+              unknown
+            {% endif %}
+
+          # ─── Kategorie ───
+          # Priorität: manuelle Eingabe → OFF/OBF/OPF letzte Kategorie der
+          # Hierarchie (spezifischste). OFF liefert mit Accept-Language: de
+          # die deutsche Variante, z. B. "Kaffee" für Lavazza Crema E Aroma.
+          kategorie: >-
+            {% set manuell = states('input_text.off_manuell_kategorie') | string | trim %}
+            {% if manuell | length > 0
+               and manuell | lower not in ['unknown','unavailable','none'] %}
+              {{ manuell }}
+            {% else %}
+              {% set quelle = states('sensor.off_quelle') %}
+              {% if quelle in ['off', 'obf', 'opf'] %}
+                {% set product = state_attr('sensor.' ~ quelle ~ '_last_lookup', 'product') %}
+                {% set cats = product.categories | default('') | string %}
+                {% if cats | length > 0 %}
+                  {{ cats.split(',') | last | trim }}
+                {% else %}
+                  unknown
+                {% endif %}
+              {% else %}
+                unknown
+              {% endif %}
+            {% endif %}
+
+  # ─── Binary-Sensor: ist ein gültiger Barcode (8-14 Ziffern) eingegeben? ───
+  - binary_sensor:
+      - name: OFF Barcode Vorhanden
+        unique_id: off_barcode_vorhanden
+        state: >-
+          {{ states('input_text.off_barcode_eingabe')
+             | string | regex_match('^\d{8,14}$') is not none }}
+
+  # ─────────────────────────────────────────────────────────
+  # Inventar-Summary-Sensoren (pro Lager)
+  # ─────────────────────────────────────────────────────────
+  # Hintergrund: HA's todo-Integration legt die Items NICHT als
+  # state-attribute ab. Im Dashboard-Markdown kann man also nicht
+  # via state_attr('todo.X', 'items') auf die Liste zugreifen.
+  # Lösung: Trigger-basierte Template-Sensoren, die bei jeder
+  # Änderung der jeweiligen Todo-Liste todo.get_items ausführen
+  # und Anzahl + Stückzahl-Summe + Niedrigbestand als Attribute
+  # exposen. Dashboard nutzt dann state_attr auf diese Sensoren.
+  #
+  # Zusätzlich: alle 5 Min Sicherheitsnetz für UI-Edits, die
+  # u.U. keinen state-event auf todo auslösen.
+  # ─────────────────────────────────────────────────────────
+
+  - trigger:
+      - platform: state
+        entity_id: todo.inventar_vorratskammer
+        for:
+          minutes: 5
+      - platform: homeassistant
+        event: start
+    action:
+      - action: todo.get_items
+        target:
+          entity_id: todo.inventar_vorratskammer
+        data:
+          status: needs_action
+        response_variable: result
+    sensor:
+      - name: "Inventar Vorratskammer Summary"
+        unique_id: inventar_summary_vorratskammer
+        icon: mdi:package-variant-closed
+        state: "{{ result['todo.inventar_vorratskammer']['items'] | default([]) | length }}"
+        attributes:
+          total_stk: >-
+            {% set items = result['todo.inventar_vorratskammer']['items'] | default([]) %}
+            {% set ns = namespace(total=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 %}
+                {% set ns.total = ns.total + (m[0] | int) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total }}
+          niedrig: >-
+            {% set items = result['todo.inventar_vorratskammer']['items'] | default([]) %}
+            {% set ns = namespace(n=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 and (m[0] | int) == 1 %}
+                {% set ns.n = ns.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.n }}
+
+  - trigger:
+      - platform: state
+        entity_id: todo.inventar_kuehlschrank
+        for:
+          minutes: 5
+      - platform: homeassistant
+        event: start
+    action:
+      - action: todo.get_items
+        target:
+          entity_id: todo.inventar_kuehlschrank
+        data:
+          status: needs_action
+        response_variable: result
+    sensor:
+      - name: "Inventar Kühlschrank Summary"
+        unique_id: inventar_summary_kuehlschrank
+        icon: mdi:fridge
+        state: "{{ result['todo.inventar_kuehlschrank']['items'] | default([]) | length }}"
+        attributes:
+          total_stk: >-
+            {% set items = result['todo.inventar_kuehlschrank']['items'] | default([]) %}
+            {% set ns = namespace(total=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 %}
+                {% set ns.total = ns.total + (m[0] | int) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total }}
+          niedrig: >-
+            {% set items = result['todo.inventar_kuehlschrank']['items'] | default([]) %}
+            {% set ns = namespace(n=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 and (m[0] | int) == 1 %}
+                {% set ns.n = ns.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.n }}
+
+  - trigger:
+      - platform: state
+        entity_id: todo.inventar_gefrierschrank
+        for:
+          minutes: 5
+      - platform: homeassistant
+        event: start
+    action:
+      - action: todo.get_items
+        target:
+          entity_id: todo.inventar_gefrierschrank
+        data:
+          status: needs_action
+        response_variable: result
+    sensor:
+      - name: "Inventar Gefrierschrank Summary"
+        unique_id: inventar_summary_gefrierschrank
+        icon: mdi:snowflake
+        state: "{{ result['todo.inventar_gefrierschrank']['items'] | default([]) | length }}"
+        attributes:
+          total_stk: >-
+            {% set items = result['todo.inventar_gefrierschrank']['items'] | default([]) %}
+            {% set ns = namespace(total=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 %}
+                {% set ns.total = ns.total + (m[0] | int) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total }}
+          niedrig: >-
+            {% set items = result['todo.inventar_gefrierschrank']['items'] | default([]) %}
+            {% set ns = namespace(n=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 and (m[0] | int) == 1 %}
+                {% set ns.n = ns.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.n }}
+
+  - trigger:
+      - platform: state
+        entity_id: todo.inventar_schrank
+        for:
+          minutes: 5
+      - platform: homeassistant
+        event: start
+    action:
+      - action: todo.get_items
+        target:
+          entity_id: todo.inventar_schrank
+        data:
+          status: needs_action
+        response_variable: result
+    sensor:
+      - name: "Inventar Schrank Summary"
+        unique_id: inventar_summary_schrank
+        icon: mdi:locker
+        state: "{{ result['todo.inventar_schrank']['items'] | default([]) | length }}"
+        attributes:
+          total_stk: >-
+            {% set items = result['todo.inventar_schrank']['items'] | default([]) %}
+            {% set ns = namespace(total=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 %}
+                {% set ns.total = ns.total + (m[0] | int) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total }}
+          niedrig: >-
+            {% set items = result['todo.inventar_schrank']['items'] | default([]) %}
+            {% set ns = namespace(n=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 and (m[0] | int) == 1 %}
+                {% set ns.n = ns.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.n }}
+
+  - trigger:
+      - platform: state
+        entity_id: todo.inventar_sonstiges
+        for:
+          minutes: 5
+      - platform: homeassistant
+        event: start
+    action:
+      - action: todo.get_items
+        target:
+          entity_id: todo.inventar_sonstiges
+        data:
+          status: needs_action
+        response_variable: result
+    sensor:
+      - name: "Inventar Sonstiges Summary"
+        unique_id: inventar_summary_sonstiges
+        icon: mdi:package-variant
+        state: "{{ result['todo.inventar_sonstiges']['items'] | default([]) | length }}"
+        attributes:
+          total_stk: >-
+            {% set items = result['todo.inventar_sonstiges']['items'] | default([]) %}
+            {% set ns = namespace(total=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 %}
+                {% set ns.total = ns.total + (m[0] | int) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total }}
+          niedrig: >-
+            {% set items = result['todo.inventar_sonstiges']['items'] | default([]) %}
+            {% set ns = namespace(n=0) %}
+            {% for item in items %}
+              {% set m = item.summary | regex_findall('^\s*([0-9]+)\s+Stk') %}
+              {% if m | length > 0 and (m[0] | int) == 1 %}
+                {% set ns.n = ns.n + 1 %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.n }}
+
+# ════════════════════════════════════════════════════════════
+# CUSTOMIZE
+# ════════════════════════════════════════════════════════════
+
+homeassistant:
+  customize:
+    sensor.off_last_lookup:
+      friendly_name: OFF Last Lookup
+
+# ════════════════════════════════════════════════════════════
+# SCRIPTS
+# ════════════════════════════════════════════════════════════
+
+script:
+
+  off_barcode_lookup:
+    alias: "OFF: Multi-DB Barcode nachschlagen"
+    icon: mdi:magnify
+    sequence:
+      # ─── Spezial-Codes erkennen: Lagerort + Müll ───
+      - variables:
+          eingegebener_code: "{{ states('input_text.off_barcode_eingabe') | string }}"
+          lagerort_mapping:
+            "2900000000018": "Vorratskammer"
+            "2900000000025": "Kühlschrank"
+            "2900000000032": "Gefrierschrank"
+            "2900000000049": "Schrank"
+            "2900000000056": "Sonstiges"
+          muell_code: "2900000099999"
+          ist_lagerort: "{{ eingegebener_code in lagerort_mapping }}"
+          ist_muell: "{{ eingegebener_code == muell_code }}"
+          produkt_im_buffer: >-
+            {{ is_state('input_boolean.off_produkt_im_buffer', 'on') }}
+
+      # ─── Müll-Code: Produkt ausbuchen ───
+      - if:
+          - condition: template
+            value_template: "{{ ist_muell }}"
+        then:
+          - if:
+              - condition: template
+                value_template: "{{ produkt_im_buffer }}"
+            then:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.off_modus
+                data:
+                  option: "Ausbuchen"
+
+              - action: script.off_buchen
+
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.off_produkt_im_buffer
+
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_barcode_eingabe
+            data:
+              value: ""
+
+          - stop: "Müll-Code verarbeitet"
+
+      # ─── Lagerort-Code: Lagerplatz wechseln + ggf. einbuchen ───
+      - if:
+          - condition: template
+            value_template: "{{ ist_lagerort }}"
+        then:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.off_lagerplatz
+            data:
+              option: "{{ lagerort_mapping[eingegebener_code] }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ produkt_im_buffer }}"
+            then:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.off_modus
+                data:
+                  option: "Einbuchen"
+
+              - action: script.off_buchen
+
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.off_produkt_im_buffer
+
+
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_barcode_eingabe
+            data:
+              value: ""
+
+          - stop: "Lagerort verarbeitet"
+
+      # ─── Normaler Produkt-Lookup ab hier ───
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_name
+        data:
+          value: ""
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_marke
+        data:
+          value: ""
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_kategorie
+        data:
+          value: ""
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_menge_einheit
+        data:
+          option: "—"
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.off_aus_lokaler_db
+
+      # ─── 1. PRIORITÄT: Eigenes Google Sheet zuerst abfragen ───
+      - action: rest_command.off_sheet_lookup
+        data:
+          barcode: "{{ states('input_text.off_barcode_eingabe') | string }}"
+        response_variable: sheet_resp
+
+      - variables:
+          sheet_data: >-
+            {% set c = sheet_resp.content | default({}) %}
+            {% if c is mapping %}
+              {{ c }}
+            {% elif c is string and c | length > 0 %}
+              {{ c | from_json }}
+            {% else %}
+              {}
+            {% endif %}
+          sheet_found: "{{ (sheet_data.status | default('')) == 'found' }}"
+
+      # Wenn im eigenen Sheet gefunden → direkt verwenden, APIs überspringen
+      - if:
+          - condition: template
+            value_template: "{{ sheet_found }}"
+        then:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.off_aus_lokaler_db
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_manuell_name
+            data:
+              value: "{{ sheet_data.produkt | default('') }}"
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_manuell_marke
+            data:
+              value: "{{ sheet_data.marke | default('') }}"
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_manuell_kategorie
+            data:
+              value: "{{ sheet_data.kategorie | default('') }}"
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_menge
+            data:
+              value: "{{ sheet_data.menge | default('') }}"
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.off_produkt_im_buffer
+          - stop: "Produkt aus eigenem Sheet geladen"
+
+      # ─── 2. FALLBACK: Öffentliche APIs (OFF / OBF / OPF) ───
+      - parallel:
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.off_last_lookup
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.obf_last_lookup
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.opf_last_lookup
+
+      - delay:
+          milliseconds: 1500
+
+      # ─── Buffer-Marker setzen oder "Nicht gefunden" melden ───
+      - if:
+          - condition: template
+            value_template: >-
+              {{ states('sensor.off_quelle') | string != 'none' }}
+        then:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.off_produkt_im_buffer
+        else:
+          # Nirgends gefunden → Benachrichtigung
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.off_produkt_im_buffer
+          - if:
+              - condition: state
+                entity_id: input_boolean.sonos_tts_aktiv
+                state: "on"
+              - condition: state
+                entity_id: input_boolean.inventar_tts
+                state: "on"
+            then:
+              - action: tts.speak
+                target:
+                  entity_id: tts.home_assistant_cloud
+                data:
+                  media_player_entity_id: media_player.sonos_all
+                  message: "Produkt nicht gefunden. Bitte Namen manuell eingeben."
+                  language: de-DE
+          - action: telegram_bot.send_message
+            data:
+              chat_id: 988178587
+              parse_mode: html
+              message: >-
+                ❓ <b>Produkt nicht gefunden</b>
+
+                Barcode <code>{{ states('input_text.off_barcode_eingabe') }}</code> wurde nicht gefunden.
+                Bitte manuell eingeben.
+          - action: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "❓ Produkt nicht gefunden"
+              message: >-
+                Barcode {{ states('input_text.off_barcode_eingabe') }} – bitte manuell eingeben.
+              data:
+                push:
+                  sound:
+                    name: default
+                    critical: 1
+                    volume: 1
+
+  off_buchen:
+    alias: "OFF: Produkt buchen"
+    icon: mdi:basket
+    sequence:
+      - variables:
+          produkt: "{{ states('sensor.off_product_name') | string }}"
+          marke: "{{ state_attr('sensor.off_product_name', 'marke') | string }}"
+          kategorie: "{{ state_attr('sensor.off_product_name', 'kategorie') | string }}"
+          code: "{{ state_attr('sensor.off_last_lookup', 'code') | string }}"
+          modus: "{{ states('input_select.off_modus') | string }}"
+          lagerplatz: "{{ states('input_select.off_lagerplatz') | string }}"
+          anzahl: "{{ states('input_number.off_anzahl') | int(1) }}"
+          menge: >-
+            {% set m_zahl = states('input_text.off_menge') | string | trim %}
+            {% set m_einheit = states('input_select.off_menge_einheit') | string | trim %}
+            {% set off_menge = state_attr('sensor.off_product_name', 'menge_off') | string %}
+            {% set m_skip = ['unknown','unavailable','none',''] %}
+            {% if m_zahl | length > 0 and m_einheit != '—' %}
+              {{ m_zahl }} {{ m_einheit }}
+            {% elif m_zahl | length > 0 and m_zahl | lower not in m_skip %}
+              {{ m_zahl }}
+            {% elif off_menge | lower not in m_skip %}
+              {{ off_menge }}
+            {% else %}
+              keine Angabe
+            {% endif %}
+          ziel_liste: >-
+            {% if lagerplatz == 'Vorratskammer' %}
+              todo.inventar_vorratskammer
+            {% elif lagerplatz == 'Kühlschrank' %}
+              todo.inventar_kuehlschrank
+            {% elif lagerplatz == 'Gefrierschrank' %}
+              todo.inventar_gefrierschrank
+            {% elif lagerplatz == 'Schrank' %}
+              todo.inventar_schrank
+            {% else %}
+              todo.inventar_sonstiges
+            {% endif %}
+
+      - condition: template
+        value_template: >-
+          {{ produkt | string | lower not in ['unknown','unavailable','none',''] }}
+
+      # ─── AUSBUCHEN: Lagerplatz automatisch ermitteln ───
+      # Beim Ausbuchen ignorieren wir den im Dashboard eingestellten
+      # Lagerplatz und durchsuchen alle 5 Inventar-Listen nach dem EAN.
+      # Das gefundene Item wird dort ausgebucht, wo es liegt.
+      # Wenn nirgends gefunden: Vorgang bricht ab (kein Phantom-Item).
+      - if:
+          - condition: template
+            value_template: "{{ modus == 'Ausbuchen' }}"
+        then:
+          - action: todo.get_items
+            target:
+              entity_id:
+                - todo.inventar_vorratskammer
+                - todo.inventar_kuehlschrank
+                - todo.inventar_gefrierschrank
+                - todo.inventar_schrank
+                - todo.inventar_sonstiges
+            data:
+              status: needs_action
+            response_variable: alle_inv
+
+          - variables:
+              gefundene_liste: >-
+                {% set ns = namespace(liste='') %}
+                {% set c = code | string | trim %}
+                {% if c | length > 0 %}
+                  {% for liste_id, daten in alle_inv.items() %}
+                    {% for item in daten['items'] | default([]) %}
+                      {% set desc = item.description | default('') | string %}
+                      {% set sum = item.summary | string %}
+                      {% if ('EAN: ' ~ c) in desc
+                            or ('Barcode: ' ~ c) in desc
+                            or ('EAN: ' ~ c) in sum
+                            or ('Barcode: ' ~ c) in sum %}
+                        {% set ns.liste = liste_id %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endfor %}
+                {% endif %}
+                {{ ns.liste }}
+
+          # Wenn nicht gefunden → Push-Notification und Abbruch
+          - if:
+              - condition: template
+                value_template: "{{ gefundene_liste | length == 0 }}"
+            then:
+              - stop: "Ausbuchen abgebrochen: Produkt in keiner Liste."
+
+          # ziel_liste auf die gefundene umsetzen und Lagerplatz im
+          # Dashboard zur Anzeige nachziehen.
+          - variables:
+              ziel_liste: "{{ gefundene_liste }}"
+
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.off_lagerplatz
+            data:
+              option: >-
+                {% set lager_map = {
+                  'todo.inventar_vorratskammer': 'Vorratskammer',
+                  'todo.inventar_kuehlschrank': 'Kühlschrank',
+                  'todo.inventar_gefrierschrank': 'Gefrierschrank',
+                  'todo.inventar_schrank': 'Schrank',
+                  'todo.inventar_sonstiges': 'Sonstiges'
+                } %}
+                {{ lager_map.get(gefundene_liste, 'Sonstiges') }}
+
+      - action: todo.get_items
+        target:
+          entity_id: "{{ ziel_liste }}"
+        data:
+          status: needs_action
+        response_variable: inventar
+
+      - variables:
+          vorhandene_items: "{{ inventar[ziel_liste]['items'] | default([]) }}"
+
+          # [BUG-FIX 1 — KRITISCH]
+          # Vorher per Substring-Match `code in summary or code in description`.
+          # Das konnte das FALSCHE Item finden, wenn ein anderer Eintrag den
+          # Barcode als Substring enthält (z. B. EAN8 als Teil von EAN13).
+          # Jetzt: explizit auf "EAN: <code>" bzw. "Barcode: <code>" matchen.
+          vorhandenes_item: >-
+            {% set ns = namespace(item='') %}
+            {% set c = code | string | trim %}
+            {% if c | length > 0 %}
+              {% for item in vorhandene_items %}
+                {% set sum = item.summary | string %}
+                {% set desc = item.description | default('') | string %}
+                {% if ('EAN: ' ~ c) in desc
+                      or ('Barcode: ' ~ c) in desc
+                      or ('EAN: ' ~ c) in sum
+                      or ('Barcode: ' ~ c) in sum %}
+                  {% set ns.item = item.summary %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+            {{ ns.item }}
+
+          # Erkennt drei Formate (jetzt auch ohne Punkt nach Stk):
+          # - Neu:    "1 Stk. Produkt ..." oder "1 Stk Produkt ..."
+          # - Mittel: "Produkt | Stk.: 1"
+          # - Alt:    "Produkt | Stückzahl: 1"
+          alte_stueckzahl: >-
+            {% if vorhandenes_item | length > 0 %}
+              {% set neu = vorhandenes_item | regex_findall('^\s*([0-9]+)\s+Stk\.?') %}
+              {% if neu | length > 0 %}
+                {{ neu[0] | int(0) }}
+              {% else %}
+                {% set alt = vorhandenes_item | regex_findall('(?:Stückzahl|Stk\.): ([0-9]+)') %}
+                {% if alt | length > 0 %}
+                  {{ alt[0] | int(0) }}
+                {% else %}
+                  1
+                {% endif %}
+              {% endif %}
+            {% else %}
+              0
+            {% endif %}
+
+          neue_stueckzahl: >-
+            {% if modus == 'Einbuchen' %}
+              {{ alte_stueckzahl | int(0) + anzahl | int(1) }}
+            {% else %}
+              {{ alte_stueckzahl | int(0) - anzahl | int(1) }}
+            {% endif %}
+
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ vorhandenes_item | length > 0 }}"
+            sequence:
+              - action: todo.remove_item
+                target:
+                  entity_id: "{{ ziel_liste }}"
+                data:
+                  item: "{{ vorhandenes_item }}"
+                continue_on_error: true
+
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ neue_stueckzahl | int(0) > 0 }}"
+            sequence:
+              - action: todo.add_item
+                target:
+                  entity_id: "{{ ziel_liste }}"
+                data:
+                  item: >-
+                    {{ neue_stueckzahl }} Stk. {{ produkt | trim }}{{ ' ' ~ (menge | trim) if (menge | trim) not in ['keine Angabe','unknown','unavailable',''] else '' }}{{ ' | Kategorie: ' ~ (kategorie | trim) if (kategorie | trim) not in ['','unknown','unavailable','none'] else '' }}
+                    | Marke: {{ marke }}
+                  description: |
+                    EAN: {{ code }}
+
+                    <img src="https://barcodeapi.org/api/ean13/{{ code }}" alt="EAN" height="30">
+
+      # Hinweis: Einkaufslisten-Logik bei "Stk = 1" wird zentral
+      # von der Automation "inventar_niedrigbestand" gehandhabt - mit Dedup.
+
+      - action: shell_command.off_excel_log
+        data:
+          datum: "{{ now().strftime('%d.%m.%Y %H:%M') }}"
+          modus: "{{ modus }}"
+          produkt: "{{ produkt }}"
+          marke: "{{ marke }}"
+          menge: "{{ menge }}"
+          code: "{{ code }}"
+          lagerplatz: "{{ lagerplatz }}"
+          anzahl: "{{ anzahl }}"
+
+      # ─── Bei JEDER Buchung: ins Apps Script Sheet schreiben ───
+      # Sheet-Schema-konform: bestand + kategorie (Produkt) + marke +
+      # menge + produkt + lagerplatz. Position/Erstellt/Aktualisiert
+      # setzt das Apps Script selbst.
+      - action: rest_command.off_sheet_anlegen
+        data:
+          barcode: "{{ code }}"
+          bestand: "{{ neue_stueckzahl | int(0) }}"
+          kategorie: "{{ kategorie | trim }}"
+          marke: "{{ marke }}"
+          menge: "{{ menge }}"
+          produkt: "{{ produkt | trim }}"
+          lagerplatz: "{{ lagerplatz }}"
+        continue_on_error: true
+
+      # ─── Benachrichtigungen nach erfolgreicher Buchung ───
+      - action: telegram_bot.send_message
+        data:
+          target: 988178587
+          parse_mode: html
+          message: >-
+            {% if modus == 'Einbuchen' %}📥{% else %}📤{% endif %} <b>Produkt {{ modus | lower }}</b>
+
+            🏷️ <b>{{ produkt | trim }}{% if menge not in ['keine Angabe','unknown','unavailable',''] %} {{ menge }}{% endif %}</b>
+            {% if marke not in ['unknown','unavailable','','none'] %}🏭 Marke: {{ marke }}
+            {% endif %}🏬 Lagerplatz: {{ lagerplatz }}
+            📊 Bestand: <b>{{ neue_stueckzahl }} Stk.</b>
+            ⏰ {{ now().strftime('%d.%m.%Y %H:%M') }}
+        continue_on_error: true
+      - action: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "{% if modus == 'Einbuchen' %}📥{% else %}📤{% endif %} Produkt {{ modus | lower }}"
+          message: >-
+            {{ produkt | trim }} – {{ neue_stueckzahl }} Stk. in {{ lagerplatz }}
+          data:
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1
+        continue_on_error: true
+      - if:
+          - condition: state
+            entity_id: input_boolean.sonos_tts_aktiv
+            state: "on"
+          - condition: state
+            entity_id: input_boolean.inventar_tts
+            state: "on"
+        then:
+          - action: tts.speak
+            target:
+              entity_id: tts.home_assistant_cloud
+            data:
+              media_player_entity_id: media_player.sonos_all
+              message: >-
+                Produkt {{ modus | lower }}: {{ produkt | trim }}.
+                Bestand jetzt {{ neue_stueckzahl }} Stück.
+              language: de-DE
+        continue_on_error: true
+
+      # ─── Aufräumen: manuelle Eingaben + Marker zurücksetzen ───
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_name
+        data:
+          value: ''
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_marke
+        data:
+          value: ''
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_kategorie
+        data:
+          value: ''
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_menge
+        data:
+          value: ''
+
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.off_anzahl
+        data:
+          value: 1
+
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_menge_einheit
+        data:
+          option: "—"
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.off_aus_lokaler_db
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.off_produkt_im_buffer
+
+  # ─────────────────────────────────────────────────────────
+  # Shortcut-Scripts für Dashboard-Buttons
+  # ─────────────────────────────────────────────────────────
+
+  off_einbuchen:
+    alias: "OFF: Einbuchen (Shortcut)"
+    icon: mdi:basket-plus
+    sequence:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_modus
+        data:
+          option: "Einbuchen"
+      - action: script.off_buchen
+
+  off_ausbuchen:
+    alias: "OFF: Ausbuchen (Shortcut)"
+    icon: mdi:basket-minus
+    sequence:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_modus
+        data:
+          option: "Ausbuchen"
+      - action: script.off_buchen
+
+  # ─────────────────────────────────────────────────────────
+  # Browser-Mod: Barcode in Zwischenablage kopieren
+  # ─────────────────────────────────────────────────────────
+
+  off_barcode_kopieren:
+    alias: "OFF: Barcode in Zwischenablage kopieren"
+    icon: mdi:content-copy
+    sequence:
+      - variables:
+          code: "{{ state_attr('sensor.off_last_lookup', 'code') | string }}"
+
+      - condition: template
+        value_template: "{{ code | length >= 8 }}"
+
+      - action: browser_mod.javascript
+        data:
+          command: >-
+            navigator.clipboard.writeText('{{ code }}');
+
+      - action: browser_mod.notification
+        data:
+          message: "Barcode {{ code }} kopiert"
+          duration: 2000
+
+  # ─────────────────────────────────────────────────────────
+  # CSV-Snapshot: Vorratskammer-Inventar als Excel-Datei
+  # ─────────────────────────────────────────────────────────
+
+  inventar_vorratskammer_export:
+    alias: "Inventar Vorratskammer → CSV exportieren"
+    icon: mdi:file-excel
+    sequence:
+
+      - action: todo.get_items
+        target:
+          entity_id: todo.inventar_vorratskammer
+        data:
+          status: needs_action
+        response_variable: liste
+
+      - action: shell_command.inventar_vorratskammer_csv_init
+
+      - repeat:
+          for_each: "{{ liste['todo.inventar_vorratskammer']['items'] | default([]) }}"
+          sequence:
+
+            - variables:
+                zeile: "{{ repeat.item.summary | string }}"
+                beschreibung: "{{ repeat.item.description | default('') | string }}"
+
+                # [VERBESSERUNG 3] Regex akzeptiert jetzt auch "1 Stk " ohne Punkt
+                stk: >-
+                  {% set neu = zeile | regex_findall('^\s*([0-9]+)\s+Stk\.?') %}
+                  {% if neu | length > 0 %}
+                    {{ neu[0] }}
+                  {% else %}
+                    {% set alt = zeile | regex_findall('(?:Stückzahl|Stk\.): ([0-9]+)') %}
+                    {{ alt[0] if alt | length > 0 else '' }}
+                  {% endif %}
+
+                produkt: >-
+                  {% set neu = zeile | regex_findall('^\s*[0-9]+\s+Stk\.?\s+([^|]+)') %}
+                  {% if neu | length > 0 %}
+                    {{ neu[0] | trim }}
+                  {% else %}
+                    {% set p = zeile.split(' | ')[0] | trim %}
+                    {% set m = zeile | regex_findall('Menge: ([^|]+)') %}
+                    {% if m | length > 0 and (m[0] | trim) not in ['keine Angabe','unknown','unavailable',''] %}
+                      {{ p }} {{ m[0] | trim }}
+                    {% else %}
+                      {{ p }}
+                    {% endif %}
+                  {% endif %}
+
+                marke: >-
+                  {% set m = zeile | regex_findall('Marke: ([^|]+)') %}
+                  {{ (m[0] | trim) if m | length > 0 else '' }}
+
+                barcode: >-
+                  {% set m_d = beschreibung | regex_findall('(?:EAN|Barcode):\s*(\d+)') %}
+                  {% if m_d | length > 0 %}
+                    {{ m_d[0] | trim }}
+                  {% else %}
+                    {% set m_s = zeile | regex_findall('Barcode:\s*(\d+)') %}
+                    {{ (m_s[0] | trim) if m_s | length > 0 else '' }}
+                  {% endif %}
+
+                lagerplatz: "Vorratskammer"
+
+            - action: shell_command.inventar_vorratskammer_csv_zeile
+              data:
+                stk: "{{ stk | trim }}"
+                produkt: "{{ produkt | trim }}"
+                marke: "{{ marke | trim }}"
+                barcode: "{{ barcode | trim }}"
+                lagerplatz: "{{ lagerplatz | trim }}"
+
+  # ─────────────────────────────────────────────────────────
+  # Inventar aus Sheet resyncen
+  # ─────────────────────────────────────────────────────────
+  # Liest das komplette Sheet via Apps Script (?action=list), leert
+  # die 5 Inventar-Listen und schreibt sie neu auf — nur Items mit
+  # bestand > 0 werden übernommen (sonst landen Geister-Einträge mit
+  # 0 Stk. in der UI, die nur das Sheet als historische Referenz hat).
+  #
+  # Achtung: Bei aktiviertem Niedrigbestand-Auto-Trigger (1 Stk →
+  # Einkaufsliste) feuert die Niedrigbestand-Automation während des
+  # Resyncs evtl. mehrfach. Da sie aber Dedup über Barcode macht,
+  # gibt's keine Duplikate auf der Einkaufsliste.
+  # ─────────────────────────────────────────────────────────
+
+  inventar_resync_aus_sheet:
+    alias: "Inventar aus Sheet resyncen"
+    icon: mdi:database-refresh
+    mode: single
+    sequence:
+
+      # 1) Sheet abfragen
+      - action: rest_command.off_sheet_list
+        response_variable: sheet_resp
+
+      - variables:
+          sheet_data: >-
+            {% set c = sheet_resp.content | default({}) %}
+            {% if c is mapping %}
+              {{ c }}
+            {% elif c is string and c | length > 0 %}
+              {{ c | from_json }}
+            {% else %}
+              {}
+            {% endif %}
+          items_alle: "{{ sheet_data.items | default([]) }}"
+          items_aktiv: >-
+            {{ items_alle
+               | rejectattr('bestand', 'in', ['', None])
+               | selectattr('bestand', '>', 0)
+               | list }}
+
+      # Wenn Sheet nicht erreichbar → Abbruch mit Telegram-Hinweis
+      - if:
+          - condition: template
+            value_template: "{{ (sheet_data.status | default('')) != 'ok' }}"
+        then:
+          - stop: "Sheet-Lookup fehlgeschlagen"
+
+      # 2) Alle 5 Inventar-Listen leeren
+      - repeat:
+          for_each:
+            - todo.inventar_vorratskammer
+            - todo.inventar_kuehlschrank
+            - todo.inventar_gefrierschrank
+            - todo.inventar_schrank
+            - todo.inventar_sonstiges
+          sequence:
+            - variables:
+                aktuelle_liste: "{{ repeat.item }}"
+
+            - action: todo.get_items
+              target:
+                entity_id: "{{ aktuelle_liste }}"
+              data:
+                status: needs_action
+              response_variable: bestehend
+
+            - repeat:
+                for_each: "{{ bestehend[aktuelle_liste]['items'] | default([]) }}"
+                sequence:
+                  - action: todo.remove_item
+                    target:
+                      entity_id: "{{ aktuelle_liste }}"
+                    data:
+                      item: "{{ repeat.item.summary }}"
+                    continue_on_error: true
+
+      # 3) Neue Items aus Sheet einfügen
+      - repeat:
+          for_each: "{{ items_aktiv }}"
+          sequence:
+            - variables:
+                p_lagerplatz: "{{ repeat.item.lagerplatz | default('Vorratskammer') | string | trim }}"
+                p_produkt: "{{ repeat.item.produkt | default('') | string | trim }}"
+                p_bestand: "{{ repeat.item.bestand | int(0) }}"
+                p_marke: "{{ repeat.item.marke | default('') | string | trim }}"
+                p_kategorie: "{{ repeat.item.kategorie | default('') | string | trim }}"
+                p_menge: "{{ repeat.item.menge | default('') | string | trim }}"
+                p_barcode: "{{ repeat.item.barcode | default('') | string | trim }}"
+                ziel_liste: >-
+                  {% if p_lagerplatz == 'Vorratskammer' %}
+                    todo.inventar_vorratskammer
+                  {% elif p_lagerplatz == 'Kühlschrank' %}
+                    todo.inventar_kuehlschrank
+                  {% elif p_lagerplatz == 'Gefrierschrank' %}
+                    todo.inventar_gefrierschrank
+                  {% elif p_lagerplatz == 'Schrank' %}
+                    todo.inventar_schrank
+                  {% else %}
+                    todo.inventar_sonstiges
+                  {% endif %}
+
+            # Items ohne Produktnamen oder mit Bestand 0 überspringen
+            - if:
+                - condition: template
+                  value_template: >-
+                    {{ p_produkt | length > 0
+                       and p_produkt | lower not in ['unknown','unavailable','none','']
+                       and p_bestand > 0 }}
+              then:
+                - action: todo.add_item
+                  target:
+                    entity_id: "{{ ziel_liste }}"
+                  data:
+                    item: >-
+                      {{ p_bestand }} Stk. {{ p_produkt }}{{ ' ' ~ p_menge if p_menge | lower not in ['', 'keine angabe', 'unknown', 'unavailable', 'none'] else '' }}{{ ' | Kategorie: ' ~ p_kategorie if p_kategorie | lower not in ['', 'unknown', 'unavailable', 'none'] else '' }}
+                      | Marke: {{ p_marke }}
+                    description: |
+                      EAN: {{ p_barcode }}
+
+                      <img src="https://barcodeapi.org/api/ean13/{{ p_barcode }}" alt="EAN" height="30">
+                  continue_on_error: true
+
+  # ─────────────────────────────────────────────────────────
+  # Notfall-Reset: alle Inventar-Listen + Einkaufsliste leeren
+  # ─────────────────────────────────────────────────────────
+  # Das Apps-Script-Sheet bleibt unberührt — d.h. wenn du danach
+  # nochmal scannst, sind Stammdaten (Marke, Kategorie, Menge)
+  # sofort wieder verfügbar und der erste Scan bucht das Produkt
+  # neu mit korrekten Daten ein.
+  # ─────────────────────────────────────────────────────────
+
+  inventar_alles_leeren:
+    alias: "Inventar: Alles leeren (Reset)"
+    icon: mdi:delete-sweep
+    mode: single
+    sequence:
+
+      # 1) Alle 5 Inventar-Listen + Einkaufsliste leeren
+      - repeat:
+          for_each:
+            - todo.inventar_vorratskammer
+            - todo.inventar_kuehlschrank
+            - todo.inventar_gefrierschrank
+            - todo.inventar_schrank
+            - todo.inventar_sonstiges
+            - todo.einkaufsliste_2
+          sequence:
+            - variables:
+                aktuelle_liste: "{{ repeat.item }}"
+
+            - action: todo.get_items
+              target:
+                entity_id: "{{ aktuelle_liste }}"
+              data:
+                status: needs_action
+              response_variable: bestehend
+
+            - repeat:
+                for_each: "{{ bestehend[aktuelle_liste]['items'] | default([]) }}"
+                sequence:
+                  - action: todo.remove_item
+                    target:
+                      entity_id: "{{ aktuelle_liste }}"
+                    data:
+                      item: "{{ repeat.item.summary }}"
+                    continue_on_error: true
+
+      # 2) Eingabefelder leeren
+      - action: input_text.set_value
+        target:
+          entity_id:
+            - input_text.off_barcode_eingabe
+            - input_text.off_menge
+            - input_text.off_manuell_name
+            - input_text.off_manuell_marke
+            - input_text.off_manuell_kategorie
+        data:
+          value: ""
+
+      # 3) Anzahl auf 1 zurücksetzen
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.off_anzahl
+        data:
+          value: 1
+
+      # 4) Selects auf Default
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_modus
+        data:
+          option: "Einbuchen"
+
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_lagerplatz
+        data:
+          option: "Vorratskammer"
+
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.off_menge_einheit
+        data:
+          option: "—"
+
+      # 5) Marker-Booleans aus
+      - action: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.off_aus_lokaler_db
+            - input_boolean.off_produkt_im_buffer
+
+# ════════════════════════════════════════════════════════════
+# AUTOMATIONEN
+# ════════════════════════════════════════════════════════════
+
+automation:
+
+  # ─────────────────────────────────────────────────────────
+  # Barcode aus Share-Event oder Webhook-Kurzbefehl einlesen
+  # ─────────────────────────────────────────────────────────
+
+  - alias: "OFF: Barcode aus Share Event oder Kurzbefehl"
+    id: off_barcode_aus_share
+
+    trigger:
+      - platform: event
+        event_type: mobile_app.share
+        id: share
+      - platform: webhook
+        webhook_id: zwischenablage_empfangen
+        allowed_methods:
+          - POST
+        local_only: false
+        id: webhook
+
+    variables:
+      geteilter_inhalt: >-
+        {% if trigger.id == 'share' %}
+          {{ (trigger.event.data.text | default('')) ~ ' ' ~
+             (trigger.event.data.url | default('')) ~ ' ' ~
+             (trigger.event.data.entered | default('')) ~ ' ' ~
+             (trigger.event.data.subject | default('')) }}
+        {% else %}
+          {{ trigger.json.text | default('') | string }}
+        {% endif %}
+
+      barcode_kandidaten: >-
+        {{ geteilter_inhalt | regex_findall('\d{8,14}') }}
+
+      barcode: >-
+        {{ (barcode_kandidaten[0] | string)
+           if barcode_kandidaten | length > 0 else '' }}
+
+    condition:
+      - condition: template
+        value_template: "{{ barcode | string | length >= 8 }}"
+
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_barcode_eingabe
+        data:
+          value: "{{ barcode }}"
+
+      - action: script.off_barcode_lookup
+
+      - delay:
+          seconds: 2
+
+
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # iOS-Kurzbefehl: Direkt-Einbuchen per Webhook
+  # ─────────────────────────────────────────────────────────
+
+  - alias: "OFF: Webhook Einbuchen"
+    id: off_webhook_einbuchen
+
+    trigger:
+      - platform: webhook
+        webhook_id: barcode_einbuchen
+        allowed_methods:
+          - POST
+        local_only: false
+
+    variables:
+      barcode_input: "{{ trigger.json.text | default('') | string }}"
+      barcode_kandidaten: "{{ barcode_input | regex_findall('\\d{8,14}') }}"
+      barcode: >-
+        {{ (barcode_kandidaten[0] | string)
+           if barcode_kandidaten | length > 0 else '' }}
+      # Optional aus JSON: vom iOS-Kurzbefehl mitgeschickter Lagerplatz.
+      # Erlaubte Werte: Vorratskammer, Kühlschrank, Gefrierschrank,
+      # Schrank, Sonstiges. Wenn leer/ungültig → bleibt der aktuell
+      # eingestellte Wert von input_select.off_lagerplatz.
+      lagerplatz_eingabe: "{{ trigger.json.lagerplatz | default('') | string }}"
+      gueltige_lagerplaetze:
+        - Vorratskammer
+        - Kühlschrank
+        - Gefrierschrank
+        - Schrank
+        - Sonstiges
+
+    condition:
+      - condition: template
+        value_template: "{{ barcode | string | length >= 8 }}"
+
+    action:
+      # Lagerplatz aus dem Webhook-JSON übernehmen, falls mitgegeben.
+      - if:
+          - condition: template
+            value_template: "{{ lagerplatz_eingabe in gueltige_lagerplaetze }}"
+        then:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.off_lagerplatz
+            data:
+              option: "{{ lagerplatz_eingabe }}"
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_barcode_eingabe
+        data:
+          value: "{{ barcode }}"
+
+      - action: script.off_barcode_lookup
+
+      - delay:
+          seconds: 2
+
+      # Wenn das Barcode-Feld jetzt leer ist, war es ein Lagerort-Code
+      - if:
+          - condition: template
+            value_template: >-
+              {{ states('input_text.off_barcode_eingabe') | length == 0 }}
+        then:
+          - stop: "War ein Lagerort-Code, kein Einbuchen"
+
+      - action: script.off_einbuchen
+
+
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # iOS-Kurzbefehl: Direkt-Ausbuchen per Webhook
+  # ─────────────────────────────────────────────────────────
+
+  - alias: "OFF: Webhook Ausbuchen"
+    id: off_webhook_ausbuchen
+
+    trigger:
+      - platform: webhook
+        webhook_id: barcode_ausbuchen
+        allowed_methods:
+          - POST
+        local_only: false
+
+    variables:
+      barcode_input: "{{ trigger.json.text | default('') | string }}"
+      barcode_kandidaten: "{{ barcode_input | regex_findall('\\d{8,14}') }}"
+      barcode: >-
+        {{ (barcode_kandidaten[0] | string)
+           if barcode_kandidaten | length > 0 else '' }}
+
+    condition:
+      - condition: template
+        value_template: "{{ barcode | string | length >= 8 }}"
+
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_barcode_eingabe
+        data:
+          value: "{{ barcode }}"
+
+      - action: script.off_barcode_lookup
+
+      - delay:
+          seconds: 2
+
+      - if:
+          - condition: template
+            value_template: >-
+              {{ states('input_text.off_barcode_eingabe') | length == 0 }}
+        then:
+          - stop: "War ein Lagerort-Code, kein Ausbuchen"
+
+      - action: script.off_ausbuchen
+
+
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # Auto-Lookup bei Barcode-Änderung im Dashboard
+  # ─────────────────────────────────────────────────────────
+
+  - alias: "OFF: Auto-Lookup bei Barcode-Änderung"
+    id: off_auto_lookup
+    description: >
+      Sobald sich der Barcode-Wert ändert und 1 Sekunde stabil bleibt,
+      automatisch OFF-Lookup auslösen.
+    trigger:
+      - platform: state
+        entity_id: input_text.off_barcode_eingabe
+        for:
+          seconds: 1
+    condition:
+      - condition: template
+        value_template: >-
+          {{ trigger.to_state.state | string | regex_match('^\d{8,14}$') }}
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_name
+        data:
+          value: ''
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_marke
+        data:
+          value: ''
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.off_aus_lokaler_db
+      - action: script.off_barcode_lookup
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # Niedrigbestand (1 Stk.) → automatisch auf Einkaufsliste
+  # ─────────────────────────────────────────────────────────
+  #
+  # [BUG-FIX 2] schon_drauf jetzt mit Pattern-Match (EAN:/Barcode:)
+  #   statt nacktem Substring → keine false positives mehr durch
+  #   Barcode-Teilstrings in fremden Einträgen.
+  # [BUG-FIX 2b] Fallback bei leerem Barcode: Match auf Produktnamen,
+  #   damit Items ohne EAN nicht bei jedem State-Change doppelt
+  #   hinzugefügt werden.
+  # [VERBESSERUNG 1a] condition: automationen_ein_aus = on
+  # [VERBESSERUNG 1b] Zusätzlicher Trigger alle 30 Minuten als
+  #   Sicherheitsnetz für manuelle UI-Edits (state-Trigger feuert nur
+  #   bei add/remove, nicht bei update_item).
+  # ─────────────────────────────────────────────────────────
+
+  - alias: "Inventar: Niedrigbestand → Einkaufsliste"
+    id: inventar_niedrigbestand
+    description: >
+      Überwacht alle Inventar-Listen. Sobald ein Produkt nur noch 1 Stück
+      enthält, wird es automatisch auf die Einkaufsliste gesetzt - mit
+      Dedup-Check über Barcode (oder Produktname als Fallback).
+
+    trigger:
+      - platform: state
+        entity_id:
+          - todo.inventar_vorratskammer
+          - todo.inventar_kuehlschrank
+          - todo.inventar_gefrierschrank
+          - todo.inventar_schrank
+          - todo.inventar_sonstiges
+        id: state
+      # Sicherheitsnetz: alle 30 Min komplett durchchecken, falls
+      # ein Item per UI/update_item geändert wurde (kein state-event).
+      - platform: time_pattern
+        minutes: "/30"
+        id: periodic
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: "on"
+
+    action:
+
+      # Bei periodischem Trigger: über alle Listen iterieren.
+      # Bei state-Trigger: nur die betroffene Liste.
+      - variables:
+          ziel_listen: >-
+            {% if trigger.id == 'state' %}
+              {{ [trigger.entity_id] }}
+            {% else %}
+              {{ [
+                'todo.inventar_vorratskammer',
+                'todo.inventar_kuehlschrank',
+                'todo.inventar_gefrierschrank',
+                'todo.inventar_schrank',
+                'todo.inventar_sonstiges'
+              ] }}
+            {% endif %}
+
+      - action: todo.get_items
+        target:
+          entity_id: todo.einkaufsliste_2
+        data:
+          status: needs_action
+        response_variable: einkauf
+
+      - repeat:
+          for_each: "{{ ziel_listen }}"
+          sequence:
+
+            - variables:
+                aktuelle_liste: "{{ repeat.item }}"
+
+            - action: todo.get_items
+              target:
+                entity_id: "{{ aktuelle_liste }}"
+              data:
+                status: needs_action
+              response_variable: inventar
+
+            - repeat:
+                for_each: "{{ inventar[aktuelle_liste]['items'] | default([]) }}"
+                sequence:
+
+                  - variables:
+                      zeile: "{{ repeat.item.summary | string }}"
+                      beschreibung: "{{ repeat.item.description | default('') | string }}"
+
+                      # Regex akzeptiert "1 Stk." UND "1 Stk" (ohne Punkt)
+                      stk: >-
+                        {% set neu = zeile | regex_findall('^\s*([0-9]+)\s+Stk\.?') %}
+                        {% if neu | length > 0 %}
+                          {{ neu[0] | int(0) }}
+                        {% else %}
+                          {% set alt = zeile | regex_findall('(?:Stückzahl|Stk\.): ([0-9]+)') %}
+                          {{ alt[0] | int(0) if alt | length > 0 else 99 }}
+                        {% endif %}
+
+                      produkt: >-
+                        {% set neu = zeile | regex_findall('^\s*[0-9]+\s+Stk\.?\s+([^|]+)') %}
+                        {% if neu | length > 0 %}
+                          {{ neu[0] | trim }}
+                        {% else %}
+                          {{ zeile.split(' | ')[0] | trim }}
+                        {% endif %}
+
+                      marke_m: "{{ zeile | regex_findall('Marke: ([^|]+)') }}"
+                      marke: "{{ (marke_m[0] | trim) if marke_m | length > 0 else '' }}"
+
+                      barcode: >-
+                        {% set m_d = beschreibung | regex_findall('(?:EAN|Barcode):\s*(\d+)') %}
+                        {% if m_d | length > 0 %}
+                          {{ m_d[0] | trim }}
+                        {% else %}
+                          {% set m_s = zeile | regex_findall('Barcode:\s*(\d+)') %}
+                          {{ (m_s[0] | trim) if m_s | length > 0 else '' }}
+                        {% endif %}
+
+                      lagerplatz: >-
+                        {% set lager_map = {
+                          'todo.inventar_vorratskammer': 'Vorratskammer',
+                          'todo.inventar_kuehlschrank': 'Kühlschrank',
+                          'todo.inventar_gefrierschrank': 'Gefrierschrank',
+                          'todo.inventar_schrank': 'Schrank',
+                          'todo.inventar_sonstiges': 'Sonstiges'
+                        } %}
+                        {{ lager_map.get(aktuelle_liste, '') }}
+
+                      # [BUG-FIX 2] Pattern-Match statt Substring,
+                      # plus Fallback auf Produktnamen wenn kein Barcode.
+                      schon_drauf: >-
+                        {% set b = barcode | string | trim %}
+                        {% set p = produkt | string | lower | trim %}
+                        {% set ns = namespace(found=false) %}
+                        {% for e in einkauf['todo.einkaufsliste_2']['items'] | default([]) %}
+                          {% set sum = (e.summary | string) %}
+                          {% set desc = (e.description | default('') | string) %}
+                          {% if b | length > 0 %}
+                            {% if ('EAN: ' ~ b) in desc
+                                  or ('Barcode: ' ~ b) in desc
+                                  or ('EAN: ' ~ b) in sum
+                                  or ('Barcode: ' ~ b) in sum %}
+                              {% set ns.found = true %}
+                            {% endif %}
+                          {% elif p | length > 0 %}
+                            {% if (sum | lower).startswith(p ~ ' nachkaufen')
+                                  or (sum | lower).startswith(p ~ ' |') %}
+                              {% set ns.found = true %}
+                            {% endif %}
+                          {% endif %}
+                        {% endfor %}
+                        {{ ns.found }}
+
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{ (stk | int(0)) == 1
+                                 and (schon_drauf | string | lower) != 'true' }}
+                        sequence:
+                          - action: todo.add_item
+                            target:
+                              entity_id: todo.einkaufsliste_2
+                            data:
+                              item: >-
+                                {{ produkt }} nachkaufen
+                                | Nur noch 1 Stück
+                                | Marke: {{ marke }}
+                                | Lagerplatz: {{ lagerplatz }}
+                              description: |
+                                EAN: {{ barcode }}
+
+                                <img src="https://barcodeapi.org/api/ean13/{{ barcode }}" alt="EAN" height="30">
+
+                          # einkauf-Variable im RAM aktualisieren, damit
+                          # weitere Iterationen das frisch hinzugefügte
+                          # Item als "schon drauf" erkennen (verhindert
+                          # Duplikate wenn mehrere Items im selben Lauf
+                          # auf 1 Stk fallen).
+                          - variables:
+                              neuer_eintrag:
+                                summary: >-
+                                  {{ produkt }} nachkaufen
+                                  | Nur noch 1 Stück
+                                  | Marke: {{ marke }}
+                                  | Lagerplatz: {{ lagerplatz }}
+                                description: "EAN: {{ barcode }}"
+                              einkauf: >-
+                                {% set bestehend = einkauf['todo.einkaufsliste_2']['items'] | default([]) %}
+                                {{ {'todo.einkaufsliste_2': {'items': bestehend + [neuer_eintrag]}} }}
+
+    mode: queued
+    max: 10
+
+  # ─────────────────────────────────────────────────────────
+  # Einkaufsliste: Sync HA ↔ Apple Erinnerungen
+  # ─────────────────────────────────────────────────────────
+  # Master: todo.einkaufsliste_2 (HA)
+  # Spiegel: todo.erinnerungen (iCloud via CalDAV)
+  #
+  # Drei Sync-Richtungen in einem Lauf:
+  #   1) In Apple abgehakte Items → in HA als erledigt markieren
+  #   2) Neue HA-Items → in Apple anlegen
+  #   3) In HA gelöschte Items → aus Apple entfernen
+  #
+  # Polling-Hinweis: CalDAV pollt iCloud per Default alle 15 Min.
+  # Auf dem iPhone abgehakte Items erreichen HA also mit Verzögerung.
+  # ─────────────────────────────────────────────────────────
+
+  - alias: "Einkaufsliste: Sync HA ↔ Apple Erinnerungen"
+    id: einkaufsliste_sync_apple
+    description: >
+      Spiegelt todo.einkaufsliste_2 (Master) zu todo.erinnerungen.
+      In Apple abgehakte Items werden auch in HA als erledigt markiert.
+
+    trigger:
+      - platform: state
+        entity_id:
+          - todo.einkaufsliste_2
+          - todo.erinnerungen
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: "on"
+
+    action:
+      - action: todo.get_items
+        target:
+          entity_id: todo.einkaufsliste_2
+        data:
+          status: needs_action
+        response_variable: ha
+
+      - action: todo.get_items
+        target:
+          entity_id: todo.erinnerungen
+        response_variable: apple
+
+      - variables:
+          ha_offen: >-
+            {{ ha['todo.einkaufsliste_2']['items']
+               | default([]) | map(attribute='summary') | list }}
+          apple_alle: "{{ apple['todo.erinnerungen']['items'] | default([]) }}"
+          apple_offen: >-
+            {{ apple_alle | selectattr('status', '==', 'needs_action')
+               | map(attribute='summary') | list }}
+          apple_done: >-
+            {{ apple_alle | selectattr('status', '==', 'completed')
+               | map(attribute='summary') | list }}
+
+          # In Apple abgehakt, in HA aber noch offen → in HA auch abhaken
+          zu_ha_done: "{{ ha_offen | select('in', apple_done) | list }}"
+
+          # In HA offen, in Apple nirgends → in Apple anlegen
+          zu_apple_add: >-
+            {{ ha_offen | reject('in', apple_offen)
+               | reject('in', apple_done) | list }}
+
+          # In Apple offen, in HA aber nicht (mehr) → aus Apple entfernen
+          zu_apple_remove: "{{ apple_offen | reject('in', ha_offen) | list }}"
+
+      # 1) Done-Sync Apple → HA
+      - repeat:
+          for_each: "{{ zu_ha_done }}"
+          sequence:
+            - action: todo.update_item
+              target:
+                entity_id: todo.einkaufsliste_2
+              data:
+                item: "{{ repeat.item }}"
+                status: completed
+              continue_on_error: true
+
+      # 2) Neue Items HA → Apple
+      - repeat:
+          for_each: "{{ zu_apple_add }}"
+          sequence:
+            - action: todo.add_item
+              target:
+                entity_id: todo.erinnerungen
+              data:
+                item: "{{ repeat.item }}"
+              continue_on_error: true
+
+      # 3) Gelöschte Items aus Apple entfernen
+      - repeat:
+          for_each: "{{ zu_apple_remove }}"
+          sequence:
+            - action: todo.remove_item
+              target:
+                entity_id: todo.erinnerungen
+              data:
+                item: "{{ repeat.item }}"
+              continue_on_error: true
+
+    mode: queued
+    max: 10

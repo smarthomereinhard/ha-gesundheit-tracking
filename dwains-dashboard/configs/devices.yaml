@@ -1,0 +1,48 @@
+sensor:
+  sort_order: 1
+media_player:
+  sort_order: 2
+binary_sensor:
+  sort_order: 3
+number:
+  sort_order: 4
+switch:
+  sort_order: 5
+person:
+  sort_order: 6
+weather:
+  sort_order: 7
+remote:
+  sort_order: 8
+light:
+  sort_order: 9
+input_button:
+  sort_order: 10
+automation:
+  sort_order: 11
+button:
+  sort_order: 12
+climate:
+  sort_order: 13
+update:
+  sort_order: 14
+event:
+  sort_order: 15
+camera:
+  sort_order: 16
+input_boolean:
+  sort_order: 17
+fan:
+  sort_order: 18
+lock:
+  sort_order: 19
+select:
+  sort_order: 20
+image:
+  sort_order: 21
+vacuum:
+  sort_order: 22
+cover:
+  sort_order: 23
+device_tracker:
+  sort_order: 24

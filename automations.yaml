@@ -1,0 +1,3879 @@
+- id: '1736169864036'
+  alias: Haustüre – Licht Eingang & Benachrichtigung
+  description: Schaltet das Licht im Eingangsbereich beim Öffnen der Haustüre ein
+    und sendet eine Benachrichtigung beim Öffnen und Schließen. Das Licht schaltet
+    sich je nach Tageszeit unterschiedlich lange aus.
+  triggers:
+  - alias: Haustüre geöffnet
+    type: opened
+    device_id: 6359a6bb3fc290f983360c56a85086d4
+    entity_id: da19cf8798b9d9b565da7d77eaaa3e85
+    domain: binary_sensor
+    id: door_opened
+    trigger: device
+  - alias: Haustüre geschlossen
+    type: not_opened
+    device_id: 6359a6bb3fc290f983360c56a85086d4
+    entity_id: da19cf8798b9d9b565da7d77eaaa3e85
+    domain: binary_sensor
+    id: door_closed
+    trigger: device
+  conditions: []
+  actions:
+  - parallel:
+    - alias: Benachrichtigung an Andreas
+      data:
+        title: "\U0001F6AA Haustüre"
+        message: '{% if trigger.id == ''door_opened'' %}Geöffnet{% else %}Geschlossen{%
+          endif %}
+
+          '
+      action: notify.mobile_app_andreas_iphone_15pro_max
+    - alias: Benachrichtigung an Karo
+      data:
+        title: "\U0001F6AA Haustüre"
+        message: '{% if trigger.id == ''door_opened'' %}Geöffnet{% else %}Geschlossen{%
+          endif %}
+
+          '
+      action: notify.mobile_app_karo_iphone
+      enabled: false
+    - action: telegram_bot.send_message
+      data:
+        chat_id: 988178587
+        parse_mode: html
+        message: "{% if trigger.id == 'door_opened' %}\n  \U0001F6AA Haustüre wurde
+          geöffnet\n{% else %}\n  \U0001F6AA Haustüre wurde geschlossen\n{% endif
+          %}\n"
+  - if:
+    - condition: trigger
+      id: door_opened
+    then:
+    - choose:
+      - conditions:
+        - alias: Zeitfenster morgens 04:00–08:00
+          condition: time
+          after: 04:00:00
+          before: 08:00:00
+        sequence:
+        - alias: Licht Eingang auf 100% einschalten
+          target:
+            area_id: eingang
+          data:
+            brightness_pct: 100
+          action: light.turn_on
+        - alias: Warten bis Haustüre geschlossen ist
+          wait_for_trigger:
+          - type: not_opened
+            device_id: 6359a6bb3fc290f983360c56a85086d4
+            entity_id: da19cf8798b9d9b565da7d77eaaa3e85
+            domain: binary_sensor
+            trigger: device
+          timeout: 00:10:00
+          continue_on_timeout: false
+        - alias: 2 Minuten Nachlauf
+          delay: 00:02:00
+        - alias: Licht Eingang ausschalten
+          target:
+            area_id: eingang
+          data:
+            transition: 10
+          action: light.turn_off
+      - conditions: []
+        sequence:
+        - alias: Licht Eingang auf 100% einschalten
+          target:
+            area_id: eingang
+          data:
+            brightness_pct: 100
+          action: light.turn_on
+        - alias: 5 Minuten warten
+          delay: 00:05:00
+        - alias: Licht Eingang ausschalten
+          target:
+            area_id: eingang
+          data:
+            transition: 10
+          action: light.turn_off
+  mode: single
+- id: '1774197859753'
+  alias: HomeKey → Wohnungstür öffnen
+  description: Öffnet die Wohnungstür wenn HomeKey erkannt wird
+  triggers:
+  - topic: HK/auth/success
+    trigger: mqtt
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - target:
+      entity_id: lock.wohnungstur
+    action: lock.open
+  mode: single
+- id: '1774198027903'
+  alias: HomeKey → Wohnungstür öffnen
+  description: Öffnet die Wohnungstür wenn HomeKey erkannt wird
+  triggers:
+  - topic: ESP_34B345F2/homekey/auth
+    trigger: mqtt
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - target:
+      entity_id: lock.wohnungstur
+    action: lock.open
+  mode: single
+- id: '1737022631894'
+  alias: Abstellkammer – Kontaktsensor → Licht AN/AUS
+  description: ''
+  triggers:
+  - alias: Tür Abstellkammer geöffnet
+    type: opened
+    device_id: 4cac321e8fb820214407bd7082e27706
+    entity_id: e96aa8445d68c2411b931df542d721b0
+    domain: binary_sensor
+    id: opened
+    trigger: device
+  - alias: Tür Abstellkammer geschlossen
+    type: not_opened
+    device_id: 4cac321e8fb820214407bd7082e27706
+    entity_id: e96aa8445d68c2411b931df542d721b0
+    domain: binary_sensor
+    id: closed
+    trigger: device
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: opened
+      sequence:
+      - alias: Licht Abstellkammer auf 100% einschalten
+        target:
+          device_id: 1353a0299e321097cc6a0729f1b81918
+        data:
+          brightness_pct: 100
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: closed
+      sequence:
+      - alias: Licht Abstellkammer ausschalten
+        target:
+          device_id: 1353a0299e321097cc6a0729f1b81918
+        action: light.turn_off
+  mode: single
+- id: '1737120957713'
+  alias: Badezimmer Licht bei Bewegung
+  description: Licht einschalten, wenn Bewegung erkannt wird, und ausschalten, wenn
+    keine Bewegung für 3 Minuten erkannt wird. Wenn der Shelly manuell eingeschaltet
+    wird, werden Bewegungs- und Lichtsensor deaktiviert. Wenn der Shelly manuell ausgeschaltet
+    wird, werden beide wieder aktiviert.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.hue_motion_sensor_3_bewegung
+    from: 'off'
+    to: 'on'
+    id: bewegung_start
+  - trigger: state
+    entity_id: switch.plus1pm_switch_0
+    from: 'off'
+    to: 'on'
+    id: shelly_manuell_an
+  - trigger: state
+    entity_id: switch.plus1pm_switch_0
+    from: 'on'
+    to: 'off'
+    id: shelly_manuell_aus
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: bewegung_start
+      - condition: state
+        entity_id: switch.hue_motion_sensor_3_bewegungssensor_aktiviert
+        state: 'on'
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.plus1pm_switch_0
+      - delay:
+          minutes: 3
+      - condition: state
+        entity_id: binary_sensor.hue_motion_sensor_3_bewegung
+        state: 'off'
+      - action: switch.turn_off
+        target:
+          entity_id: switch.plus1pm_switch_0
+    - conditions:
+      - condition: trigger
+        id: shelly_manuell_an
+      - condition: template
+        value_template: '{{ trigger.to_state.context.parent_id is none }}
+
+          '
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id:
+          - switch.hue_motion_sensor_3_bewegungssensor_aktiviert
+          - switch.hue_motion_sensor_3_lichtsensor_aktiviert
+    - conditions:
+      - condition: trigger
+        id: shelly_manuell_aus
+      - condition: template
+        value_template: '{{ trigger.to_state.context.parent_id is none }}
+
+          '
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id:
+          - switch.hue_motion_sensor_3_bewegungssensor_aktiviert
+          - switch.hue_motion_sensor_3_lichtsensor_aktiviert
+  mode: single
+- id: '1753259857184'
+  alias: Plus1PM Licht nach 20 Minuten ausschalten
+  description: Schaltet light.licht_deckenlampe_bad aus, wenn es länger als 20 Minuten
+    an ist
+  triggers:
+  - entity_id:
+    - switch.plus1pm_switch_0
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+    trigger: state
+  conditions: []
+  actions:
+  - target:
+      entity_id:
+      - light.licht_deckenlampe_bad
+    action: light.turn_off
+    data: {}
+  mode: single
+- id: '1755547722235'
+  alias: Tag 45c8dcff wird gescannt
+  description: ''
+  triggers:
+  - trigger: tag
+    tag_id: 45c8dcff-c479-4542-9871-93dfabd3a155
+  conditions: []
+  actions:
+  - action: light.toggle
+    data: {}
+    target:
+      device_id: a9ca5c44860cf330090969aa8b0bbbc6
+  mode: single
+- id: '1755547845128'
+  alias: Tag Wandlampe wird gescannt
+  description: Schaltet die Wandlampe um, wenn ein NFC-Tag gescannt wird.
+  triggers:
+  - trigger: tag
+    tag_id: 88a78c16-c262-457e-bde4-f66829f33a17
+  conditions: []
+  actions:
+  - action: light.toggle
+    data: {}
+    target:
+      device_id: a9ca5c44860cf330090969aa8b0bbbc6
+  mode: single
+- id: wohnzimmer_bewegung_art_mode
+  alias: Wohnzimmer – Licht bei Bewegung mit Sofort-An/Aus
+  description: Schaltet die Deckenlampe bei Bewegung ein und aus.
+  triggers:
+  - entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+    to: 'on'
+    id: motion_on
+    trigger: state
+  - entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+    to: 'off'
+    id: motion_off
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: motion_on
+      - condition: or
+        conditions:
+        - condition: sun
+          after: sunset
+        - condition: sun
+          before: sunrise
+      sequence:
+      - target:
+          entity_id: light.deckenlampe
+        action: light.turn_on
+        data:
+          brightness_pct: 50
+          transition: 5
+    - conditions:
+      - condition: trigger
+        id: motion_off
+      sequence:
+      - target:
+          entity_id: light.deckenlampe
+        action: light.turn_off
+        data:
+          transition: 37
+  mode: restart
+- id: '1774773519549'
+  alias: Wohnzimmer Licht – Präsenz FP2
+  description: 'Deckenlampe an wenn jemand im Wohnzimmer ist und es dunkel genug ist.
+    Tag: nur unter 75 lx. Nacht: immer.'
+  triggers:
+  - entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+    to: 'on'
+    id: belegt
+    trigger: state
+  - entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+    to: 'off'
+    id: frei
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: belegt
+      - condition: time
+        after: 04:00:00
+        before: 06:00:00
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.deckenlampe
+        data:
+          brightness_pct: 20
+          color_temp_kelvin: 2700
+          transition: 2
+    - conditions:
+      - condition: trigger
+        id: belegt
+      - condition: time
+        after: 06:00:00
+        before: '21:00:00'
+      - condition: numeric_state
+        entity_id: sensor.presence_sensor_fp2_c965_light_sensor_light_level
+        below: 75
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.deckenlampe
+        data:
+          brightness_pct: 100
+          color_temp_kelvin: 4000
+          transition: 2
+    - conditions:
+      - condition: trigger
+        id: belegt
+      - condition: or
+        conditions:
+        - condition: time
+          after: '21:00:00'
+        - condition: time
+          before: 04:00:00
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.deckenlampe
+        data:
+          brightness_pct: 30
+          color_temp_kelvin: 2700
+          transition: 2
+    - conditions:
+      - condition: trigger
+        id: frei
+      sequence:
+      - wait_template: '{{ is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_3'',
+          ''off'') }}'
+      - choose:
+        - conditions:
+          - condition: time
+            after: 06:00:00
+            before: '21:00:00'
+          sequence:
+          - delay:
+              minutes: 2
+        default:
+        - delay:
+            seconds: 30
+      - condition: state
+        entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+        state: 'off'
+      - action: light.turn_off
+        target:
+          entity_id: light.deckenlampe
+        data:
+          transition: 5
+  - action: automation.turn_on
+    target:
+      entity_id: automation.wohnzimmer_licht_prasenz_fp2
+  mode: restart
+- id: '1738697979515'
+  alias: Licht Aus automation ATV Büro
+  description: ''
+  triggers:
+  - device_id: bb5aa296b08aba3b6cb113bda4b6a4a7
+    domain: media_player
+    entity_id: 7106415908f6edca234b4ff2632e9e69
+    type: playing
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_off
+    data: {}
+    target:
+      entity_id:
+      - light.schreibtisch_links
+      - light.schreibtisch_rechts
+  mode: single
+- id: '1738835522008'
+  alias: Licht AN automation ATV Büro
+  description: ''
+  triggers:
+  - device_id: bb5aa296b08aba3b6cb113bda4b6a4a7
+    domain: media_player
+    entity_id: 7106415908f6edca234b4ff2632e9e69
+    type: paused
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_on
+    data: {}
+    target:
+      entity_id:
+      - light.schreibtisch_links
+      - light.schreibtisch_rechts
+  mode: single
+- id: '1738840152115'
+  alias: ATV Büro aus warten Licht aus
+  description: ''
+  triggers:
+  - type: turned_off
+    device_id: bb5aa296b08aba3b6cb113bda4b6a4a7
+    entity_id: 5b63a03e442ce778f60a84ff9029b021
+    domain: remote
+    trigger: device
+  conditions:
+  - condition: sun
+    before: sunset
+    after: sunrise
+    enabled: false
+  actions:
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+  - action: light.turn_off
+    data: {}
+    target:
+      entity_id:
+      - light.schreibtisch_links
+      - light.schreibtisch_rechts
+  mode: single
+- id: '1755580502125'
+  alias: G8 M4 Monitor Steuerung
+  description: Schaltet den Monitor abhängig vom Halter (input_boolean.g8_m4)
+  triggers:
+  - entity_id: input_boolean.g8_m4
+    to: 'on'
+    trigger: state
+  - entity_id: input_boolean.g8_m4
+    to: 'off'
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.g8_m4
+        state: 'on'
+      sequence:
+      - target:
+          device_id: fa01380f112baefa6261c5859390489a
+        action: remote.turn_on
+        data: {}
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.g8_m4
+        state: 'off'
+      sequence:
+      - target:
+          device_id: fa01380f112baefa6261c5859390489a
+        action: remote.turn_off
+        data: {}
+  mode: single
+- id: '1769534612209'
+  alias: Büro Licht Bewegung (Tag/Nacht & manueller Override)
+  description: Steuert das Bürolicht basierend auf Bewegung, mit Helligkeitsanpassung
+    für Nacht und einer intelligenten manuellen Überschreibung.
+  triggers:
+  - entity_id: binary_sensor.hue_motion_sensor_2_bewegung
+    from: 'off'
+    to: 'on'
+    id: motion_on
+    trigger: state
+  - entity_id: binary_sensor.hue_motion_sensor_2_bewegung
+    from: 'on'
+    to: 'off'
+    for:
+      minutes: 3
+    id: motion_off_3m
+    trigger: state
+  - entity_id: light.deckenlampe_buro
+    to: 'on'
+    id: light_on
+    trigger: state
+  - entity_id: light.deckenlampe_buro
+    to: 'off'
+    id: light_off
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: motion_on
+      - condition: state
+        entity_id: light.deckenlampe_buro
+        state: 'off'
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - target:
+          entity_id: input_boolean.buro_licht_automatik
+        action: input_boolean.turn_on
+      - target:
+          entity_id: input_boolean.buro_licht_manuell
+        action: input_boolean.turn_off
+      - choose:
+        - conditions:
+          - condition: time
+            after: '18:00:00'
+            before: '22:00:00'
+          sequence:
+          - target:
+              entity_id: light.deckenlampe_buro
+            data:
+              brightness_pct: 80
+              transition: 2
+            action: light.turn_on
+        default:
+        - target:
+            entity_id: light.deckenlampe_buro
+          data:
+            brightness_pct: 30
+            transition: 2
+          action: light.turn_on
+      - delay: 00:00:02
+      - target:
+          entity_id: input_boolean.buro_licht_automatik
+        action: input_boolean.turn_off
+    - conditions:
+      - condition: trigger
+        id: light_on
+      - condition: state
+        entity_id: input_boolean.buro_licht_automatik
+        state: 'off'
+      sequence:
+      - target:
+          entity_id: input_boolean.buro_licht_manuell
+        action: input_boolean.turn_on
+      - target:
+          entity_id: switch.hue_motion_sensor_2_bewegungssensor_aktiviert
+        action: switch.turn_off
+    - conditions:
+      - condition: trigger
+        id: light_off
+      sequence:
+      - target:
+          entity_id:
+          - input_boolean.buro_licht_manuell
+          - input_boolean.buro_licht_automatik
+        action: input_boolean.turn_off
+      - target:
+          entity_id: switch.hue_motion_sensor_2_bewegungssensor_aktiviert
+        action: switch.turn_on
+    - conditions:
+      - condition: trigger
+        id: motion_off_3m
+      - condition: state
+        entity_id: input_boolean.buro_licht_manuell
+        state: 'off'
+      sequence:
+      - target:
+          entity_id: light.deckenlampe_buro
+        data:
+          transition: 3
+        action: light.turn_off
+  mode: restart
+- id: '1769990000000'
+  alias: Büro – Fensterkontakte steuern Lightstrips & Schreibtisch (konsolidiert)
+  description: Konsolidiert Büro-Fensterkontakt-Automationen in eine robuste State-Machine
+    mit Debounce, Fade und Nachtlogik.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.window_and_door_sensor_e714
+    to: 'off'
+    for: 00:00:02
+    id: e714_closed
+  - trigger: state
+    entity_id: binary_sensor.window_and_door_sensor_e714
+    to: 'on'
+    for: 00:00:05
+    id: e714_opened
+  - trigger: state
+    entity_id: binary_sensor.window_and_door_sensor_e714_2
+    to: 'on'
+    id: e7142_opened
+  - trigger: state
+    entity_id: binary_sensor.window_and_door_sensor_e714_2
+    to: 'off'
+    id: e7142_closed
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: e714_closed
+      - condition: or
+        conditions:
+        - condition: time
+          after: 06:00:00
+          before: '10:00:00'
+        - condition: time
+          after: '18:00:00'
+      - condition: state
+        entity_id: light.hue_lightstrip_1_2
+        state: 'off'
+      sequence:
+      - target:
+          entity_id: light.hue_lightstrip_1_2
+        data:
+          transition: 2
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: e714_opened
+      - condition: or
+        conditions:
+        - condition: time
+          after: 06:00:00
+          before: '10:00:00'
+        - condition: time
+          after: '18:00:00'
+      sequence:
+      - target:
+          entity_id: light.hue_lightstrip_1_2
+        data:
+          transition: 15
+        action: light.turn_off
+    - conditions:
+      - condition: trigger
+        id: e7142_opened
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: light.schreibtisch_rechts
+          state: 'on'
+        - condition: state
+          entity_id: light.schreibtisch_links
+          state: 'on'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.schreibtisch_links
+          - light.schreibtisch_rechts
+    - conditions:
+      - condition: trigger
+        id: e7142_closed
+      - condition: sun
+        after: sunset
+        before: sunrise
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.schreibtisch_links
+          - light.schreibtisch_rechts
+        data:
+          brightness_pct: 100
+  mode: restart
+- id: '1774206000000'
+  alias: The Frame (32) – Apple TV Büro AUS → Art Mode / 21 Uhr TV AUS
+  description: Steuert den 32er The Frame abhängig vom Apple TV im Büro. Vor 21 Uhr
+    geht der TV bei Apple-TV-Aus in den Art Mode, ab 21 Uhr wird der TV vollständig
+    ausgeschaltet.
+  triggers:
+  - id: apple_tv_off
+    trigger: state
+    entity_id: media_player.buro_2_2
+    to: 'off'
+  - id: apple_tv_standby
+    trigger: state
+    entity_id: media_player.buro_2_2
+    to: standby
+  - id: tv_off_21
+    trigger: time
+    at: '21:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: tv_off_21
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.the_frame_32_2
+          state: 'off'
+      sequence:
+      - alias: The Frame vollständig ausschalten
+        action: media_player.turn_off
+        target:
+          entity_id: media_player.the_frame_32_2
+    - conditions:
+      - condition: trigger
+        id:
+        - apple_tv_off
+        - apple_tv_standby
+      - condition: time
+        before: '21:00:00'
+      - condition: state
+        entity_id: media_player.the_frame_32_2
+        state: 'on'
+      - condition: template
+        value_template: '{{ state_attr(''media_player.the_frame_32_2'', ''source'')
+          == ''Apple TV'' }}'
+      sequence:
+      - delay:
+          seconds: 3
+      - alias: Apple TV Status zur Sicherheit erneut prüfen
+        condition: template
+        value_template: '{{ states(''media_player.buro_2_2'') in [''off'', ''standby'']
+          }}
+
+          '
+      - alias: Art Mode aktivieren
+        action: samsungtv_smart.set_art_mode
+        data:
+          entity_id: media_player.the_frame_32_2
+    - conditions:
+      - condition: trigger
+        id:
+        - apple_tv_off
+        - apple_tv_standby
+      - condition: time
+        after: '21:00:00'
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.the_frame_32_2
+          state: 'off'
+      sequence:
+      - alias: Nach 21 Uhr The Frame vollständig ausschalten
+        action: media_player.turn_off
+        target:
+          entity_id: media_player.the_frame_32_2
+  mode: single
+- id: buero_stuhl_andi_lightstrip
+  alias: Büro – Stuhl Andi → Lightstrip 1
+  description: 'Stuhl besetzt = Lightstrip an (nur nach Sonnenuntergang). Stuhl verlassen
+    = 5 Minuten warten, dann Lightstrip aus. Kurze Bewegungen schalten das Licht nicht
+    aus (mode: restart). Tagsüber bleibt das Licht aus.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.window_and_door_sensor_916f_2
+    to: 'on'
+    id: verlassen
+  - trigger: state
+    entity_id: binary_sensor.window_and_door_sensor_916f_2
+    to: 'off'
+    id: besetzt
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: besetzt
+      - condition: or
+        conditions:
+        - condition: sun
+          after: sunset
+        - condition: sun
+          before: sunrise
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.hue_lightstrip_1
+        data:
+          brightness_pct: 90
+          color_temp_kelvin: 4103
+    - conditions:
+      - condition: trigger
+        id: verlassen
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 5
+          seconds: 0
+          milliseconds: 0
+      - condition: state
+        entity_id: binary_sensor.window_and_door_sensor_916f_2
+        state: 'on'
+      - action: light.turn_off
+        target:
+          entity_id: light.hue_lightstrip_1
+        data: {}
+  mode: restart
+- id: buro_bewegung_the_frame_32_art_mode_neu
+  alias: Büro – Bewegung startet The Frame (32) Art Mode
+  description: Wenn Bewegung im Büro erkannt → The Frame Art Mode deaktivieren (TV
+    aktiv)
+  triggers:
+  - platform: state
+    entity_id: binary_sensor.hue_motion_sensor_2_bewegung
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: media_player.the_frame_32
+    state: 'on'
+  actions:
+  - target:
+      entity_id: media_player.the_frame_32
+    data:
+      source: TV
+    action: media_player.select_source
+  mode: single
+- id: buro_keine_bewegung_the_frame_32_art_mode_neu
+  alias: Büro – 1 Stunde keine Bewegung → The Frame (32) Art Mode
+  description: Nach 1 Stunde ohne Bewegung im Büro → The Frame Art Mode aktivieren
+  triggers:
+  - platform: state
+    entity_id: binary_sensor.hue_motion_sensor_2_bewegung
+    to: 'off'
+    for:
+      hours: 1
+  actions:
+  - target:
+      entity_id: media_player.the_frame_32
+    data:
+      source: Art Mode
+    action: media_player.select_source
+  mode: single
+- id: '1775060777686'
+  alias: Büro – Monitor an wenn Stuhl besetzt
+  triggers:
+  - entity_id: binary_sensor.window_and_door_sensor_916f_2
+    to: 'off'
+    for:
+      seconds: 5
+    trigger: state
+  conditions: []
+  actions:
+  - target:
+      entity_id: media_player.49_odyssey_oled_g9_2
+    action: media_player.turn_on
+  mode: single
+- id: '1775060794997'
+  alias: Büro – Monitor aus wenn Stuhl leer
+  triggers:
+  - entity_id: binary_sensor.window_and_door_sensor_916f_2
+    to: 'on'
+    for:
+      minutes: 1
+    trigger: state
+  conditions: []
+  actions:
+  - target:
+      entity_id: media_player.49_odyssey_oled_g9_2
+    action: media_player.turn_off
+  mode: single
+- id: '1770317322015'
+  alias: Apple TV Schlafzimmer aus → Bettgestell nach 10s aus
+  description: ''
+  triggers:
+  - entity_id: media_player.schlafzimmer_tv
+    to: 'off'
+    trigger: state
+  conditions: []
+  actions:
+  - delay:
+      seconds: 10
+  - target:
+      entity_id: light.bettgestell
+    action: light.turn_off
+  mode: restart
+- id: '1770318529930'
+  alias: Apple TV Schlafzimmer Pause → Bettgestell 80% (17–24 Uhr)
+  description: ''
+  triggers:
+  - entity_id: media_player.schlafzimmer_tv
+    from: playing
+    to: paused
+    trigger: state
+  conditions:
+  - condition: time
+    after: '17:00:00'
+    before: 00:00:00
+  actions:
+  - target:
+      entity_id: light.bettgestell
+    data:
+      brightness_pct: 80
+    action: light.turn_on
+  mode: restart
+- id: '1770318626878'
+  alias: Apple TV Schlafzimmer Play → Bettgestell 50%
+  description: Schaltet das Bettgestelllicht auf 50% Helligkeit, wenn der Apple TV
+    im Schlafzimmer zwischen 17 und 24 Uhr zu spielen beginnt.
+  triggers:
+  - entity_id: media_player.schlafzimmer_tv
+    from: paused
+    to: playing
+    trigger: state
+  conditions:
+  - condition: time
+    after: '17:00:00'
+    before: 00:00:00
+  actions:
+  - target:
+      entity_id: light.bettgestell
+    data:
+      brightness_pct: 50
+    action: light.turn_on
+  mode: restart
+- id: '1771052754528'
+  alias: Apple TV Schlafzimmer Ein → Bettgestell 50% (17–24 Uhr)
+  description: ''
+  triggers:
+  - alias: Schlafzimmer TV → AN
+    entity_id: media_player.schlafzimmer_tv
+    to: 'on'
+    trigger: state
+  conditions:
+  - alias: Zeitfenster 17–00 Uhr
+    condition: time
+    after: '17:00:00'
+    before: 00:00:00
+  actions:
+  - alias: Bettgestell → 50%
+    target:
+      entity_id: light.bettgestell
+    data:
+      brightness_pct: 50
+    action: light.turn_on
+  mode: single
+- id: '1771691931205'
+  alias: Schlafzimmer – Fenster offen Erinnerung
+  description: Erinnerung per Push, falls das Fenster länger als 10 Minuten offen
+    ist. Bestätigung bei Schließen.
+  triggers:
+  - id: open_10min
+    alias: Fenster 10 Minuten offen
+    entity_id: binary_sensor.ikea_sensor_7_tur
+    to: 'on'
+    for: 00:10:00
+    trigger: state
+  - id: closed
+    alias: Fenster geschlossen
+    entity_id: binary_sensor.ikea_sensor_7_tur
+    to: 'off'
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: closed
+      sequence:
+      - parallel:
+        - action: notify.mobile_app_andreas_iphone_15pro_max
+          data:
+            title: "\U0001FA9F Schlafzimmer"
+            message: Das Fenster ist jetzt geschlossen.
+        - action: notify.mobile_app_karo_iphone
+          data:
+            title: "\U0001FA9F Schlafzimmer"
+            message: Das Fenster ist jetzt geschlossen.
+    - conditions:
+      - condition: trigger
+        id: open_10min
+      sequence:
+      - repeat:
+          count: 2
+          sequence:
+          - condition: state
+            entity_id: binary_sensor.ikea_sensor_7_tur
+            state: 'on'
+          - parallel:
+            - action: notify.mobile_app_andreas_iphone_15pro_max
+              data:
+                title: "\U0001FA9F Schlafzimmer"
+                message: Das Schlafzimmer Fenster ist noch offen
+            - action: notify.mobile_app_karo_iphone
+              data:
+                title: "\U0001FA9F Schlafzimmer"
+                message: Das Schlafzimmer Fenster ist noch offen
+            - action: telegram_bot.send_message
+              data:
+                chat_id: 988178587
+                parse_mode: html
+                message: "\U0001FA9F Das Schlafzimmer Fenster ist noch offen"
+          - delay: 00:05:00
+  mode: restart
+- id: '1738836091116'
+  alias: ATV Wozi spielt → Küche & Deckenlampe aus (außer manuell)
+  description: Wenn der Apple TV im Wohnzimmer zu spielen beginnt, werden Küchenlichter
+    und Deckenlampe ausgeschaltet – außer sie wurden manuell eingeschaltet (erkannt
+    über context.parent_id).
+  triggers:
+  - trigger: state
+    entity_id: media_player.apple_tv
+    to: playing
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - alias: Küche aus – nur wenn nicht manuell eingeschaltet
+    if:
+    - condition: template
+      value_template: "{{ state_attr('light.deckenlampe_kuche', 'context') is none\n
+        \  or state_attr('light.deckenlampe_kuche', 'context').parent_id is none }}"
+    then:
+    - action: light.turn_off
+      target:
+        entity_id:
+        - light.deckenlampe_kuche
+        - light.unterschrank
+        - light.schranke
+      data:
+        transition: 3
+  - alias: Deckenlampe aus – nur wenn nicht manuell eingeschaltet
+    if:
+    - condition: template
+      value_template: "{{ state_attr('light.deckenlampe', 'context') is none\n   or
+        state_attr('light.deckenlampe', 'context').parent_id is none }}"
+    then:
+    - action: light.turn_off
+      target:
+        entity_id: light.deckenlampe
+      data:
+        transition: 3
+  mode: single
+- id: '1769347538122'
+  alias: Küche – FP2 Präsenz – Lichtprofil Tag/Nacht + Kochmodus (Dunstabzug)
+  description: Praesenz (FP2) -> Licht an (Zeitprofil), keine Praesenz -> Licht aus
+    (Tag 2min / Nacht 20s). Solange Dunstabzug AN ist, bleibt Licht an. Tagsueber
+    wird das Licht nur eingeschaltet, wenn es unter der eingestellten Helligkeitsschwelle
+    ist.
+  triggers:
+  - id: presence_on
+    trigger: state
+    entity_id:
+    - binary_sensor.presence_sensor_fp2_c965_presence_sensor_1
+    - binary_sensor.presence_sensor_fp2_c965_presence_sensor_2
+    - binary_sensor.presence_sensor_fp2_c965_presence_sensor_4
+    - binary_sensor.presence_sensor_fp2_c965_presence_sensor_5
+    to: 'on'
+  - id: hood_on
+    trigger: state
+    entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+    to: 'on'
+  - id: hood_off
+    trigger: state
+    entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+    to: 'off'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - choose:
+    - conditions:
+      - condition: time
+        after: 04:00:00
+        before: 06:00:00
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.deckenlampe_kuche
+          - light.unterschrank
+          - light.schranke
+        data:
+          brightness_pct: 30
+          color_temp_kelvin: 2700
+          transition: 1
+    - conditions:
+      - condition: time
+        after: 06:00:00
+        before: '21:00:00'
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.presence_sensor_fp2_c965_light_sensor_light_level
+          below: input_number.kuche_helligkeit_schwelle
+        - condition: state
+          entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+          state: 'on'
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.deckenlampe_kuche
+          - light.unterschrank
+          - light.schranke
+        data:
+          brightness_pct: 100
+          color_temp_kelvin: 4000
+          transition: 1
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: time
+          after: '21:00:00'
+        - condition: time
+          before: 04:00:00
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.deckenlampe_kuche
+          - light.unterschrank
+          - light.schranke
+        data:
+          brightness_pct: 15
+          color_temp_kelvin: 3000
+          transition: 2
+  - alias: Warten bis keine Praesenz mehr und Dunstabzug aus
+    wait_template: '{{ is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_1'',''off'')
+      and is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_2'',''off'')
+      and is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_4'',''off'')
+      and is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_5'',''off'')
+      and is_state(''switch.shellyplus1pm_b0b21c1b4a6c_switch_0'',''off'') }}'
+  - choose:
+    - conditions:
+      - condition: time
+        after: 04:00:00
+        before: '21:00:00'
+      sequence:
+      - delay:
+          minutes: 2
+    default:
+    - delay:
+        seconds: 20
+  - condition: template
+    value_template: '{{ is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_1'',''off'')
+      and is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_2'',''off'')
+      and is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_4'',''off'')
+      and is_state(''binary_sensor.presence_sensor_fp2_c965_presence_sensor_5'',''off'')
+      and is_state(''switch.shellyplus1pm_b0b21c1b4a6c_switch_0'',''off'') }}'
+  - choose:
+    - conditions:
+      - condition: time
+        after: 04:00:00
+        before: '21:00:00'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.deckenlampe_kuche
+          - light.unterschrank
+          - light.schranke
+        data:
+          transition: 5
+    default:
+    - action: light.turn_off
+      target:
+        entity_id:
+        - light.deckenlampe_kuche
+        - light.unterschrank
+        - light.schranke
+      data:
+        transition: 2
+  mode: restart
+- id: '1771855370344'
+  alias: Küche – Schublade steuert Dunstabzug (Nachlauf & Abbruch)
+  description: Schublade auf = Dunstabzug an. Schublade zu = nach 1 Stunde aus (wenn
+    weiterhin zu) + TTS nur 08-20 Uhr. Wenn Dunstabzug manuell ausgeschaltet wird,
+    wird der Nachlauf sofort abgebrochen.
+  triggers:
+  - entity_id: binary_sensor.ikea_sensor_06_schublade_tur
+    to: 'on'
+    id: opened
+    trigger: state
+  - entity_id: binary_sensor.ikea_sensor_06_schublade_tur
+    to: 'off'
+    id: closed
+    trigger: state
+  - entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+    to: 'off'
+    id: hood_off
+    trigger: state
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: opened
+      sequence:
+      - target:
+          entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+        action: switch.turn_on
+    - conditions:
+      - condition: trigger
+        id: closed
+      sequence:
+      - delay:
+          hours: 1
+      - condition: state
+        entity_id: binary_sensor.ikea_sensor_06_schublade_tur
+        state: 'off'
+      - condition: state
+        entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+        state: 'on'
+      - target:
+          entity_id: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+        action: switch.turn_off
+      - choose:
+        - conditions:
+          - condition: time
+            after: 08:00:00
+            before: '20:00:00'
+          sequence:
+          - target:
+              entity_id: media_player.sonos_all
+            data:
+              message: Die Dunstabzugshaube ist jetzt aus.
+              language: de-DE
+            action: tts.cloud_say
+    - conditions:
+      - condition: trigger
+        id: hood_off
+      sequence:
+      - stop: Dunstabzug manuell aus – Nachlauf abgebrochen.
+  mode: restart
+- id: waschmaschine_zyklusstart_merken
+  alias: Waschmaschine – Zyklusstart merken
+  description: Erkennt den Start robust über die Leistungsaufnahme und merkt den Start-Zählerstand.
+  triggers:
+  - alias: Start erkennen
+    trigger: numeric_state
+    entity_id: sensor.waschmaschine
+    above: 8
+    for:
+      minutes: 2
+  conditions:
+  - alias: Automationen aktiv
+    condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  - alias: Nur wenn noch kein Zyklus aktiv ist
+    condition: numeric_state
+    entity_id: input_number.waschmaschine_start_kwh
+    below: 0.001
+  actions:
+  - alias: Start-Zählerstand speichern
+    action: input_number.set_value
+    target:
+      entity_id: input_number.waschmaschine_start_kwh
+    data:
+      value: '{{ states("sensor.waschmaschine_switch_0_energy") | float(0) }}'
+  mode: single
+- id: waschmaschine_fertig_telegram
+  alias: Waschmaschine – Fertig Telegram
+  description: Meldet das Ende des Waschgangs inklusive Verbrauch und Stromkosten.
+  triggers:
+  - alias: Ende erkennen
+    trigger: numeric_state
+    entity_id: sensor.waschmaschine
+    below: 2
+    for:
+      minutes: 8
+  conditions:
+  - alias: Automationen aktiv
+    condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  - alias: Start-Zählerstand vorhanden
+    condition: numeric_state
+    entity_id: input_number.waschmaschine_start_kwh
+    above: 0
+  - alias: Mindestverbrauch für echten Waschgang
+    condition: template
+    value_template: '{{ (states("sensor.waschmaschine_switch_0_energy") | float(0)
+      - states("input_number.waschmaschine_start_kwh") | float(0)) > 0.02 }}'
+  actions:
+  - alias: Variablen berechnen
+    variables:
+      start_kwh: '{{ states("input_number.waschmaschine_start_kwh") | float(0) }}'
+      end_kwh: '{{ states("sensor.waschmaschine_switch_0_energy") | float(0) }}'
+      verbrauch_kwh: '{{ [states("sensor.waschmaschine_switch_0_energy") | float(0)
+        - states("input_number.waschmaschine_start_kwh") | float(0), 0] | max | round(3)
+        }}'
+      strompreis_eur_kwh: '{% set aktiv = states("sensor.strompreis_aktiv_eur_kwh")
+        %}{% if aktiv not in ["unknown", "unavailable", "none", ""] %}{{ aktiv | float(0)
+        }}{% else %}{{ (states("input_number.input_number_strompreis_ct") | float(0))
+        / 100 }}{% endif %}'
+      strompreis_ct: '{{ (strompreis_eur_kwh | float(0) * 100) | round(2) }}'
+      stromkosten_eur: '{{ ([states("sensor.waschmaschine_switch_0_energy") | float(0)
+        - states("input_number.waschmaschine_start_kwh") | float(0), 0] | max * (strompreis_eur_kwh
+        | float(0))) | round(3) }}'
+  - alias: Zeitstempel speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.waschmaschine_letztes_ende
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  - alias: Benachrichtigungen parallel senden
+    parallel:
+    - alias: Push an Andreas
+      action: notify.mobile_app_andreas_iphone_15pro_max
+      data:
+        title: "\U0001F9FA Waschmaschine"
+        message: 'Fertig! Verbrauch: {{ verbrauch_kwh }} kWh · Strompreis: {{ strompreis_ct
+          }} ct/kWh · Kosten: {{ stromkosten_eur }} €'
+    - alias: Push an Karo
+      action: notify.mobile_app_karo_iphone
+      data:
+        title: "\U0001F9FA Waschmaschine"
+        message: 'Fertig! Verbrauch: {{ verbrauch_kwh }} kWh · Strompreis: {{ strompreis_ct
+          }} ct/kWh · Kosten: {{ stromkosten_eur }} €'
+    - alias: Telegram an Andreas
+      action: telegram_bot.send_message
+      data:
+        chat_id: 988178587
+        parse_mode: html
+        message: "\U0001F9FA <b>Waschmaschine fertig!</b> ⚡ Verbrauch: {{ verbrauch_kwh
+          }} kWh \U0001F4A1 Strompreis: {{ strompreis_ct }} ct/kWh \U0001F4B6 Stromkosten:
+          {{ stromkosten_eur }} €"
+    - alias: Sonos TTS
+      action: tts.speak
+      target:
+        entity_id: tts.home_assistant_cloud
+      data:
+        cache: false
+        media_player_entity_id: media_player.sonos_all
+        message: 'Sir, die Waschmaschine ist fertig. Verbrauch: {{ verbrauch_kwh }}
+          Kilowattstunden, Stromkosten: {{ stromkosten_eur }} Euro.'
+        language: de-DE
+      enabled: false
+    - alias: Lichter blinken
+      repeat:
+        count: 2
+        sequence:
+        - action: light.turn_on
+          target:
+            entity_id:
+            - light.deckenlampe_kuche
+            - light.deckenlampe
+            - light.deckenlampe_buro
+            - light.bettgestell
+          data:
+            flash: long
+        - if:
+          - condition: template
+            value_template: '{{ repeat.index < repeat.count }}'
+          then:
+          - delay:
+              seconds: 5
+  - alias: Schränke 2 Minuten grün pulsieren
+    repeat:
+      count: 24
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.schranke
+          - light.unterschrank
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness: 255
+          transition: 2
+      - delay:
+          seconds: 2
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.schranke
+          - light.unterschrank
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness: 50
+          transition: 2
+      - delay:
+          seconds: 3
+  - alias: Schränke Licht zurücksetzen
+    action: light.turn_off
+    target:
+      entity_id:
+      - light.schranke
+      - light.unterschrank
+  - alias: Start-Zählerstand zurücksetzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.waschmaschine_start_kwh
+    data:
+      value: 0
+  mode: single
+- id: spuelmaschine_zyklusstart
+  alias: Spülmaschine – Zyklusstart merken
+  description: Erkennt den Start robust über die Leistungsaufnahme und merkt den Start-Zählerstand.
+  triggers:
+  - alias: Start erkennen
+    trigger: numeric_state
+    entity_id: sensor.shellyplugsg3_8cbfea9829f4_switch_0_power
+    above: 8
+    for:
+      minutes: 2
+  conditions:
+  - alias: Automationen aktiv
+    condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  - alias: Nur wenn noch kein Zyklus aktiv ist
+    condition: numeric_state
+    entity_id: input_number.spuelmaschine_start_kwh
+    below: 0.001
+  actions:
+  - alias: Start-Zählerstand speichern
+    action: input_number.set_value
+    target:
+      entity_id: input_number.spuelmaschine_start_kwh
+    data:
+      value: '{{ states("sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy") | float(0)
+        }}'
+  mode: single
+- id: spuelmaschine_fertig_2
+  alias: Spülmaschine – Fertig
+  description: Meldet das Ende des Spülgangs und lässt das Unterschrank-Licht 2 Minuten
+    grün pulsieren.
+  triggers:
+  - alias: Ende erkennen
+    trigger: numeric_state
+    entity_id: sensor.shellyplugsg3_8cbfea9829f4_switch_0_power
+    below: 2
+    for:
+      minutes: 8
+  conditions:
+  - alias: Automationen aktiv
+    condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  - alias: Start-Zählerstand vorhanden
+    condition: numeric_state
+    entity_id: input_number.spuelmaschine_start_kwh
+    above: 0
+  - alias: Mindestverbrauch
+    condition: template
+    value_template: '{{ (states("sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy")
+      | float(0) - states("input_number.spuelmaschine_start_kwh") | float(0)) > 0.02
+      }}'
+  actions:
+  - alias: Variablen berechnen
+    variables:
+      verbrauch_kwh: '{{ [states("sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy")
+        | float(0) - states("input_number.spuelmaschine_start_kwh") | float(0), 0]
+        | max | round(3) }}'
+      strompreis_eur_kwh: '{% set aktiv = states("sensor.strompreis_aktiv_eur_kwh")
+        %}{% if aktiv not in ["unknown", "unavailable", "none", ""] %}{{ aktiv | float(0)
+        }}{% else %}{{ (states("input_number.input_number_strompreis_ct") | float(0))
+        / 100 }}{% endif %}'
+      strompreis_ct: '{{ (strompreis_eur_kwh | float(0) * 100) | round(2) }}'
+      stromkosten_eur: '{{ ([states("sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy")
+        | float(0) - states("input_number.spuelmaschine_start_kwh") | float(0), 0]
+        | max * (strompreis_eur_kwh | float(0))) | round(3) }}'
+  - alias: Zeitstempel speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.spulmaschine_letztes_ende
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  - alias: Tab abziehen
+    action: script.spulmaschine_tab_verbraucht
+  - alias: Push an Karo
+    action: notify.mobile_app_karo_iphone
+    data:
+      message: 'Fertig! Verbrauch: {{ verbrauch_kwh }} kWh · Kosten: {{ stromkosten_eur
+        }} €'
+      title: "\U0001F37D️ Spülmaschine"
+  - alias: Push an Andreas
+    action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F37D️ Spülmaschine"
+      message: 'Fertig! Verbrauch: {{ verbrauch_kwh }} kWh · Kosten: {{ stromkosten_eur
+        }} €'
+  - alias: Telegram an Andreas
+    action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F37D️ <b>Spülmaschine fertig!</b> ⚡ Verbrauch: {{ verbrauch_kwh
+        }} kWh \U0001F4A1 Strompreis: {{ strompreis_ct }} ct/kWh \U0001F4B6 Stromkosten:
+        {{ stromkosten_eur }} €"
+  - alias: Sonos TTS
+    action: tts.speak
+    target:
+      entity_id: tts.home_assistant_cloud
+    data:
+      cache: false
+      media_player_entity_id: media_player.sonos_all
+      message: 'Sir, die Spülmaschine ist fertig. Verbrauch: {{ verbrauch_kwh }} Kilowattstunden,
+        Stromkosten: {{ stromkosten_eur }} Euro.'
+      language: de-DE
+    enabled: false
+  - alias: Unterschrank 2 Minuten grün pulsieren
+    repeat:
+      count: 24
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.unterschrank
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness: 255
+          transition: 2
+      - delay:
+          seconds: 2
+      - action: light.turn_on
+        target:
+          entity_id: light.unterschrank
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness: 50
+          transition: 2
+      - delay:
+          seconds: 3
+  - alias: Unterschrank zurücksetzen
+    action: light.turn_off
+    target:
+      entity_id: light.unterschrank
+  - alias: Start-Zählerstand zurücksetzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.spuelmaschine_start_kwh
+    data:
+      value: 0
+  mode: single
+- id: '1777902350036'
+  alias: Kaffeemaschine – Erinnerung nach Laufzeit (iOS interaktiv)
+  description: ''
+  use_blueprint:
+    path: Maneridiet/coffee_prompt_ios_de.yaml
+    input:
+      notify_devices:
+      - d3b47930437b9f07067a55fd3926ed49
+      coffee_switch: switch.kaffeemaschine
+- id: '1738835975335'
+  alias: Apple TV Wozi Pause Licht an
+  triggers:
+  - entity_id: media_player.apple_tv
+    to: paused
+    trigger: state
+  conditions:
+  - condition: sun
+    after: sunset
+    before: sunrise
+  actions:
+  - action: light.turn_on
+    data:
+      color_temp_kelvin: 3233
+      brightness_pct: 100
+    target:
+      entity_id: light.ambilight
+  mode: single
+- id: '1738836349613'
+  alias: ATV Wozi aus alles aus
+  description: ''
+  triggers:
+  - type: turned_off
+    device_id: a50471dd58eecf79a8c3cfc939a713b3
+    entity_id: 37379a4b0dd96cb6ada624964c003307
+    domain: remote
+    trigger: device
+  conditions:
+  - condition: sun
+    before: sunrise
+    after: sunset
+    enabled: false
+  actions:
+  - action: light.turn_off
+    data:
+      transition: 64
+    target:
+      entity_id:
+      - light.hue_go_2
+      - light.hue_go_1
+      - light.ambilight
+      - light.stehlampe_links
+      device_id: 90a17fec07149b5a5230e219eacf6b1a
+  mode: single
+- id: '1755750508660'
+  alias: ATV Aus Fernbedienung Spät Licht aus
+  description: Schaltet Lichter spät abends per Fernbedienung aus.
+  triggers:
+  - type: turned_off
+    device_id: 0313ef575cd1020ef7bf064c1feebbd3
+    entity_id: 25cacd1b5c432698ac049cf5fb653485
+    domain: remote
+    trigger: device
+  conditions:
+  - condition: time
+    after: '18:00:00'
+    before: 05:00:00
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - sun
+    - sat
+    - fri
+  actions:
+  - action: light.turn_off
+    data:
+      transition: 60
+    target:
+      device_id:
+      - c495a6a7161a58b582535ece954c9741
+      - 377ecb51719a32f6e12e19d00a9babbb
+      - 11e73a894a167ee6abc3c8db9ae79e63
+      - 485a9ba9260b95f458eea32058542b56
+      - e384cc5dc303a8742c94c64854149dc0
+  mode: single
+- id: '1774177115321'
+  alias: The Frame (32) – Art Mode bei TV an/aus
+  description: Schaltet den 32er The Frame auf Art Mode per Helper
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.the_frame_32_art_mode
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: media_player.the_frame_32_2
+    state: 'on'
+  actions:
+  - action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.the_frame_32_2
+  - delay:
+      seconds: 2
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.the_frame_32_art_mode
+  mode: single
+- id: '1774207000000'
+  alias: The Frame (32) – Zeitfenster Art Mode nur bei Anwesenheit
+  description: Schaltet den 32er The Frame morgens 04:00–07:00 und abends 16:00–21:00
+    in den Art Mode. Nur bei Anwesenheit. Außerhalb der Zeitfenster oder bei Abwesenheit
+    wird der TV vollständig ausgeschaltet.
+  triggers:
+  - id: morning_on
+    trigger: time
+    at: 04:00:00
+  - id: morning_off
+    trigger: time
+    at: 07:00:00
+  - id: evening_on
+    trigger: time
+    at: '16:00:00'
+  - id: evening_off
+    trigger: time
+    at: '21:00:00'
+  - id: arrived_home
+    trigger: state
+    entity_id: person.andreas
+    to: home
+  - id: left_home
+    trigger: state
+    entity_id: person.andreas
+    from: home
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - morning_on
+        - evening_on
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: 'on'
+      - condition: state
+        entity_id: person.andreas
+        state: home
+      sequence:
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: media_player.the_frame_32_2
+            state: 'off'
+          sequence:
+          - alias: The Frame einschalten
+            action: media_player.turn_on
+            target:
+              entity_id: media_player.the_frame_32_2
+      - alias: Auf TV-Start warten
+        wait_template: '{{ not is_state(''media_player.the_frame_32_2'', ''off'')
+          }}'
+        timeout: 00:00:20
+        continue_on_timeout: true
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: media_player.the_frame_32_2
+            state: 'off'
+          sequence:
+          - alias: Zweiter Einschaltversuch
+            action: media_player.turn_on
+            target:
+              entity_id: media_player.the_frame_32_2
+          - wait_template: '{{ not is_state(''media_player.the_frame_32_2'', ''off'')
+              }}'
+            timeout: 00:00:20
+            continue_on_timeout: true
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.the_frame_32_2
+          state: 'off'
+      - delay:
+          seconds: 3
+      - alias: Art Mode aktivieren
+        action: samsungtv_smart.set_art_mode
+        data:
+          entity_id: media_player.the_frame_32_2
+    - conditions:
+      - condition: trigger
+        id: arrived_home
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: 'on'
+      - condition: or
+        conditions:
+        - condition: time
+          after: 04:00:00
+          before: 07:00:00
+        - condition: time
+          after: '16:00:00'
+          before: '21:00:00'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: media_player.the_frame_32_2
+            state: 'off'
+          sequence:
+          - alias: The Frame einschalten
+            action: media_player.turn_on
+            target:
+              entity_id: media_player.the_frame_32_2
+      - alias: Auf TV-Start warten
+        wait_template: '{{ not is_state(''media_player.the_frame_32_2'', ''off'')
+          }}'
+        timeout: 00:00:20
+        continue_on_timeout: true
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: media_player.the_frame_32_2
+            state: 'off'
+          sequence:
+          - alias: Zweiter Einschaltversuch
+            action: media_player.turn_on
+            target:
+              entity_id: media_player.the_frame_32_2
+          - wait_template: '{{ not is_state(''media_player.the_frame_32_2'', ''off'')
+              }}'
+            timeout: 00:00:20
+            continue_on_timeout: true
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.the_frame_32_2
+          state: 'off'
+      - delay:
+          seconds: 3
+      - alias: Art Mode aktivieren
+        action: samsungtv_smart.set_art_mode
+        data:
+          entity_id: media_player.the_frame_32_2
+    - conditions:
+      - condition: trigger
+        id:
+        - morning_off
+        - evening_off
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.the_frame_32_2
+          state: 'off'
+      sequence:
+      - alias: The Frame vollständig ausschalten
+        action: media_player.turn_off
+        target:
+          entity_id: media_player.the_frame_32_2
+    - conditions:
+      - condition: trigger
+        id: left_home
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.the_frame_32_2
+          state: 'off'
+      - condition: or
+        conditions:
+        - condition: time
+          after: 04:00:00
+          before: 07:00:00
+        - condition: time
+          after: '16:00:00'
+          before: '21:00:00'
+      sequence:
+      - alias: The Frame bei Abwesenheit ausschalten
+        action: media_player.turn_off
+        target:
+          entity_id: media_player.the_frame_32_2
+  mode: single
+- id: '1774208000000'
+  alias: The Frame (55) – Art Mode per Helper
+  description: Schaltet den 55er The Frame auf Art Mode per Helper
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.the_frame_55_art_mode
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: media_player.samsung_the_frame_55_thf
+    state: 'on'
+  actions:
+  - action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.samsung_the_frame_55_thf
+  - delay:
+      seconds: 2
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.the_frame_55_art_mode
+  mode: single
+- id: '1772982330054'
+  alias: Wasser – Monatliche Ablesung Erinnerung
+  description: Erinnert am letzten Tag des Monats um 10:00 Uhr die Wasserzähler abzulesen
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sat
+    - sun
+  conditions:
+  - condition: template
+    value_template: '{{ now().day == (now().replace(month=now().month % 12 + 1, day=1)
+      - timedelta(days=1)).day }}'
+  actions:
+  - parallel:
+    - action: notify.mobile_app_andreas_iphone_15pro_max
+      data:
+        title: "\U0001F4A7 Wasserzähler ablesen!"
+        message: 'Letzter Tag des Monats – bitte Kalt- und Warmwasser ablesen und
+          im HA Dashboard eintragen. Kalt: {{ states(''input_number.wasser_kalt_zaehlerstand'')
+          }} m³ | Warm: {{ states(''input_number.wasser_warm_zaehlerstand'') }} m³'
+    - action: notify.mobile_app_karo_iphone
+      data:
+        title: "\U0001F4A7 Wasserzähler ablesen!"
+        message: 'Letzter Tag des Monats – bitte Kalt- und Warmwasser ablesen und
+          im HA Dashboard eintragen. Kalt: {{ states(''input_number.wasser_kalt_zaehlerstand'')
+          }} m³ | Warm: {{ states(''input_number.wasser_warm_zaehlerstand'') }} m³'
+    - action: telegram_bot.send_message
+      data:
+        chat_id: 988178587
+        parse_mode: markdown
+        message: "\U0001F4A7 *Monatliche Wasserzähler-Ablesung* ━━━━━━━━━━━━━━━━━━
+          Bitte heute die Zählerstände ablesen und im Dashboard eintragen: \U0001F535
+          Kaltwasser Nr. 28012348  Stand: {{ states('input_number.wasser_kalt_zaehlerstand')
+          }} m³ \U0001F534 Warmwasser Nr. 28012458  Stand: {{ states('input_number.wasser_warm_zaehlerstand')
+          }} m³ \U0001F449 Dashboard → Wasser → Zählerstand eingeben"
+  mode: single
+- id: '1774999000000'
+  alias: Energie – Täglicher Gerätebericht (23:00)
+  description: Tagesverbrauch aller Geräte inkl. Kosten, nur aktive Geräte, + Filter
+    & Müll
+  triggers:
+  - at: '23:00:00'
+    trigger: time
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      disable_notification: true
+      parse_mode: markdown
+      message: "⚡ *Tagesverbrauch {{ now().strftime(\"%d.%m.%Y\") }}*\nStrompreis:
+        {{ states(\"input_number.input_number_strompreis_ct\") | float(0) | round(2)
+        }} ct/kWh\n\n*\U0001F3E0 Haus gesamt*\nVerbrauch: {{ states(\"sensor.haus_gesamt_tag\")
+        | float(0) | round(3) }} kWh  |  Kosten: {{ states(\"sensor.haus_gesamt_kosten_tag\")
+        | float(0) | round(2) }} €\n─────────────────\n*\U0001F37D️ Küche*\n{% if
+        states(\"sensor.kuehlschrank_tag\") | float(0) > 0 %}Kühlschrank:    {{ states(\"sensor.kuehlschrank_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kuhlschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.spuelmaschine_tag\")
+        | float(0) > 0 %}Spülmaschine:   {{ states(\"sensor.spuelmaschine_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_spulmaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.kaffeemaschine_tag\")
+        | float(0) > 0 %}Kaffeemaschine: {{ states(\"sensor.kaffeemaschine_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kaffeemaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) > 0 %}Dunstabzug:     {{ states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_dunstabzugshaube_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.unterschrank_tag\")
+        | float(0) > 0 %}Unterschrank:   {{ states(\"sensor.unterschrank_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_unterschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F5A5️ Büro*\n{%
+        if states(\"sensor.buero_schreibtisch_tag\") | float(0) > 0 %}Schreibtisch
+        A: {{ states(\"sensor.buero_schreibtisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.buro_schreibtisch_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.buero_schreibtisch_karo_tag\") | float(0)
+        > 0 %}Schreibtisch K: {{ states(\"sensor.buero_schreibtisch_karo_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_schreibtisch_karo_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_doppeldose_tag\")
+        | float(0) > 0 %}Doppeldose:     {{ states(\"sensor.buero_doppeldose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_doppeldose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CF️ Schlafzimmer*\n{%
+        if states(\"sensor.bett_tag\") | float(0) > 0 %}Bett:           {{ states(\"sensor.bett_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bett_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.bettgestell_tag\")
+        | float(0) > 0 %}Bettgestell:    {{ states(\"sensor.bettgestell_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bettgestell_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) > 0 %}Nachttisch R:   {{ states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_rechts_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_links_tag\")
+        | float(0) > 0 %}Nachttisch L:   {{ states(\"sensor.nachttisch_links_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_links_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schraenke_tag\")
+        | float(0) > 0 %}Schränke:       {{ states(\"sensor.schraenke_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_schranke_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CB️ Wohnzimmer*\n{%
+        if states(\"sensor.sonos_beam_5_1_tag\") | float(0) > 0 %}Sonos Beam:     {{
+        states(\"sensor.sonos_beam_5_1_tag\") | float(0) | round(3) }} kWh  |  {{
+        states(\"sensor.wohnzimmer_sonos_beam_5_1_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.sonos_tisch_tag\") | float(0) > 0 %}Sonos
+        Tisch:    {{ states(\"sensor.sonos_tisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.wohnzimmer_sonos_tisch_kosten_tag\") | float(0) |
+        round(3) }} €\n{% endif %}{% if states(\"sensor.sonos_lampe_tag\") | float(0)
+        > 0 %}Sonos Lampe:    {{ states(\"sensor.sonos_lampe_tag\") | float(0) | round(3)
+        }} kWh  |  {{ states(\"sensor.wohnzimmer_sonos_lampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) > 0 %}Stehlampe R:    {{ states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_stehlampe_rechts_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.ambilight_tag\")
+        | float(0) > 0 %}Ambilight:      {{ states(\"sensor.ambilight_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_ambilight_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6BF Bad
+        / Sonstiges*\n{% if states(\"sensor.homepod_badezimmer_tag\") | float(0) >
+        0 %}HomePod Bad:    {{ states(\"sensor.homepod_badezimmer_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.badezimmer_homepod_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.abstellkammer_tag\")
+        | float(0) > 0 %}Abstellkammer:  {{ states(\"sensor.abstellkammer_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.abstellkammer_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.wandlampe_tag\")
+        | float(0) > 0 %}Wandlampe:      {{ states(\"sensor.wandlampe_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wandlampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.balkon_steckdose_tag\")
+        | float(0) > 0 %}Balkon:         {{ states(\"sensor.balkon_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.balkon_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) > 0 %}Futternapf:     {{ states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.futternapf_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001FAE7 Waschküche*\nWaschmaschine:
+        \ {{ states(\"sensor.waschmaschine_tag\") | float(0) | round(3) }} kWh  |
+        \ {{ states(\"sensor.waschkuche_waschmaschine_kosten_tag\") | float(0) | round(3)
+        }} €\n{% if states(\"sensor.waeschetrockner_tag\") | float(0) > 0 %}Trockner:
+        \      {{ states(\"sensor.waeschetrockner_tag\") | float(0) | round(3) }}
+        kWh  |  {{ states(\"sensor.waschkuche_waschetrockner_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}─────────────────\n*\U0001F527 Filter-Status*\nLetzter
+        Wechsel:  {{ as_datetime(states(\"input_datetime.filter_letzter_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nNächster Wechsel: {{ as_datetime(states(\"input_datetime.filter_naechster_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nFällig in: {{ states(\"sensor.filter_tage_bis_fallig\") }} Tagen  |  Bestand:
+        {{ states(\"input_number.filter_bestand\") | int }} Stück\n─────────────────\n*\U0001F5D1️
+        Mülltonnen*\n\U0001F7E2 {{ states(\"sensor.restmull\") }}\n\U0001F7E1 {{ states(\"sensor.biomull\")
+        }}\n⬜ {{ states(\"sensor.glasbox\") }}"
+  mode: single
+- id: wasser_jahresanfang_setzen
+  alias: Wasser – Jahresanfang automatisch setzen
+  description: Setzt am 1. Januar die aktuellen Zählerstände als Jahresanfangswerte
+  triggers:
+  - trigger: time
+    at: 00:01:00
+  conditions:
+  - condition: template
+    value_template: '{{ now().month == 1 and now().day == 1 }}'
+  actions:
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.wasser_kalt_stand_jahresanfang
+    data:
+      value: '{{ states("input_number.wasser_kalt_zaehlerstand") | float(0) }}'
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.wasser_warm_stand_jahresanfang
+    data:
+      value: '{{ states("input_number.wasser_warm_zaehlerstand") | float(0) }}'
+  - action: notify.persistent_notification
+    data:
+      notification_id: wasser_jahresanfang_{{ now().year }}
+      title: "\U0001F389 Wasser Jahresanfang {{ now().year }}"
+      message: "Jahresanfangsstände gesetzt:\n\U0001F535 Kaltwasser: {{ states(\"input_number.wasser_kalt_zaehlerstand\")
+        }} m³\n\U0001F534 Warmwasser: {{ states(\"input_number.wasser_warm_zaehlerstand\")
+        }} m³"
+  mode: single
+- id: heizung_monatliche_ablesung_erinnerung
+  alias: Heizung – Monatliche Ablesung Erinnerung
+  description: Erinnert am letzten Tag des Monats um 19:00 Uhr den Wärmemengenzähler
+    abzulesen
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+  conditions:
+  - condition: template
+    value_template: '{{ now().day == (now().replace(month=now().month % 12 + 1, day=1)
+      - timedelta(days=1)).day }}'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F525 Wärmemengenzähler ablesen!"
+      message: 'Letzter Tag des Monats – bitte Heizungszähler ablesen und eintragen.
+        Aktuell: {{ states("input_number.heizung_zaehlerstand") }} kWh'
+  mode: single
+- id: heizung_jahresanfang_setzen
+  alias: Heizung – Jahresanfang automatisch setzen
+  description: Setzt am 1. Januar den aktuellen Zählerstand als Jahresanfangswert
+  triggers:
+  - trigger: time
+    at: 00:01:00
+  conditions:
+  - condition: template
+    value_template: '{{ now().month == 1 and now().day == 1 }}'
+  actions:
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.heizung_stand_jahresanfang
+    data:
+      value: '{{ states("input_number.heizung_zaehlerstand") | float(0) }}'
+  - action: persistent_notification.create
+    data:
+      notification_id: heizung_jahresanfang_{{ now().year }}
+      title: "\U0001F389 Heizung Jahresanfang {{ now().year }}"
+      message: "Jahresanfangsstand gesetzt:\n\U0001F525 Wärmemengenzähler: {{ states(\"input_number.heizung_zaehlerstand\")
+        }} kWh"
+  mode: single
+- id: wasser_ablesung_faellig_setzen
+  alias: Wasser – Ablesung fällig setzen
+  description: Setzt am letzten Tag des Monats das Fällig-Flag und schickt erste Erinnerung
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+  conditions:
+  - condition: template
+    value_template: '{{ now().day == (now().replace(month=now().month % 12 + 1, day=1)
+      - timedelta(days=1)).day }}'
+  actions:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.wasser_ablesung_fallig
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F4A7 Wasserzähler ablesen!"
+      message: 'Letzter Tag des Monats – bitte Kalt- und Warmwasser ablesen und eintragen.
+
+        Kalt: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³ | Warm: {{
+        states("input_number.wasser_warm_zaehlerstand") }} m³'
+  mode: single
+- id: wasser_ablesung_taeglich_erinnerung
+  alias: Wasser – Tägliche Erinnerung bis quittiert
+  description: Erinnert täglich um 10:00 solange Ablesung noch aussteht
+  triggers:
+  - trigger: time
+    at: '10:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.wasser_ablesung_fallig
+    state: 'on'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F4A7 Wasserzähler noch nicht abgelesen!"
+      message: 'Bitte noch Kalt- und Warmwasser ablesen und im Dashboard eintragen.
+
+        Kalt: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³ | Warm: {{
+        states("input_number.wasser_warm_zaehlerstand") }} m³'
+  mode: single
+- id: heizung_ablesung_faellig_setzen
+  alias: Heizung – Ablesung fällig setzen
+  description: Setzt am letzten Tag des Monats das Fällig-Flag und schickt erste Erinnerung
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+  conditions:
+  - condition: template
+    value_template: '{{ now().day == (now().replace(month=now().month % 12 + 1, day=1)
+      - timedelta(days=1)).day }}'
+  actions:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.heizung_ablesung_fallig
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F525 Wärmemengenzähler ablesen!"
+      message: 'Letzter Tag des Monats – bitte Heizungszähler ablesen und eintragen.
+
+        Aktuell: {{ states("input_number.heizung_zaehlerstand") }} kWh'
+  mode: single
+- id: heizung_ablesung_taeglich_erinnerung
+  alias: Heizung – Tägliche Erinnerung bis quittiert
+  description: Erinnert täglich um 10:00 solange Ablesung noch aussteht
+  triggers:
+  - trigger: time
+    at: '10:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.heizung_ablesung_fallig
+    state: 'on'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F525 Heizungszähler noch nicht abgelesen!"
+      message: 'Bitte noch den Wärmemengenzähler ablesen und im Dashboard eintragen.
+
+        Aktuell: {{ states("input_number.heizung_zaehlerstand") }} kWh'
+  mode: single
+- id: strom_ablesung_faellig_setzen
+  alias: Strom – Ablesung fällig setzen (31. Dez)
+  description: Setzt am 31. Dezember das Fällig-Flag und schickt erste Erinnerung
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+  conditions:
+  - condition: template
+    value_template: '{{ now().month == 12 and now().day == 31 }}'
+  actions:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.strom_ablesung_fallig
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: ⚡ Stromzähler ablesen!
+      message: 'Letzter Tag des Jahres – bitte Stromzähler ablesen und eintragen.
+
+        Letzter Stand: {{ states("input_number.strom_zaehlerstand_letzte_ablesung_kwh")
+        }} kWh'
+  mode: single
+- id: strom_ablesung_taeglich_erinnerung
+  alias: Strom – Tägliche Erinnerung bis quittiert
+  description: Erinnert täglich um 10:00 solange Ablesung noch aussteht
+  triggers:
+  - trigger: time
+    at: '10:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.strom_ablesung_fallig
+    state: 'on'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: ⚡ Stromzähler noch nicht abgelesen!
+      message: 'Bitte noch den Stromzähler ablesen und eintragen.
+
+        Letzter Stand: {{ states("input_number.strom_zaehlerstand_letzte_ablesung_kwh")
+        }} kWh'
+  mode: single
+- id: '1774170907466'
+  alias: 'Wartung – Filter: Kauf-Erinnerung bei leerem Bestand'
+  description: Wenn der Bestand auf 0 fällt -> sofort Telegram senden.
+  triggers:
+  - trigger: state
+    entity_id: input_number.filter_bestand
+  conditions:
+  - alias: Nur bei Wechsel von > 0 auf 0
+    condition: template
+    value_template: "{{ trigger.to_state is not none\n   and (trigger.to_state.state
+      | int(0)) <= 0\n   and (trigger.from_state is not none)\n   and (trigger.from_state.state
+      | int(0)) > 0 }}\n"
+  actions:
+  - alias: Letzte Kauf-Erinnerung setzen
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.filter_letzte_kauf_erinnerung
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  - alias: Telegram Kauf-Erinnerung
+    action: notify.telegram_bot_8004651348_988178587
+    data:
+      message: "\U0001F6D2 Filterbestand leer. Bitte neue Filter kaufen. Aktueller
+        Bestand: {{ states('input_number.filter_bestand') | int(0) }}\n"
+  mode: single
+- id: '1774781819666'
+  alias: NFC – Filter getauscht
+  triggers:
+  - trigger: tag
+    tag_id: 20b46c0a-a7fa-46bb-ad82-9611b4069d1b
+  actions:
+  - action: input_button.press
+    target:
+      entity_id: input_button.filter_getauscht
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F527 <b>Filter getauscht</b>\n✅ Filter wurde soeben per NFC-Tag
+        als getauscht markiert."
+  mode: single
+- id: filter_einkaufsliste
+  alias: Filter – Einkaufsliste wenn Bestand niedrig
+  description: Fügt Filter zur Einkaufsliste hinzu wenn Bestand auf 1 fällt
+  triggers:
+  - trigger: numeric_state
+    entity_id: input_number.filter_bestand
+    below: 2
+  actions:
+  - action: todo.add_item
+    target:
+      entity_id: todo.einkaufsliste_2
+    data:
+      item: "\U0001F527 Luftfilter nachkaufen (Bestand niedrig!)"
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F6D2 Filter nachkaufen!"
+      message: Nur noch {{ states('input_number.filter_bestand') | int(0) }} Filter
+        auf Lager – zur Einkaufsliste hinzugefügt!
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: markdown
+      message: "\U0001F6D2 *Filter nachkaufen!*\n\nNur noch {{ states('input_number.filter_bestand')
+        | int(0) }} Filter auf Lager.\nZur Einkaufsliste hinzugefügt ✅"
+  mode: single
+- id: ha_einkaufsliste_sync
+  alias: Einkaufsliste – täglich iOS sync
+  description: Schickt täglich eine Benachrichtigung mit Button um den Shortcut zu
+    starten
+  triggers:
+  - trigger: time
+    at: 09:00:00
+  conditions:
+  - condition: template
+    value_template: '{{ states.shopping_list | selectattr("state", "eq", "incomplete")
+      | list | count > 0 }}'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F6D2 Einkaufsliste synchronisieren"
+      message: Neue Einträge in der HA Einkaufsliste – jetzt mit iOS Erinnerungen
+        sync?
+      data:
+        actions:
+        - action: URI
+          title: ▶️ Shortcut starten
+          uri: shortcuts://run-shortcut?name=HA%20Einkaufsliste%20sync
+  mode: single
+- id: '1778339521787'
+  alias: 'Restlos: Alle 2 Stunden (9-22 Uhr)'
+  description: ''
+  triggers:
+  - hours: /2
+    minutes: '0'
+    trigger: time_pattern
+  conditions:
+  - condition: time
+    after: 09:00:00
+    before: '22:00:00'
+  actions:
+  - data: {}
+    action: shell_command.restlos_update
+  mode: single
+- id: '1778406644610'
+  alias: Kaffeebohnen auf Einkaufsliste
+  description: Wenn die 1kg Packung leer ist, Kaffeebohnen zur Einkaufsliste hinzufügen
+  triggers:
+  - entity_id: input_button.kaffeebohnen_leer
+    trigger: state
+  actions:
+  - target:
+      entity_id: todo.einkaufsliste
+    data:
+      item: Kaffeebohnen 1 kg
+    action: todo.add_item
+  mode: single
+- id: '1779109151758'
+  alias: 'Zone betreten: Lidl Einkaufsliste (Sicherheits-Version)'
+  description: Sendet eine vereinfachte Benachrichtigung beim Betreten von Lidl.
+  triggers:
+  - entity_id: device_tracker.andreas_iphone_15pro_max
+    zone: zone.lidl
+    event: enter
+    trigger: zone
+  conditions: []
+  actions:
+  - data:
+      title: "Lidl Einkauf \U0001F6D2"
+      message: Du bist bei Lidl. Tippe hier für deine Einkaufsliste!
+      data:
+        navigation_target: /todo-list/todo.einkaufsliste
+        actions:
+        - action: URI
+          title: Liste direkt öffnen
+          uri: /todo-list/todo.einkaufsliste
+    action: notify.mobile_app_andreas_iphone_15pro_max
+  mode: single
+- id: '1779109329929'
+  alias: 'Zone betreten: Lidl Popup'
+  description: Öffnet die To-Do-Liste als Popup auf dem iPhone
+  triggers:
+  - entity_id: device_tracker.andreas_iphone_15pro_max
+    zone: zone.lidl
+    event: enter
+    trigger: zone
+  conditions: []
+  actions:
+  - data:
+      title: Lidl Einkaufsliste
+      dismissable: true
+      autoclose: false
+      size: normal
+      content:
+        type: todo-list
+        entity: todo.einkaufsliste
+      browser_id:
+      - andreas_iphone_15pro_max_browser
+    action: browser_mod.popup
+  mode: single
+- id: '1779600494935'
+  alias: "\U0001F5A8️ Niimbot Print"
+  description: ''
+  triggers:
+  - entity_id: input_button.niimbot_print
+    trigger: state
+  actions:
+  - data:
+      url: http://192.168.178.25:5555/api/niimbot/print
+      method: POST
+      content_type: application/json
+      payload: '{"text": "Test Druck\nJ.A.R.V.I.S."}'
+    action: rest.post_api
+- id: '1779600538896'
+  alias: "\U0001F5A8️ Niimbot Print via REST"
+  description: ''
+  triggers:
+  - entity_id: input_text.niimbot_text
+    trigger: state
+  actions:
+  - data:
+      text: '{{ states(''input_text.niimbot_text'') }}'
+    action: rest_command.niimbot_print
+- id: '1779717265787'
+  alias: Einkaufsliste - Produkte dynamisch hinzufügen
+  description: Erhöht flexibel den Bestand für Milch, Brot, Eier etc.
+  triggers:
+  - entity_id:
+    - input_button.kaffe
+    trigger: state
+    id: Kaffee
+  - entity_id: input_button.milch
+    trigger: state
+    id: Milch
+  - entity_id: input_button.brot
+    trigger: state
+    id: Brot
+  - entity_id: input_button.eier
+    trigger: state
+    id: Eier
+  conditions: []
+  actions:
+  - variables:
+      produkt_name: '{{ trigger.id }}'
+  - action: todo.get_items
+    target:
+      entity_id: todo.einkaufsliste_2
+    data:
+      status: needs_action
+    response_variable: aktuelle_liste
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ aktuelle_liste[''todo.einkaufsliste_2''][''items''] |
+          selectattr(''summary'', ''search'', produkt_name) | list | length > 0 }}'
+      sequence:
+      - variables:
+          match: '{{ aktuelle_liste[''todo.einkaufsliste_2''][''items''] | selectattr(''summary'',
+            ''search'', produkt_name) | list | first }}'
+          aktuelle_anzahl: '{% set parts = match.summary.split(''x '') %} {{ parts[0]
+            | int if parts | length > 1 and parts[0] | int > 0 else 1 }}'
+          neue_anzahl: '{{ aktuelle_anzahl + 1 }}'
+      - action: todo.update_item
+        target:
+          entity_id: todo.einkaufsliste_2
+        data:
+          item: '{{ match.summary }}'
+          rename: '{{ neue_anzahl }}x {{ produkt_name }}'
+    - conditions: []
+      sequence:
+      - action: todo.add_item
+        target:
+          entity_id: todo.einkaufsliste_2
+        data:
+          item: 1x {{ produkt_name }}
+  mode: single
+- id: '1757048514129'
+  alias: Balkon – Tür offen (Sonos + Telegram + Wandlampe bei Dunkelheit)
+  description: Wandlampe sofort an bei Dunkelheit wenn Balkontür geöffnet wird. Erinnerung
+    nach 10 Minuten (2x alle 5 Minuten), TTS nur tagsüber. Wandlampe wird 60 Minuten
+    nach Sonnenaufgang ausgeschaltet.
+  triggers:
+  - id: opened
+    entity_id: binary_sensor.ikea_sensor_03_balkontur
+    to: 'on'
+    trigger: state
+  - id: open_10min
+    entity_id: binary_sensor.ikea_sensor_03_balkontur
+    to: 'on'
+    for: 00:10:00
+    trigger: state
+  - id: closed
+    entity_id: binary_sensor.ikea_sensor_03_balkontur
+    to: 'off'
+    trigger: state
+  - id: sunrise_off
+    trigger: sun
+    event: sunrise
+    offset: 01:00:00
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sunrise_off
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.wandlampe
+    - conditions:
+      - condition: trigger
+        id: opened
+      - condition: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        below: 0
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.wandlampe
+        data:
+          brightness_pct: 30
+    - conditions:
+      - condition: trigger
+        id: closed
+      sequence:
+      - delay: 00:00:30
+      - action: light.turn_off
+        target:
+          entity_id: light.wandlampe
+      - action: telegram_bot.send_message
+        enabled: false
+        data:
+          chat_id: 988178587
+          parse_mode: html
+          message: "\U0001F33F Die Balkontür ist geschlossen"
+    - conditions:
+      - condition: trigger
+        id: open_10min
+      sequence:
+      - condition: state
+        entity_id: binary_sensor.ikea_sensor_03_balkontur
+        state: 'on'
+      - repeat:
+          count: 2
+          sequence:
+          - parallel:
+            - action: notify.mobile_app_andreas_iphone_15pro_max
+              data:
+                title: "\U0001F33F Balkon"
+                message: Die Balkontür ist noch offen
+            - action: notify.mobile_app_karo_iphone
+              data:
+                title: "\U0001F33F Balkon"
+                message: Die Balkontür ist noch offen
+            - action: telegram_bot.send_message
+              data:
+                chat_id: 988178587
+                parse_mode: html
+                message: "\U0001F33F Die Balkontür ist noch offen"
+          - delay: 00:05:00
+  mode: restart
+- id: '1763366715360'
+  alias: Rollladen + Lüften Erinnerung – Wohnzimmer (Fensterschutz)
+  description: Morgens öffnet der Rollladen bei Sonnenaufgang. Abends schließt er
+    bei Sonnenuntergang – wenn das Wohnzimmerfenster offen ist, bleibt er offen und
+    schließt erst sobald das Fenster wieder geschlossen wird. Zusätzlich Erinnerung
+    nach 10 Minuten Lüften.
+  triggers:
+  - alias: Morgens – Sonnenaufgang
+    event: sunrise
+    id: sunrise
+    trigger: sun
+  - alias: Abends – Sonnenuntergang
+    event: sunset
+    id: sunset
+    trigger: sun
+  - alias: Wohnzimmerfenster geschlossen
+    type: not_opened
+    device_id: c4baeb7fce91539c4146c86fca19f101
+    entity_id: 1ed9a16123511b92a774f15d8b20dc9f
+    domain: binary_sensor
+    id: window_closed
+    trigger: device
+  - alias: Wohnzimmerfenster geöffnet
+    type: opened
+    device_id: c4baeb7fce91539c4146c86fca19f101
+    entity_id: 1ed9a16123511b92a774f15d8b20dc9f
+    domain: binary_sensor
+    id: window_opened
+    trigger: device
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sunrise
+      sequence:
+      - target:
+          entity_id: cover.rolladen
+        data:
+          position: 100
+        action: cover.set_cover_position
+    - conditions:
+      - condition: trigger
+        id: sunset
+      sequence:
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: binary_sensor.ikea_sensor_08_tur
+            state: 'off'
+          sequence:
+          - target:
+              entity_id: cover.rolladen
+            data:
+              position: 0
+            action: cover.set_cover_position
+        default:
+        - wait_for_trigger:
+          - entity_id: binary_sensor.ikea_sensor_08_tur
+            to: 'off'
+            trigger: state
+          continue_on_timeout: false
+        - target:
+            entity_id: cover.rolladen
+          data:
+            position: 0
+          action: cover.set_cover_position
+    - conditions:
+      - condition: trigger
+        id: window_closed
+      - condition: sun
+        after: sunset
+      sequence:
+      - target:
+          entity_id: cover.rolladen
+        data:
+          position: 0
+        action: cover.set_cover_position
+    - conditions:
+      - condition: trigger
+        id: window_opened
+      sequence:
+      - delay: 00:10:00
+      - condition: state
+        entity_id: binary_sensor.ikea_sensor_08_tur
+        state: 'on'
+      - action: alexa_devices.send_sound
+        data:
+          sound: amzn_sfx_doorbell_01
+          device_id: 1b8e7ee657368337c9fe5919ac41e3c3
+      - action: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: Fertig mit lüften
+          message: Schließe das Wohnzimmer Fenster
+      - action: notify.mobile_app_iphone_von_karo_2
+        data:
+          title: Fertig mit lüften
+          message: Schließe die Büro Fenster
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_8004651348_988178587
+        data:
+          title: Schliesse das Fenster
+          message: Wohnzimmer Fenster ist Offen
+      - action: notify.send_message
+        target:
+          entity_id: notify.andreas_s_sonos_beam_sprechen
+        data:
+          message: Das Fenster ist noch offen!
+        enabled: false
+  mode: restart
+- id: '1779881782164'
+  alias: Balkon – Klimaanlage kühlen bei Hitze und offener Tür
+  description: Stellt die Klimaanlage auf Kühlmodus, wenn die Außentemperatur über
+    28°C steigt und die Balkontür offen ist.
+  triggers:
+  - trigger: temperature.crossed_threshold
+    target:
+      entity_id: weather.forecast_home
+    options:
+      threshold:
+        type: above
+        value:
+          active_choice: number
+          number: 28
+          unit_of_measurement: °C
+  conditions:
+  - condition: door.is_open
+    target:
+      entity_id: binary_sensor.ikea_sensor_03_balkontur
+    options:
+      behavior: any
+      for: 00:00:00
+  actions:
+  - action: climate.set_hvac_mode
+    metadata: {}
+    target:
+      entity_id: climate.klimaanlage
+    data:
+      hvac_mode: cool
+  mode: single
+- id: '1779883168078'
+  alias: "\U0001F525 Advanced Heating Control V5"
+  description: ''
+  use_blueprint:
+    path: panhans/advanced_heating_control.yaml
+    input:
+      input_trvs:
+      - climate.klimaanlage
+      input_temperature_sensor: sensor.shellywalldisplay_000822894f04_temperature
+- id: '1779895160450'
+  alias: Klimaanlage automatisch steuern
+  description: Klima nach 60 Minuten aus und tagsüber bei über 26 Grad wieder einschalten
+  triggers:
+  - entity_id: climate.klimaanlage
+    to: cool
+    for:
+      minutes: 60
+    id: klima_60_minuten
+    trigger: state
+  - entity_id: sensor.hub_2_58_temperatur
+    above: 26
+    id: temperatur_hoch
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: klima_60_minuten
+      sequence:
+      - target:
+          entity_id: climate.klimaanlage
+        action: climate.turn_off
+    - conditions:
+      - condition: trigger
+        id: temperatur_hoch
+      - condition: state
+        entity_id: climate.klimaanlage
+        state: 'off'
+      - condition: time
+        after: 07:00:00
+        before: '20:00:00'
+      sequence:
+      - target:
+          entity_id: climate.klimaanlage
+        data:
+          hvac_mode: cool
+        action: climate.set_hvac_mode
+  mode: restart
+- id: '1738722003321'
+  alias: Low battery level detection & notification for all battery sensors
+  description: Benachrichtigt mit Gerätenamen und Ladestand aller Geräte mit niedriger
+    Batterie (sortiert nach Batteriestand, Prozent fett markiert).
+  use_blueprint:
+    path: sbyx/low-battery-level-detection-notification-for-all-battery-sensors.yaml
+    input:
+      exclude:
+        device_id:
+        - d78d5b79d923354aa4c7f73dfd0cb2c6
+      actions:
+      - action: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "\U0001F50B Batterie Warnung"
+          message: "{% if sensors | length == 1 %}\n  {{ state_attr(sensors[0], 'friendly_name')
+            }} hat nur noch **{{ states(sensors[0]) }}%** Batterie.\n{% else %}\n
+            \ Folgende Geräte haben eine niedrige Batterie:\n  {% for s in sensors
+            | sort(attribute='state') %}\n    - {{ state_attr(s, 'friendly_name')
+            }} (**{{ states(s) }}%**)\n  {% endfor %}\n{% endif %}\n"
+      - action: telegram_bot.send_message
+        data:
+          config_entry_id: 01K0QD26T4HR7H28QG76XRZCWJ
+      day: 7
+- id: '1757233138801'
+  alias: Geräte Batterie Warnung
+  description: Benachrichtigt, wenn der Batteriestand eines Geräts niedrig ist.
+  triggers:
+  - trigger: event
+    event_type: battery_notes_battery_threshold
+    event_data:
+      battery_low: true
+    id: low
+  - trigger: event
+    event_type: battery_notes_battery_threshold
+    event_data:
+      battery_low: false
+    id: high
+  conditions: []
+  actions:
+  - if:
+    - condition: trigger
+      id:
+      - low
+    then:
+    - action: notify.persistent_notification
+      data:
+        title: '{{ trigger.event.data.device_name }} Battery Low'
+        message: Das Gerät hat einen Batteriestand von {{ trigger.event.data.battery_level
+          }}% {{ '\n' -}} du benötigst {{ trigger.event.data.battery_quantity }}×
+          {{ trigger.event.data.battery_type }}
+        data:
+          notification_id: '{{ trigger.event.data.device_id }}-{{ trigger.event.data.source_entity_id
+            }}'
+  - if:
+    - condition: trigger
+      id:
+      - high
+    then:
+    - action: persistent_notification.dismiss
+      data:
+        notification_id: '{{ trigger.event.data.device_id }}-{{ trigger.event.data.source_entity_id
+          }}'
+  mode: single
+- id: '1762017930802'
+  alias: Wasser Melder
+  description: ''
+  triggers:
+  - type: moist
+    device_id: 61590b82b6f9ceb0f3eae51b1717b8e9
+    entity_id: 93e672eeec4a94294d9fe98308221501
+    domain: binary_sensor
+    metadata:
+      secondary: false
+    trigger: device
+  conditions: []
+  actions:
+  - action: light.turn_on
+    data:
+      flash: long
+      rgb_color:
+      - 227
+      - 36
+      - 0
+    target:
+      entity_id: light.bettgestell
+  - repeat:
+      count: 10
+      sequence:
+      - action: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          message: Wasser tritt aus!!!
+          title: Wasser läuft aus
+      - action: alexa_devices.send_sound
+        data:
+          sound: air_horn_03
+          device_id: 1b8e7ee657368337c9fe5919ac41e3c3
+      - action: tts.speak
+        target:
+          entity_id: tts.home_assistant_cloud
+        data:
+          cache: true
+          media_player_entity_id: media_player.sonos_all
+          message: Es wurde Wasseraustritt erkannt!
+  mode: single
+- id: '1772133567098'
+  alias: Wetter – Regen/Schnee Warnung (stumm nach Zeitprofil)
+  description: 'Prueft weather.forecast_home alle 30min. Stumm: Mo-Fr 19-07 Uhr, Sa-So
+    21-09 Uhr.'
+  triggers:
+  - minutes: /30
+    alias: Alle 30 Minuten prüfen
+    trigger: time_pattern
+  conditions:
+  - condition: template
+    alias: Cooldown 6 Stunden
+    value_template: '{% set last = this.last_triggered %} {{ last is none or (as_timestamp(now())
+      - as_timestamp(last)) > 21600 }}'
+  actions:
+  - variables:
+      fc: '{{ state_attr(''weather.forecast_home'', ''forecast'') | default([]) }}'
+      next: '{{ fc[0] if fc | length > 0 else dict() }}'
+      cond: '{{ next.get(''condition'', '''') }}'
+      precip_prob: '{{ next.get(''precipitation_probability'', 0) | int(0) }}'
+      temp: '{{ next.get(''temperature'', none) }}'
+      wind: '{{ next.get(''wind_speed'', none) }}'
+      when: '{{ next.get(''datetime'', '''') }}'
+      dow: '{{ now().isoweekday() }}'
+      is_weekday: '{{ dow in [1,2,3,4,5] }}'
+      is_weekend: '{{ dow in [6,7] }}'
+      quiet_weekday: '{{ is_weekday and ((now().hour >= 19) or (now().hour < 7)) }}'
+      quiet_weekend: '{{ is_weekend and ((now().hour >= 21) or (now().hour < 9)) }}'
+      quiet: '{{ quiet_weekday or quiet_weekend }}'
+      title: ☔️ Wetterwarnung
+      message: '{% set c = cond if cond else states(''weather.forecast_home'') %}
+        In Kürze möglich: {{ c }}{% if precip_prob %} ({{ precip_prob }}%){% endif
+        %}. {% if temp is not none %}Temp: {{ temp }}°C.{% endif %} {% if wind is
+        not none %} Wind: {{ wind }}.{% endif %} {% if when %} Zeitpunkt: {{ when
+        }}.{% endif %}'
+  - choose:
+    - conditions:
+      - condition: template
+        alias: Regen/Schnee wahrscheinlich
+        value_template: '{% set bad = [''rainy'',''pouring'',''snowy'',''snowy-rainy'',''hail'',''lightning'',''lightning-rainy'']
+          %} {{ cond in bad or precip_prob >= 60 }}'
+      sequence:
+      - parallel:
+        - action: notify.mobile_app_andreas_iphone_15pro_max
+          data:
+            title: '{{ title }}'
+            message: '{{ message }}'
+            data:
+              push:
+                interruption-level: '{{ ''passive'' if quiet else ''active'' }}'
+        - action: notify.mobile_app_karo_iphone
+          data:
+            title: '{{ title }}'
+            message: '{{ message }}'
+            data:
+              push:
+                interruption-level: '{{ ''passive'' if quiet else ''active'' }}'
+  mode: single
+- id: '1772133803994'
+  alias: Button – Wetter morgen (Telegram)
+  description: Wird per input_button.wetter_morgen_ansage ausgelöst, liest die morgige
+    Vorhersage aus weather.forecast_home und sendet sie via Telegram.
+  triggers:
+  - entity_id: input_button.wetter_morgen_ansage
+    alias: Button gedrückt
+    trigger: state
+  conditions: []
+  actions:
+  - action: weather.get_forecasts
+    alias: Forecast (daily) abrufen
+    target:
+      entity_id: weather.forecast_home
+    data:
+      type: daily
+    response_variable: fc
+  - variables:
+      tomorrow: '{{ (fc[''weather.forecast_home''].forecast[1]) if (fc[''weather.forecast_home''].forecast
+        | length > 1) else dict() }}'
+      cond: '{{ tomorrow.get(''condition'', states(''weather.forecast_home'')) }}'
+      tmax: '{{ tomorrow.get(''temperature'', none) }}'
+      tmin: '{{ tomorrow.get(''templow'', none) }}'
+      pop: '{{ tomorrow.get(''precipitation_probability'', none) }}'
+      wind: '{{ tomorrow.get(''wind_speed'', none) }}'
+      dt: '{{ tomorrow.get(''datetime'', '''') }}'
+      msg: 'Wetter morgen{% if dt %} ({{ as_datetime(dt).strftime(''%d.%m.%Y'') }}){%
+        endif %}: {{ cond }}. {% if tmax is not none %}Max {{ tmax }}°C.{% endif %}
+        {% if tmin is not none %} Min {{ tmin }}°C.{% endif %} {% if pop is not none
+        %} Regenwahrscheinlichkeit {{ pop }}%.{% endif %} {% if wind is not none %}
+        Wind {{ wind }}.{% endif %}'
+  - action: telegram_bot.send_message
+    alias: Telegram Wetter morgen senden
+    data:
+      parse_mode: html
+      message: '{{ msg }}'
+  mode: single
+- id: '1775735227642'
+  alias: Wasserleck - Benachrichtigung
+  description: Sofortige Alarm-Benachrichtigung wenn Wasser erkannt wird
+  triggers:
+  - entity_id: binary_sensor.wasser_senor_1_wasserleck
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: ⚠️ Wasserleck erkannt!
+      message: Der Wassersensor hat ein Leck festgestellt. Bitte sofort prüfen!
+      data:
+        push:
+          sound: default
+          interruption-level: critical
+  mode: single
+- id: '1775735435032'
+  alias: Wasserleck - Entwarnung
+  description: Benachrichtigung wenn Sensor wieder trocken ist
+  triggers:
+  - entity_id: binary_sensor.wasser_senor_1_wasserleck
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: ✅ Entwarnung - Alles trocken
+      message: Der Wassersensor meldet wieder alles in Ordnung.
+  mode: single
+- id: '1778932391853'
+  alias: Andreas – Zuhause verlassen Benachrichtigung
+  description: Benachrichtigt, wenn Andreas die Zone 'Zuhause' verlässt.
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.andreas
+      notify_device: d3b47930437b9f07067a55fd3926ed49
+      zone_entity: zone.home
+- id: '1775154555913'
+  alias: Radio – SWR3
+  description: Spielt SWR3 auf gewähltem Lautsprecher
+  triggers: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Sonos Beam
+      sequence:
+      - target:
+          entity_id: media_player.wohnzimmer
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Sonos Tisch
+      sequence:
+      - target:
+          entity_id: media_player.sonos_tisch
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Alle Sonos
+      sequence:
+      - target:
+          entity_id: media_player.sonos_all
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod WZ
+      sequence:
+      - target:
+          entity_id: media_player.wohnzimmer_2
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Büro
+      sequence:
+      - target:
+          entity_id: media_player.buro
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Büro 2
+      sequence:
+      - target:
+          entity_id: media_player.buro_2
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Bad
+      sequence:
+      - target:
+          entity_id: media_player.badezimmer
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod WC
+      sequence:
+      - target:
+          entity_id: media_player.badezimmer_2
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Schlafzimmer
+      sequence:
+      - target:
+          entity_id: media_player.schlafzimmer_2
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod SZ
+      sequence:
+      - target:
+          entity_id: media_player.schlafzimmer_4
+        data:
+          media:
+            media_content_id: https://liveradio.swr.de/sw282p3/swr3/play.mp3
+            media_content_type: music
+        action: media_player.play_media
+  mode: single
+- id: '1775154635066'
+  alias: Radio – Regenbogen
+  description: ''
+  triggers: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Sonos Beam
+      sequence:
+      - target:
+          entity_id: media_player.wohnzimmer
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Sonos Tisch
+      sequence:
+      - target:
+          entity_id: media_player.sonos_tisch
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Alle Sonos
+      sequence:
+      - target:
+          entity_id: media_player.sonos_all
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod WZ
+      sequence:
+      - target:
+          entity_id: media_player.wohnzimmer_2
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Büro
+      sequence:
+      - target:
+          entity_id: media_player.buro
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Büro 2
+      sequence:
+      - target:
+          entity_id: media_player.buro_2
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Bad
+      sequence:
+      - target:
+          entity_id: media_player.badezimmer
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod WC
+      sequence:
+      - target:
+          entity_id: media_player.badezimmer_2
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Schlafzimmer
+      sequence:
+      - target:
+          entity_id: media_player.schlafzimmer_2
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod SZ
+      sequence:
+      - target:
+          entity_id: media_player.schlafzimmer_4
+        data:
+          media:
+            media_content_id: https://regenbogen-live.ice.infomaniak.ch/regenbogen-live.mp3
+            media_content_type: music
+        action: media_player.play_media
+  mode: single
+- id: '1775154653533'
+  alias: Radio – bigFM
+  description: ''
+  triggers: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Sonos Beam
+      sequence:
+      - target:
+          entity_id: media_player.wohnzimmer
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Sonos Tisch
+      sequence:
+      - target:
+          entity_id: media_player.sonos_tisch
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: Alle Sonos
+      sequence:
+      - target:
+          entity_id: media_player.sonos_all
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod WZ
+      sequence:
+      - target:
+          entity_id: media_player.wohnzimmer_2
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Büro
+      sequence:
+      - target:
+          entity_id: media_player.buro
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Büro 2
+      sequence:
+      - target:
+          entity_id: media_player.buro_2
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Bad
+      sequence:
+      - target:
+          entity_id: media_player.badezimmer
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod WC
+      sequence:
+      - target:
+          entity_id: media_player.badezimmer_2
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod Schlafzimmer
+      sequence:
+      - target:
+          entity_id: media_player.schlafzimmer_2
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+    - conditions:
+      - condition: state
+        entity_id: input_select.radio_lautsprecher
+        state: HomePod SZ
+      sequence:
+      - target:
+          entity_id: media_player.schlafzimmer_4
+        data:
+          media:
+            media_content_id: https://streams.bigfm.de/bigfm-deutschland-128-mp3
+            media_content_type: music
+        action: media_player.play_media
+  mode: single
+- id: '1762017397545'
+  alias: Wallpanel Battery Management iPad
+  description: ''
+  use_blueprint:
+    path: seamus65/wallpanel-battery-management.yaml
+    input:
+      battery: sensor.ipad_pro_battery_level
+      charged_percent: 100
+      low_percent: 4
+      charger: switch.steckdose_ipad
+- id: '1778516310323'
+  alias: iPad Plug – Monatsreset
+  description: Sendet Monatsauswertung per Telegram und setzt Zähler zurück
+  triggers:
+  - at: 00:01:00
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ now().day == 1 }}'
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F4CA <b>iPad Plug – Monatsauswertung</b>\n\U0001F522 Ladezyklen:
+        {{ states('input_number.ipad_plug_ladezyklen_monat') | int }} ⚡ Verbrauch:
+        {{ states('input_number.ipad_plug_kwh_monat') | float | round(3) | string
+        | replace('.', ',') }} kWh \U0001F4B6 Kosten: {{ states('input_number.ipad_plug_kosten_monat')
+        | float | round(2) | string | replace('.', ',') }} €"
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.ipad_plug_kwh_monat
+    data:
+      value: 0
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.ipad_plug_kosten_monat
+    data:
+      value: 0
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.ipad_plug_ladezyklen_monat
+    data:
+      value: 0
+  mode: single
+- id: '1767711207015'
+  alias: Startup – Automationen gemäß Schalterzustand setzen
+  description: Setzt definierte Automationen beim HA-Start passend zum input_boolean
+  triggers:
+  - event: start
+    trigger: homeassistant
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: 'on'
+      sequence:
+      - target:
+          entity_id:
+          - automation.fp2_buro_licht_aus
+          - automation.fp2_buro_licht_aus_2
+        data:
+          stop_actions: true
+        action: automation.turn_off
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: 'off'
+      sequence:
+      - target:
+          entity_id:
+          - automation.fp2_buro_licht_aus
+          - automation.fp2_buro_licht_aus_2
+        action: automation.turn_on
+  mode: single
+- id: '1774841032877'
+  alias: Tagesübersicht – Energie, Filter & Müll (23:00) test
+  description: Tagesverbrauch aller Geräte inkl. Kosten, nur aktive Geräte, + Filter
+    & Müll
+  triggers:
+  - at: '23:00:00'
+    trigger: time
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      disable_notification: true
+      parse_mode: markdown
+      message: "⚡ *Tagesverbrauch {{ now().strftime(\"%d.%m.%Y\") }}*\nStrompreis:
+        {{ states(\"sensor.strompreis_aktiv_eur_kwh\") | float(0) * 100 | round(2)
+        }} ct/kWh\n\n*\U0001F3E0 Haus gesamt*\nVerbrauch: {{ states(\"sensor.haus_gesamt_tag\")
+        | float(0) | round(3) }} kWh  |  Kosten: {{ states(\"sensor.haus_gesamt_kosten_tag\")
+        | float(0) | round(2) }} €\n─────────────────\n*\U0001F37D️ Küche*\n{% if
+        states(\"sensor.kuehlschrank_tag\") | float(0) > 0 %}Kühlschrank:    {{ states(\"sensor.kuehlschrank_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kuhlschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.spuelmaschine_tag\")
+        | float(0) > 0 %}Spülmaschine:   {{ states(\"sensor.spuelmaschine_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_spulmaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.kaffeemaschine_tag\")
+        | float(0) > 0 %}Kaffeemaschine: {{ states(\"sensor.kaffeemaschine_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kaffeemaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) > 0 %}Dunstabzug:     {{ states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_dunstabzugshaube_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.unterschrank_tag\")
+        | float(0) > 0 %}Unterschrank:   {{ states(\"sensor.unterschrank_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_unterschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F5A5️ Büro*\n{%
+        if states(\"sensor.buero_schreibtisch_tag\") | float(0) > 0 %}Schreibtisch
+        A: {{ states(\"sensor.buero_schreibtisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.buro_schreibtisch_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.buero_schreibtisch_karo_tag\") | float(0)
+        > 0 %}Schreibtisch K: {{ states(\"sensor.buero_schreibtisch_karo_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_schreibtisch_karo_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_doppeldose_tag\")
+        | float(0) > 0 %}Doppeldose:     {{ states(\"sensor.buero_doppeldose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_doppeldose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.ipad_plug_tag\")
+        | float(0) > 0 %}iPad Plug:      {{ states(\"sensor.ipad_plug_tag\") | float(0)
+        | round(3) }} kWh  |  {{ (states(\"sensor.ipad_plug_tag\") | float(0) * states(\"sensor.strompreis_aktiv_eur_kwh\")
+        | float(0)) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CF️ Schlafzimmer*\n{%
+        if states(\"sensor.bett_tag\") | float(0) > 0 %}Bett:           {{ states(\"sensor.bett_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bett_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.bettgestell_tag\")
+        | float(0) > 0 %}Bettgestell:    {{ states(\"sensor.bettgestell_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bettgestell_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) > 0 %}Nachttisch R:   {{ states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_rechts_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_links_tag\")
+        | float(0) > 0 %}Nachttisch L:   {{ states(\"sensor.nachttisch_links_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_links_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schraenke_tag\")
+        | float(0) > 0 %}Schränke:       {{ states(\"sensor.schraenke_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_schranke_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CB️ Wohnzimmer*\n{%
+        if states(\"sensor.sonos_beam_5_1_tag\") | float(0) > 0 %}Sonos Beam:     {{
+        states(\"sensor.sonos_beam_5_1_tag\") | float(0) | round(3) }} kWh  |  {{
+        states(\"sensor.wohnzimmer_sonos_beam_5_1_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.sonos_tisch_tag\") | float(0) > 0 %}Sonos
+        Tisch:    {{ states(\"sensor.sonos_tisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.wohnzimmer_sonos_tisch_kosten_tag\") | float(0) |
+        round(3) }} €\n{% endif %}{% if states(\"sensor.sonos_lampe_tag\") | float(0)
+        > 0 %}Sonos Lampe:    {{ states(\"sensor.sonos_lampe_tag\") | float(0) | round(3)
+        }} kWh  |  {{ states(\"sensor.wohnzimmer_sonos_lampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) > 0 %}Stehlampe R:    {{ states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_stehlampe_rechts_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.ambilight_tag\")
+        | float(0) > 0 %}Ambilight:      {{ states(\"sensor.ambilight_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_ambilight_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6BF Bad
+        / Sonstiges*\n{% if states(\"sensor.homepod_badezimmer_tag\") | float(0) >
+        0 %}HomePod Bad:    {{ states(\"sensor.homepod_badezimmer_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.badezimmer_homepod_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.abstellkammer_tag\")
+        | float(0) > 0 %}Abstellkammer:  {{ states(\"sensor.abstellkammer_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.abstellkammer_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.wandlampe_tag\")
+        | float(0) > 0 %}Wandlampe:      {{ states(\"sensor.wandlampe_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wandlampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.balkon_steckdose_tag\")
+        | float(0) > 0 %}Balkon:         {{ states(\"sensor.balkon_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.balkon_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) > 0 %}Futternapf:     {{ states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.futternapf_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001FAE7 Waschküche*\n{%
+        if states(\"sensor.waschmaschine_tag\") | float(0) > 0 %}Waschmaschine:  {{
+        states(\"sensor.waschmaschine_tag\") | float(0) | round(3) }} kWh  |  {{ states(\"sensor.waschkuche_waschmaschine_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F527 Filter-Status*\nLetzter
+        Wechsel:  {{ as_datetime(states(\"input_datetime.filter_letzter_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nNächster Wechsel: {{ as_datetime(states(\"input_datetime.filter_naechster_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nFällig in: {{ states(\"sensor.filter_tage_bis_fallig\") }} Tagen  |  Bestand:
+        {{ states(\"input_number.filter_bestand\") | int }} Stück\n─────────────────\n*\U0001F5D1️
+        Mülltonnen*\n\U0001F7E2 {{ states(\"sensor.restmull\") }}\n\U0001F7E1 {{ states(\"sensor.biomull\")
+        }}\n⬜ {{ states(\"sensor.glasbox\") }}"
+  mode: single
+- id: '1774842547874'
+  alias: Bewegungsfreiheit Melder test Wohnzimmer
+  description: Schaltet die Deckenlampe bei Bewegung ein und sofort aus, wenn keine
+    Anwesenheit mehr erkannt wird. Art Mode 55" wird bei Bewegung aktiviert, bei keiner
+    Präsenz wird der TV ausgeschaltet.
+  triggers:
+  - entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+    to: 'on'
+    id: motion_on
+    trigger: state
+  - entity_id: binary_sensor.presence_sensor_fp2_c965_presence_sensor_3
+    to: 'off'
+    id: motion_off
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: motion_on
+      - condition: or
+        conditions:
+        - condition: sun
+          after: sunset
+        - condition: sun
+          before: sunrise
+      sequence:
+      - target:
+          entity_id: light.deckenlampe
+        action: light.turn_on
+        data:
+          brightness_pct: 50
+      - action: script.the_frame_55_ein_und_art_mode
+        enabled: true
+    - conditions:
+      - condition: trigger
+        id: motion_off
+      sequence:
+      - target:
+          entity_id: light.deckenlampe
+        action: light.turn_off
+        data:
+          transition: 10
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.samsung_the_frame_55_thf
+          state: 'off'
+      - action: media_player.turn_off
+        target:
+          entity_id: media_player.samsung_the_frame_55_thf
+  mode: restart
+- id: '1778605580089'
+  alias: Barcode automatisch nachschlagen test
+  description: ''
+  triggers:
+  - entity_id: input_text.off_barcode_eingabe
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.state | length > 3 }}
+
+      '
+  actions:
+  - action: script.off_barcode_lookup
+  mode: restart
+- id: '1778737856327'
+  alias: Zwischenablage empfangen
+  description: Empfängt Text aus Kurzbefehl und speichert ihn
+  triggers:
+  - webhook_id: zwischenablage_empfangen
+    allowed_methods:
+    - POST
+    local_only: false
+    trigger: webhook
+  actions:
+  - target:
+      entity_id: input_text.zwischenablage
+    data:
+      value: '{{ trigger.json.text }}'
+    action: input_text.set_value
+  mode: queued
+- id: '1779253759437'
+  alias: 'Webhook: Barcode einbuchen test'
+  description: Empfängt Daten vom iPhone-Kurzbefehl und bucht Artikel ein.
+  triggers:
+  - trigger: webhook
+    webhook_id: barcode_einbuchen
+    allowed_methods:
+    - POST
+    local_only: false
+  actions:
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.off_lagerplatz
+    data:
+      option: '{{ trigger.json.lagerplatz }}'
+  - action: script.off_einbuchen
+    data: {}
+  mode: single
+- id: '1779551459844'
+  alias: "\U0001F5A8️ Niimbot Test Print"
+  description: Druckt ein Test-Label auf der Niimbot B1
+  triggers:
+  - entity_id: input_button.niimbot_test_print
+    trigger: state
+  actions:
+  - data:
+      text: 'Test Druck
+
+        J.A.R.V.I.S.
+
+        {{ now().strftime(''%d.%m.%Y %H:%M'') }}'
+    action: shell_command.niimbot_print
+- id: '1780118515763'
+  alias: Hund – Gefüttert-Status täglich zurücksetzen
+  description: Setzt beide Hund-gefüttert-Status jeden Morgen um 05:30 Uhr zurück
+  triggers:
+  - platform: time
+    at: 05:30:00
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id:
+      - input_boolean.hund_gefuettert_morgens
+      - input_boolean.hund_gefuettert_abends
+  mode: single
+- id: '1780118752474'
+  alias: Hund – Morgens füttern Erinnerung (Wochentag 06:00)
+  triggers:
+  - platform: time
+    at: 06:00:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - condition: state
+    entity_id: input_boolean.hund_gefuettert_morgens
+    state: 'off'
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F436 <b>Hund füttern!</b>\n\n⏰ Morgensfütterung noch nicht erledigt!"
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F436 Hund füttern!"
+      message: Morgensfütterung noch nicht erledigt!
+  - if:
+    - condition: state
+      entity_id: input_boolean.sonos_tts_aktiv
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.hund_erinnerung_tts
+      state: 'on'
+    then:
+    - action: tts.speak
+      target:
+        entity_id: tts.home_assistant_cloud
+      data:
+        media_player_entity_id: media_player.sonos_all
+        message: Hallo! Der Hund wurde noch nicht gefüttert. Bitte jetzt füttern.
+        language: de-DE
+  mode: single
+- id: '1780118757875'
+  alias: Hund – Morgens füttern Erinnerung (Wochenende 08:00)
+  triggers:
+  - platform: time
+    at: 08:00:00
+  conditions:
+  - condition: time
+    weekday:
+    - sat
+    - sun
+  - condition: state
+    entity_id: input_boolean.hund_gefuettert_morgens
+    state: 'off'
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F436 <b>Hund füttern!</b>\n\n⏰ Morgensfütterung noch nicht erledigt!"
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F436 Hund füttern!"
+      message: Morgensfütterung noch nicht erledigt!
+  - if:
+    - condition: state
+      entity_id: input_boolean.sonos_tts_aktiv
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.hund_erinnerung_tts
+      state: 'on'
+    then:
+    - action: tts.speak
+      target:
+        entity_id: tts.home_assistant_cloud
+      data:
+        media_player_entity_id: media_player.sonos_all
+        message: Hallo! Der Hund wurde noch nicht gefüttert. Bitte jetzt füttern.
+        language: de-DE
+  mode: single
+- id: '1780118763469'
+  alias: Hund – Abends füttern Erinnerung (19:00)
+  triggers:
+  - platform: time
+    at: '19:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hund_gefuettert_abends
+    state: 'off'
+  actions:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F436 <b>Hund füttern!</b>\n\n\U0001F319 Abendsfütterung noch
+        nicht erledigt!"
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F436 Hund füttern!"
+      message: Abendsfütterung noch nicht erledigt!
+  - if:
+    - condition: state
+      entity_id: input_boolean.sonos_tts_aktiv
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.hund_erinnerung_tts
+      state: 'on'
+    then:
+    - action: tts.speak
+      target:
+        entity_id: tts.home_assistant_cloud
+      data:
+        media_player_entity_id: media_player.sonos_all
+        message: Hallo! Der Hund wurde heute Abend noch nicht gefüttert. Bitte jetzt
+          füttern.
+        language: de-DE
+  mode: single
+- id: '1780120395657'
+  alias: 'Hund – Kritisch: Morgens nicht gefüttert (Wochentag 07:00)'
+  triggers:
+  - platform: time
+    at: 07:00:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - condition: state
+    entity_id: input_boolean.hund_gefuettert_morgens
+    state: 'off'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F6A8 Hund NOCH NICHT gefüttert!"
+      message: Morgensfütterung ist überfällig!
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+  mode: single
+- id: '1780120398241'
+  alias: 'Hund – Kritisch: Morgens nicht gefüttert (Wochenende 09:00)'
+  triggers:
+  - platform: time
+    at: 09:00:00
+  conditions:
+  - condition: time
+    weekday:
+    - sat
+    - sun
+  - condition: state
+    entity_id: input_boolean.hund_gefuettert_morgens
+    state: 'off'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F6A8 Hund NOCH NICHT gefüttert!"
+      message: Morgensfütterung ist überfällig!
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+  mode: single
+- id: '1780120400360'
+  alias: 'Hund – Kritisch: Abends nicht gefüttert (20:00)'
+  triggers:
+  - platform: time
+    at: '20:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.hund_gefuettert_abends
+    state: 'off'
+  actions:
+  - action: notify.mobile_app_andreas_iphone_15pro_max
+    data:
+      title: "\U0001F6A8 Hund NOCH NICHT gefüttert!"
+      message: Abendsfütterung ist überfällig!
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+  mode: single

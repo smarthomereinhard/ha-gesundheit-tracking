@@ -1,0 +1,12 @@
+col_span: '1'
+col_span_lg: '1'
+col_span_xl: '1'
+entity: switch.plus1pm_switch_0
+position: bottom
+row_span: '1'
+row_span_lg: '1'
+row_span_xl: '1'
+show_icon: true
+show_name: true
+show_state: true
+type: button

@@ -1,0 +1,4 @@
+entity: binary_sensor.ikea_sensor_05_tur
+show_icon: true
+show_name: true
+type: button
