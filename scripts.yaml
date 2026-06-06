@@ -1,1 +1,847 @@
-{}
+batterien_ansagen_low_liste:
+  alias: Batterien ansagen (Low-Liste)
+  mode: single
+  sequence:
+  - variables:
+      store: '{{ states(''input_text.batterie_low_liste'') }}'
+      data_obj: "{% if store in ['unknown','unavailable','none',''] %}\n  {{ dict()\
+        \ }}\n{% else %}\n  {{ store | from_json }}\n{% endif %}\n"
+      items: '{{ data_obj.values() | list }}'
+      count: '{{ items | length }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ count == 0 }}'
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_all
+        data:
+          volume_level: 0.49
+      - target:
+          entity_id: media_player.sonos_all
+        data:
+          message: Keine Batterie Warnungen vorhanden.
+          cache: false
+        action: tts.cloud_say
+    - conditions:
+      - condition: template
+        value_template: '{{ count > 0 }}'
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_all
+        data:
+          volume_level: 0.49
+      - target:
+          entity_id: media_player.sonos_all
+        data:
+          message: 'Es gibt {{ count }} Geräte mit niedriger Batterie. {% for i in
+            items %} {{ i.device_name }}: {{ i.battery_level }} Prozent. {% endfor
+            %}'
+          cache: false
+        action: tts.cloud_say
+  description: ''
+'1773570405650':
+  sequence:
+  - alias: Vorherigen Stand auf aktuellen Warmwasser-Zählerstand setzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.wasser_warm_stand_vorherig
+    data:
+      value: '{{ states(''input_number.wasser_warm_zaehlerstand'') | float(0) }}'
+  - alias: Zeitpunkt der Ablesung speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wasser_warm_letzte_ablesung
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  alias: 'Warmwasser: Ablesung speichern'
+  icon: mdi:water-check
+  description: ''
+wasser_beide_zahler_speichern:
+  alias: 'Wasser: Beide Zähler speichern'
+  icon: mdi:water-check-outline
+  sequence:
+  - alias: Kaltwasser speichern
+    action: script.kaltwasser_ablesung_speichern
+  - alias: Warmwasser speichern
+    action: script.warmwasser_ablesung_speichern
+  - alias: Statistik-Log schreiben
+    action: script.wasser_csv_log
+  - alias: Erinnerung quittieren
+    action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.wasser_ablesung_fallig
+kaltwasser_ablesung_speichern:
+  alias: 'Kaltwasser: Ablesung speichern'
+  icon: mdi:water-check
+  sequence:
+  - alias: Vorherigen Stand auf aktuellen Kaltwasser-Zählerstand setzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.wasser_kalt_stand_vorherig
+    data:
+      value: '{{ states("input_number.wasser_kalt_zaehlerstand") | float(0) }}'
+  - alias: Zeitpunkt der Ablesung speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wasser_kalt_letzte_ablesung
+    data:
+      datetime: '{{ now().strftime("%Y-%m-%d %H:%M:%S") }}'
+  - alias: Logbuch-Eintrag Kaltwasser
+    action: logbook.log
+    data:
+      name: 💧 Kaltwasser Ablesung
+      message: 'Stand: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³ |
+        Verbrauch seit letzter Ablesung: {{ (states("input_number.wasser_kalt_zaehlerstand")
+        | float(0) - states("input_number.wasser_kalt_stand_vorherig") | float(0))
+        | round(3) }} m³ | Kosten: {{ ((states("input_number.wasser_kalt_zaehlerstand")
+        | float(0) - states("input_number.wasser_kalt_stand_vorherig") | float(0))
+        * states("input_number.wasserpreis_kalt_pro_m3") | float(2.5)) | round(2)
+        }} €'
+      entity_id: input_number.wasser_kalt_zaehlerstand
+warmwasser_ablesung_speichern:
+  alias: 'Warmwasser: Ablesung speichern'
+  icon: mdi:water-check
+  sequence:
+  - alias: Vorherigen Stand auf aktuellen Warmwasser-Zählerstand setzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.wasser_warm_stand_vorherig
+    data:
+      value: '{{ states("input_number.wasser_warm_zaehlerstand") | float(0) }}'
+  - alias: Zeitpunkt der Ablesung speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wasser_warm_letzte_ablesung
+    data:
+      datetime: '{{ now().strftime("%Y-%m-%d %H:%M:%S") }}'
+  - alias: Logbuch-Eintrag Warmwasser
+    action: logbook.log
+    data:
+      name: 🔴 Warmwasser Ablesung
+      message: 'Stand: {{ states("input_number.wasser_warm_zaehlerstand") }} m³ |
+        Verbrauch seit letzter Ablesung: {{ (states("input_number.wasser_warm_zaehlerstand")
+        | float(0) - states("input_number.wasser_warm_stand_vorherig") | float(0))
+        | round(3) }} m³ | Kosten: {{ ((states("input_number.wasser_warm_zaehlerstand")
+        | float(0) - states("input_number.wasser_warm_stand_vorherig") | float(0))
+        * states("input_number.wasserpreis_warm_pro_m3") | float(8.5)) | round(2)
+        }} €'
+      entity_id: input_number.wasser_warm_zaehlerstand
+the_frame_55_ein_und_art_mode:
+  alias: The Frame (55) – Einschalten und Art Mode
+  description: Schaltet den 55er The Frame ein und setzt ihn robust in den Art Mode.
+  mode: single
+  sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.samsung_the_frame_55_thf
+        state: 'off'
+      sequence:
+      - alias: Erster Einschaltversuch
+        action: media_player.turn_on
+        target:
+          entity_id: media_player.samsung_the_frame_55_thf
+      - alias: Auf TV-Start warten (20s)
+        wait_template: '{{ not is_state(''media_player.samsung_the_frame_55_thf'',
+          ''off'') }}'
+        timeout: 00:00:20
+        continue_on_timeout: true
+      - alias: Zweiter Versuch falls noch aus
+        choose:
+        - conditions:
+          - condition: state
+            entity_id: media_player.samsung_the_frame_55_thf
+            state: 'off'
+          sequence:
+          - action: media_player.turn_on
+            target:
+              entity_id: media_player.samsung_the_frame_55_thf
+          - wait_template: '{{ not is_state(''media_player.samsung_the_frame_55_thf'',
+              ''off'') }}'
+            timeout: 00:00:20
+            continue_on_timeout: true
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.samsung_the_frame_55_thf
+      state: 'off'
+  - alias: Stabilisierungszeit
+    delay:
+      seconds: 5
+  - alias: Art Mode Versuch 1
+    action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.samsung_the_frame_55_thf
+  - delay:
+      seconds: 5
+  - alias: Art Mode Versuch 2 (Absicherung)
+    action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.samsung_the_frame_55_thf
+  - delay:
+      seconds: 5
+  - alias: Art Mode Versuch 3 (letzter Fallback)
+    action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.samsung_the_frame_55_thf
+the_frame_32_ein_und_art_mode:
+  alias: The Frame (32) – Einschalten und Art Mode
+  description: Schaltet den 32er The Frame ein und setzt ihn robust in den Art Mode.
+  mode: single
+  sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.the_frame_32_2
+        state: 'off'
+      sequence:
+      - alias: Erster Einschaltversuch
+        action: media_player.turn_on
+        target:
+          entity_id: media_player.the_frame_32_2
+      - alias: Auf TV-Start warten (20s)
+        wait_template: '{{ not is_state(''media_player.the_frame_32_2'', ''off'')
+          }}'
+        timeout: 00:00:20
+        continue_on_timeout: true
+      - alias: Zweiter Versuch falls noch aus
+        choose:
+        - conditions:
+          - condition: state
+            entity_id: media_player.the_frame_32_2
+            state: 'off'
+          sequence:
+          - action: media_player.turn_on
+            target:
+              entity_id: media_player.the_frame_32_2
+          - wait_template: '{{ not is_state(''media_player.the_frame_32_2'', ''off'')
+              }}'
+            timeout: 00:00:20
+            continue_on_timeout: true
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.the_frame_32_2
+      state: 'off'
+  - alias: Stabilisierungszeit
+    delay:
+      seconds: 5
+  - alias: Art Mode Versuch 1
+    action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.the_frame_32_2
+  - delay:
+      seconds: 5
+  - alias: Art Mode Versuch 2 (Absicherung)
+    action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.the_frame_32_2
+  - delay:
+      seconds: 5
+  - alias: Art Mode Versuch 3 (letzter Fallback)
+    action: samsungtv_smart.set_art_mode
+    data:
+      entity_id: media_player.the_frame_32_2
+hue_lightstrip_grun_pulsieren_1_minute:
+  alias: Hue Lightstrip – Grün pulsieren 1 Minute
+  mode: single
+  sequence:
+  - alias: Aktuellen Zustand sichern
+    action: scene.create
+    data:
+      scene_id: hue_lightstrip_1_vor_pulsieren
+      snapshot_entities:
+      - light.hue_lightstrip_1
+  - alias: Lightstrip einschalten und auf Grün setzen
+    action: light.turn_on
+    target:
+      entity_id: light.hue_lightstrip_1
+    data:
+      rgb_color:
+      - 0
+      - 255
+      - 0
+      brightness_pct: 15
+      transition: 0.5
+  - delay:
+      milliseconds: 600
+  - alias: 1 Minute grün pulsieren
+    repeat:
+      count: 15
+      sequence:
+      - alias: Hochdimmen
+        action: light.turn_on
+        target:
+          entity_id: light.hue_lightstrip_1
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness_pct: 100
+          transition: 1
+      - delay:
+          seconds: 1
+      - alias: Runterdimmen
+        action: light.turn_on
+        target:
+          entity_id: light.hue_lightstrip_1
+        data:
+          rgb_color:
+          - 0
+          - 255
+          - 0
+          brightness_pct: 15
+          transition: 1
+      - delay:
+          seconds: 1
+  - alias: Vorherigen Zustand wiederherstellen
+    action: scene.turn_on
+    target:
+      entity_id: scene.hue_lightstrip_1_vor_pulsieren
+    data:
+      transition: 1
+  description: ''
+mac_mini_aufwecken:
+  alias: Mac mini aufwecken
+  icon: mdi:desktop-tower
+  sequence:
+  - action: wake_on_lan.send_magic_packet
+    data:
+      mac: d0:11:e5:ee:53:e5
+  mode: single
+buro_einschalten:
+  alias: Büro einschalten
+  icon: mdi:desktop-tower-monitor
+  sequence:
+  - action: wake_on_lan.send_magic_packet
+    data:
+      mac: d0:11:e5:ee:53:e5
+      broadcast_address: 192.168.178.255
+  - delay:
+      seconds: 30
+  - action: media_player.turn_on
+    target:
+      entity_id: media_player.49_odyssey_oled_g9_2
+  mode: single
+wasser_csv_log:
+  alias: 'Wasser: Statistik-Log schreiben'
+  icon: mdi:file-table
+  sequence:
+  - alias: Persistente Benachrichtigung mit allen Details
+    action: notify.persistent_notification
+    data:
+      notification_id: wasser_ablesung_{{ now().strftime("%Y_%m") }}
+      title: 💧 Wasserablesung {{ now().strftime("%B %Y") }}
+      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n\U0001F535\
+        \ Kaltwasser (Nr. 28012348)\n  Stand: {{ states(\"input_number.wasser_kalt_zaehlerstand\"\
+        ) }} m³\n  Verbrauch: {{ (states(\"input_number.wasser_kalt_zaehlerstand\"\
+        ) | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))\
+        \ | round(3) }} m³\n  Kosten: {{ ((states(\"input_number.wasser_kalt_zaehlerstand\"\
+        ) | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))\
+        \ * 2.5) | round(2) }} €\n\n\U0001F534 Warmwasser (Nr. 28012458)\n  Stand:\
+        \ {{ states(\"input_number.wasser_warm_zaehlerstand\") }} m³\n  Verbrauch:\
+        \ {{ (states(\"input_number.wasser_warm_zaehlerstand\") | float(0) - states(\"\
+        input_number.wasser_warm_stand_vorherig\") | float(0)) | round(3) }} m³\n\
+        \  Kosten: {{ ((states(\"input_number.wasser_warm_zaehlerstand\") | float(0)\
+        \ - states(\"input_number.wasser_warm_stand_vorherig\") | float(0)) * 8.5)\
+        \ | round(2) }} €\n\n\U0001F4B6 Gesamtkosten Periode:\n  {{ (((states(\"input_number.wasser_kalt_zaehlerstand\"\
+        ) | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))\
+        \ * 2.5) + ((states(\"input_number.wasser_warm_zaehlerstand\") | float(0)\
+        \ - states(\"input_number.wasser_warm_stand_vorherig\") | float(0)) * 8.5))\
+        \ | round(2) }} €"
+heizung_ablesung_speichern:
+  alias: 'Heizung: Ablesung speichern'
+  icon: mdi:fire
+  sequence:
+  - alias: Vorherigen Stand setzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.heizung_stand_vorherig
+    data:
+      value: '{{ states("input_number.heizung_zaehlerstand") | float(0) }}'
+  - alias: Zeitpunkt speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.heizung_letzte_ablesung
+    data:
+      datetime: '{{ now().strftime("%Y-%m-%d %H:%M:%S") }}'
+  - alias: Protokoll-Eintrag
+    action: persistent_notification.create
+    data:
+      notification_id: heizung_ablesung_{{ now().strftime("%Y_%m") }}
+      title: 🔥 Heizungsablesung {{ now().strftime("%B %Y") }}
+      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n\U0001F525\
+        \ Wärmemengenzähler (Nr. 31018992)\n  Stand: {{ states(\"input_number.heizung_zaehlerstand\"\
+        ) }} kWh\n  Verbrauch: {{ (states(\"input_number.heizung_zaehlerstand\") |\
+        \ float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0)) |\
+        \ round(1) }} kWh\n  Kosten: {{ ((states(\"input_number.heizung_zaehlerstand\"\
+        ) | float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0))\
+        \ * 0.26) | round(2) }} €\n\n\U0001F4B6 Grundgebühr: {{ states(\"input_number.heizung_grundgebuehr_monatlich\"\
+        ) }} €\n\U0001F4B0 Gesamt: {{ (((states(\"input_number.heizung_zaehlerstand\"\
+        ) | float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0))\
+        \ * 0.26) + states(\"input_number.heizung_grundgebuehr_monatlich\") | float(19.54))\
+        \ | round(2) }} €"
+  - alias: Logbuch-Eintrag
+    action: logbook.log
+    data:
+      name: 🔥 Heizung Ablesung
+      message: 'Stand: {{ states("input_number.heizung_zaehlerstand") }} kWh | Verbrauch:
+        {{ (states("input_number.heizung_zaehlerstand") | float(0) - states("input_number.heizung_stand_vorherig")
+        | float(0)) | round(1) }} kWh'
+      entity_id: input_number.heizung_zaehlerstand
+  - alias: Erinnerung quittieren
+    action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.heizung_ablesung_fallig
+strom_ablesung_speichern:
+  alias: 'Strom: Ablesung speichern'
+  icon: mdi:lightning-bolt
+  sequence:
+  - alias: Aktuellen Stand als letzte Ablesung setzen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.strom_zaehlerstand_letzte_ablesung_kwh
+    data:
+      value: '{{ states("input_number.strom_zaehlerstand_aktuell_kwh") | float(0)
+        }}'
+  - alias: Datum setzen
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.strom_letzte_ablesung_datum
+    data:
+      datetime: '{{ now().strftime("%Y-%m-%d %H:%M:%S") }}'
+  - alias: Protokoll-Eintrag
+    action: persistent_notification.create
+    data:
+      notification_id: strom_ablesung_{{ now().strftime("%Y") }}
+      title: ⚡ Stromablesung {{ now().strftime("%Y") }}
+      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n⚡ Stromzähler\
+        \ (Nr. 1ESY1162989798)\n  Stand: {{ states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
+        ) }} kWh\n  Verbrauch seit letzter Ablesung: {{ (states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
+        ) | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\"\
+        ) | float(0)) | round(1) }} kWh\n  Energiekosten: {{ ((states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
+        ) | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\"\
+        ) | float(0)) * 0.4871) | round(2) }} €\n  Grundpreis Jahr: {{ states(\"sensor.strom_grundpreis_brutto_pro_jahr\"\
+        ) }} €\n\n\U0001F4B0 Gesamtkosten Jahr: {{ (((states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
+        ) | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\"\
+        ) | float(0)) * 0.4871) + states(\"sensor.strom_grundpreis_brutto_pro_jahr\"\
+        ) | float(217)) | round(2) }} €\n\U0001F4B6 Abschläge bezahlt: {{ states(\"\
+        sensor.strom_abrechnung_abschlag_bisher\") }} €"
+  - alias: Logbuch-Eintrag
+    action: logbook.log
+    data:
+      name: ⚡ Strom Ablesung
+      message: 'Stand: {{ states("input_number.strom_zaehlerstand_aktuell_kwh") }}
+        kWh | Verbrauch: {{ (states("input_number.strom_zaehlerstand_aktuell_kwh")
+        | float(0) - states("input_number.strom_zaehlerstand_letzte_ablesung_kwh")
+        | float(0)) | round(1) }} kWh'
+      entity_id: input_number.strom_zaehlerstand_aktuell_kwh
+  - alias: Erinnerung quittieren
+    action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.strom_ablesung_fallig
+spulmaschine_neue_packung:
+  alias: 'Spülmaschine: Neue Packung gekauft'
+  icon: mdi:package-variant
+  mode: single
+  sequence:
+  - alias: Tabs um Packungsgröße erhöhen
+    action: input_number.set_value
+    target:
+      entity_id: input_number.spulmaschine_tabs
+    data:
+      value: '{{ (states("input_number.spulmaschine_tabs") | int(0)) + (states("input_number.spulmaschine_tabs_pro_packung")
+        | int(0)) }}'
+  description: ''
+spulmaschine_tab_verbraucht:
+  alias: 'Spülmaschine: Tab verbraucht'
+  icon: mdi:minus-circle
+  mode: single
+  sequence:
+  - alias: Tabs um 1 verringern (nicht unter 0)
+    action: input_number.set_value
+    target:
+      entity_id: input_number.spulmaschine_tabs
+    data:
+      value: '{{ [(states("input_number.spulmaschine_tabs") | int(0)) - 1, 0] | max
+        }}'
+  description: ''
+'1779715354354':
+  alias: Blumen gießen
+  sequence:
+  - metadata: {}
+    data:
+      date: '{{ (as_timestamp(now()) | as_datetime).date() + timedelta(days = 4) }}'
+    target:
+      entity_id: input_datetime.blumen_giessen
+    action: input_datetime.set_datetime
+  mode: single
+  icon: mdi:flower
+master_notifytest:
+  alias: Master Notifytest
+  use_blueprint:
+    path: FourtyNos/Master_Notify.yaml
+    input:
+      user_group_admins:
+      - d3b47930437b9f07067a55fd3926ed49
+      alexa_group_devices:
+      - notify.karolinas_echo_show_sprechen
+      tts_provider: tts.home_assistant_cloud
+      tts_group_devices:
+      - media_player.kuche
+  description: Zentrales Skript zum Senden von Benachrichtigungen über verschiedene
+    Kanäle wie Benutzergruppen, Alexa-Geräte und Text-to-Speech.
+master_notify_v1_2_0_4:
+  alias: Master Notify (V1.2.0)
+  use_blueprint:
+    path: FourtyNos/Master_Notify.yaml
+    input:
+      user_group_admins:
+      - d3b47930437b9f07067a55fd3926ed49
+      - 7138318b7e3d5c184361e490ed40930d
+      - 201c89f20eb577787e1bd5eabc4e05cf
+  description: ''
+niimbot_inventar_labels_drucken:
+  alias: 🖨️ Inventar Labels drucken
+  icon: mdi:label
+  description: 'Druckt Inventar-Labels: Ausbuchen + alle Lagerorte'
+  mode: queued
+  max: 10
+  fields:
+    label:
+      name: Label
+      description: Welches Label drucken?
+      required: true
+      selector:
+        select:
+          options:
+          - Ausbuchen
+          - Vorratskammer
+          - Kühlschrank
+          - Gefrierschrank
+          - Schrank
+          - Sonstiges
+          - Alle
+    preview:
+      name: Vorschau
+      description: Nur Vorschau ohne Druck
+      default: false
+      selector:
+        boolean: {}
+  sequence:
+  - variables:
+      label_map:
+        Ausbuchen:
+          code: '2900000099999'
+          icon: trash-can
+          name: AUSBUCHEN
+        Vorratskammer:
+          code: '2900000000018'
+          icon: cupboard
+          name: VORRATSKAMMER
+        Kühlschrank:
+          code: '2900000000025'
+          icon: fridge
+          name: KÜHLSCHRANK
+        Gefrierschrank:
+          code: '2900000000032'
+          icon: fridge-industrial
+          name: GEFRIERSCHRANK
+        Schrank:
+          code: '2900000000049'
+          icon: wardrobe
+          name: SCHRANK
+        Sonstiges:
+          code: '2900000000056'
+          icon: package-variant
+          name: SONSTIGES
+      to_print: '{{ [label] if label != ''Alle'' else [''Ausbuchen'',''Vorratskammer'',''Kühlschrank'',''Gefrierschrank'',''Schrank'',''Sonstiges'']
+        }}'
+  - repeat:
+      for_each: '{{ to_print }}'
+      sequence:
+      - alias: Warten bis Niimbot verbunden
+        wait_template: '{{ is_state(''binary_sensor.niimbot_b0b555_connection'', ''on'')
+          }}'
+        timeout: 00:02:00
+        continue_on_timeout: false
+      - alias: Kurz warten nach Verbindung
+        delay:
+          seconds: 2
+      - action: niimbot.print
+        target:
+          device_id: 80f37c115038fb0ddd49c3a2da00d51c
+        data:
+          width: 400
+          height: 240
+          density: 3
+          preview: '{{ preview | default(false) }}'
+          payload:
+          - type: qrcode
+            data: '{{ label_map[repeat.item][''code''] }}'
+            eclevel: m
+            x: 5
+            y: 5
+            boxsize: 5
+            border: 1
+          - type: text
+            value: '{{ label_map[repeat.item][''name''] }}'
+            x: 160
+            y: 20
+            size: 32
+            width: 230
+            height: 50
+            anchor: lt
+            align: left
+          - type: line
+            x: 160
+            y: 85
+            x2: 395
+            y2: 85
+            width: 2
+          - type: icon
+            value: '{{ label_map[repeat.item][''icon''] }}'
+            x: 220
+            y: 100
+            size: 70
+          - type: text
+            value: '{{ label_map[repeat.item][''code''] }}'
+            x: 160
+            y: 215
+            size: 16
+            width: 230
+            height: 25
+            anchor: lt
+            align: left
+      - alias: Warten bis Druck fertig
+        wait_template: '{{ not is_state_attr(''sensor.niimbot_b0b555_print_duration'',
+          ''is_printing'', true) }}'
+        timeout: 00:02:00
+        continue_on_timeout: true
+      - alias: Pause zwischen Labels
+        delay:
+          seconds: 8
+niimbot_custom_label_drucken:
+  alias: 🖨️ Custom Label drucken
+  icon: mdi:label-outline
+  description: Druckt ein individuelles Label mit Name, Untertitel und Datum
+  mode: queued
+  max: 10
+  fields:
+    name:
+      name: Name
+      description: Produktname (z.B. Marmelade)
+      required: true
+      selector:
+        text: {}
+    untertitel:
+      name: Untertitel
+      description: Beschreibung (z.B. selbstgemacht)
+      default: ''
+      selector:
+        text: {}
+    datum:
+      name: Datum
+      description: Datum auf Label (leer = heute)
+      default: ''
+      selector:
+        text: {}
+    anzahl:
+      name: Anzahl
+      description: Wie viele Labels drucken?
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+          step: 1
+    preview:
+      name: Vorschau
+      description: Nur Vorschau ohne Druck
+      default: false
+      selector:
+        boolean: {}
+  sequence:
+  - variables:
+      druck_datum: '{{ datum if datum != '''' else now().strftime(''%d.%m.%Y'') }}'
+      hat_untertitel: '{{ untertitel | default('''') != '''' }}'
+  - repeat:
+      count: '{{ anzahl | default(1) }}'
+      sequence:
+      - action: niimbot.print
+        target:
+          device_id: 80f37c115038fb0ddd49c3a2da00d51c
+        data:
+          width: 400
+          height: 180
+          density: 3
+          preview: '{{ preview | default(false) }}'
+          payload:
+          - type: text
+            value: '{{ name }}'
+            x: 10
+            y: 10
+            size: 40
+            width: 380
+            height: 60
+            anchor: lt
+            align: left
+          - type: text
+            value: '{{ untertitel | default('''') }}'
+            x: 10
+            y: 72
+            size: 28
+            width: 380
+            height: 40
+            anchor: lt
+            align: left
+          - type: line
+            x: 0
+            y: 122
+            x2: 400
+            y2: 122
+            width: 2
+          - type: text
+            value: '{{ druck_datum }}'
+            x: 10
+            y: 132
+            size: 28
+            width: 200
+            height: 40
+            anchor: lt
+            align: left
+      - delay:
+          seconds: 3
+einkaufsliste_telegram:
+  alias: Einkaufsliste an Telegram senden
+  icon: mdi:cart-arrow-up
+  mode: single
+  sequence:
+  - action: todo.get_items
+    target:
+      entity_id: todo.einkaufsliste_2
+    data:
+      status: needs_action
+    response_variable: liste
+  - action: telegram_bot.send_message
+    data:
+      target: 988178587
+      parse_mode: html
+      message: '{% set items = liste[''todo.einkaufsliste_2''][''items''] | default([])
+        %}
+
+        🛒 <b>Einkaufsliste</b> ({{ items | length }} Artikel) — {{ now().strftime(''%d.%m.%Y
+        %H:%M'') }}
+
+        {% if items | length == 0 %}
+
+        ✅ Einkaufsliste ist leer.
+
+        {% else %}
+
+        {% for item in items %}• {{ item.summary.split('' | '')[0] | replace('' nachkaufen'','''')
+        | trim }}
+
+        {% endfor %}{% endif %}
+
+        '
+bestandsliste_senden:
+  alias: Bestandsliste an Telegram senden
+  icon: mdi:package-variant-closed
+  mode: single
+  sequence:
+  - action: todo.get_items
+    target:
+      entity_id: todo.inventar_vorratskammer
+    data:
+      status: needs_action
+    response_variable: r_vorrat
+  - action: todo.get_items
+    target:
+      entity_id: todo.inventar_kuehlschrank
+    data:
+      status: needs_action
+    response_variable: r_kuehl
+  - action: todo.get_items
+    target:
+      entity_id: todo.inventar_gefrierschrank
+    data:
+      status: needs_action
+    response_variable: r_gefrier
+  - action: todo.get_items
+    target:
+      entity_id: todo.inventar_schrank
+    data:
+      status: needs_action
+    response_variable: r_schrank
+  - action: todo.get_items
+    target:
+      entity_id: todo.inventar_sonstiges
+    data:
+      status: needs_action
+    response_variable: r_sonstiges
+  - action: telegram_bot.send_message
+    data:
+      target: 988178587
+      parse_mode: html
+      message: '{% set v = r_vorrat[''todo.inventar_vorratskammer''][''items''] |
+        default([]) %}
+
+        {% set k = r_kuehl[''todo.inventar_kuehlschrank''][''items''] | default([])
+        %}
+
+        {% set g = r_gefrier[''todo.inventar_gefrierschrank''][''items''] | default([])
+        %}
+
+        {% set sc = r_schrank[''todo.inventar_schrank''][''items''] | default([])
+        %}
+
+        {% set o = r_sonstiges[''todo.inventar_sonstiges''][''items''] | default([])
+        %}
+
+        📦 <b>Inventar-Bestandsliste</b> — {{ now().strftime(''%d.%m.%Y %H:%M'') }}
+
+
+        🥫 <b>Vorratskammer</b> ({{ v | length }})
+
+        {% for item in v %}• {{ item.summary.split('' | '')[0] | trim }}
+
+        {% else %}– leer –
+
+        {% endfor %}
+
+        🧊 <b>Kühlschrank</b> ({{ k | length }})
+
+        {% for item in k %}• {{ item.summary.split('' | '')[0] | trim }}
+
+        {% else %}– leer –
+
+        {% endfor %}
+
+        ❄️ <b>Gefrierschrank</b> ({{ g | length }})
+
+        {% for item in g %}• {{ item.summary.split('' | '')[0] | trim }}
+
+        {% else %}– leer –
+
+        {% endfor %}
+
+        🚪 <b>Schrank</b> ({{ sc | length }})
+
+        {% for item in sc %}• {{ item.summary.split('' | '')[0] | trim }}
+
+        {% else %}– leer –
+
+        {% endfor %}
+
+        📦 <b>Sonstiges</b> ({{ o | length }})
+
+        {% for item in o %}• {{ item.summary.split('' | '')[0] | trim }}
+
+        {% else %}– leer –
+
+        {% endfor %}'
