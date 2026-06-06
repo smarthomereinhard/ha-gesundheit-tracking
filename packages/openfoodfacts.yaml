@@ -18,6 +18,11 @@ input_text:
     name: Kategorie (manuell)
     icon: mdi:shape
     max: 50
+  off_inventar_bestand:
+    name: Inventar Bestand aktuell
+    initial: ''
+    max: 200
+    icon: mdi:package-variant
 input_select:
   off_modus:
     name: Modus
@@ -1706,3 +1711,44 @@ automation:
     - stop: War ein Lagerort-Code, kein Umbuchen
   - action: script.off_umbuchen
   mode: single
+- id: off_bestand_lookup
+  alias: 'OFF: Bestand anzeigen bei Produktwechsel'
+  trigger:
+  - platform: state
+    entity_id: sensor.off_product_name
+    not_to:
+    - unknown
+    - unavailable
+    - none
+  condition:
+  - condition: template
+    value_template: '{{ trigger.to_state.state | lower not in [''unknown'',''unavailable'',''none'','''']
+      }}'
+  action:
+  - action: todo.get_items
+    data:
+      status: needs_action
+    response_variable: inv_items
+    target:
+      entity_id:
+      - todo.inventar_vorratskammer
+      - todo.inventar_kuehlschrank
+      - todo.inventar_gefrierschrank
+      - todo.inventar_schrank
+      - todo.inventar_sonstiges
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.off_inventar_bestand
+    data:
+      value: '{% set produkt = trigger.to_state.state | string | trim | lower %}{%
+        set ns = namespace(r='''') %}{% set listen = [  (''todo.inventar_vorratskammer'',''🥫
+        Vorratskammer''),  (''todo.inventar_kuehlschrank'',''🧊 Kühlschrank''),  (''todo.inventar_gefrierschrank'',''❄️
+        Gefrierschrank''),  (''todo.inventar_schrank'',''🚪 Schrank''),  (''todo.inventar_sonstiges'',''📦
+        Sonstiges'')] %}{% for lid, lname in listen %}{% for item in inv_items[lid][''items'']
+        | default([]) %}{% set sum = item.summary | string %}{% if produkt[:12] in
+        sum | lower %}{% set stk = sum | regex_findall(''^([0-9]+)\s+Stk'') %}{% set
+        n = stk[0] | int(0) if stk | length > 0 else ''?'' %}{% if ns.r != '''' %}{%
+        set ns.r = ns.r ~ '' · '' %}{% endif %}{% set ns.r = ns.r ~ lname ~ '': ''
+        ~ n ~ '' Stk.'' %}{% endif %}{% endfor %}{% endfor %}{{ ns.r if ns.r != ''''
+        else ''Nicht im Inventar'' }}'
+  mode: restart
