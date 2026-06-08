@@ -23,7 +23,7 @@
   - parallel:
     - alias: Benachrichtigung an Andreas
       data:
-        title: 🚪 Haustüre
+        title: "\U0001F6AA Haustüre"
         message: '{% if trigger.id == ''door_opened'' %}Geöffnet{% else %}Geschlossen{%
           endif %}
 
@@ -31,7 +31,7 @@
       action: notify.mobile_app_andreas_iphone_15pro_max
     - alias: Benachrichtigung an Karo
       data:
-        title: 🚪 Haustüre
+        title: "\U0001F6AA Haustüre"
         message: '{% if trigger.id == ''door_opened'' %}Geöffnet{% else %}Geschlossen{%
           endif %}
 
@@ -42,9 +42,9 @@
       data:
         chat_id: 988178587
         parse_mode: html
-        message: "{% if trigger.id == 'door_opened' %}\n  \U0001F6AA Haustüre wurde\
-          \ geöffnet\n{% else %}\n  \U0001F6AA Haustüre wurde geschlossen\n{% endif\
-          \ %}\n"
+        message: "{% if trigger.id == 'door_opened' %}\n  \U0001F6AA Haustüre wurde
+          geöffnet\n{% else %}\n  \U0001F6AA Haustüre wurde geschlossen\n{% endif
+          %}\n"
   - if:
     - condition: trigger
       id: door_opened
@@ -995,6 +995,7 @@
     alias: Fenster geschlossen
     entity_id: binary_sensor.ikea_sensor_7_tur
     to: 'off'
+    for: 00:00:05
     trigger: state
   conditions: []
   actions:
@@ -1006,11 +1007,11 @@
       - parallel:
         - action: notify.mobile_app_andreas_iphone_15pro_max
           data:
-            title: 🪟 Schlafzimmer
+            title: "\U0001FA9F Schlafzimmer"
             message: Das Fenster ist jetzt geschlossen.
         - action: notify.mobile_app_karo_iphone
           data:
-            title: 🪟 Schlafzimmer
+            title: "\U0001FA9F Schlafzimmer"
             message: Das Fenster ist jetzt geschlossen.
     - conditions:
       - condition: trigger
@@ -1025,17 +1026,17 @@
           - parallel:
             - action: notify.mobile_app_andreas_iphone_15pro_max
               data:
-                title: 🪟 Schlafzimmer
+                title: "\U0001FA9F Schlafzimmer"
                 message: Das Schlafzimmer Fenster ist noch offen
             - action: notify.mobile_app_karo_iphone
               data:
-                title: 🪟 Schlafzimmer
+                title: "\U0001FA9F Schlafzimmer"
                 message: Das Schlafzimmer Fenster ist noch offen
             - action: telegram_bot.send_message
               data:
                 chat_id: 988178587
                 parse_mode: html
-                message: 🪟 Das Schlafzimmer Fenster ist noch offen
+                message: "\U0001FA9F Das Schlafzimmer Fenster ist noch offen"
           - delay: 00:05:00
   mode: restart
 - id: '1738836091116'
@@ -1055,9 +1056,8 @@
   - alias: Küche aus – nur wenn nicht manuell eingeschaltet
     if:
     - condition: template
-      value_template: "{{ state_attr('light.deckenlampe_kuche', 'context') is none\n\
-        \   or state_attr('light.deckenlampe_kuche', 'context').parent_id is none\
-        \ }}"
+      value_template: "{{ state_attr('light.deckenlampe_kuche', 'context') is none\n
+        \  or state_attr('light.deckenlampe_kuche', 'context').parent_id is none }}"
     then:
     - action: light.turn_off
       target:
@@ -1070,8 +1070,8 @@
   - alias: Deckenlampe aus – nur wenn nicht manuell eingeschaltet
     if:
     - condition: template
-      value_template: "{{ state_attr('light.deckenlampe', 'context') is none\n   or\
-        \ state_attr('light.deckenlampe', 'context').parent_id is none }}"
+      value_template: "{{ state_attr('light.deckenlampe', 'context') is none\n   or
+        state_attr('light.deckenlampe', 'context').parent_id is none }}"
     then:
     - action: light.turn_off
       target:
@@ -1297,10 +1297,17 @@
       entity_id: input_number.waschmaschine_start_kwh
     data:
       value: '{{ states("sensor.waschmaschine_switch_0_energy") | float(0) }}'
+  - alias: Startzeitpunkt speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.waschmaschine_startzeit
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
   mode: single
 - id: waschmaschine_fertig_telegram
   alias: Waschmaschine – Fertig Telegram
   description: Meldet das Ende des Waschgangs inklusive Verbrauch und Stromkosten.
+    Erkennt auch Zyklen die während eines HA-Neustarts liefen.
   triggers:
   - alias: Ende erkennen
     trigger: numeric_state
@@ -1308,6 +1315,11 @@
     below: 2
     for:
       minutes: 8
+    id: normal
+  - alias: Nach HA-Neustart prüfen
+    trigger: homeassistant
+    event: start
+    id: neustart
   conditions:
   - alias: Automationen aktiv
     condition: state
@@ -1322,6 +1334,17 @@
     value_template: '{{ (states(''sensor.waschmaschine_switch_0_energy'') | float(0)
       - states(''input_number.waschmaschine_start_kwh'') | float(0)) > 0.02 }}'
   actions:
+  - alias: 'Bei HA-Neustart: 3 Minuten warten bis Sensoren stabil'
+    if:
+    - condition: trigger
+      id: neustart
+    then:
+    - delay:
+        minutes: 3
+  - alias: Leistung muss unter 2W sein (Maschine wirklich fertig)
+    condition: numeric_state
+    entity_id: sensor.waschmaschine
+    below: 2
   - alias: Variablen berechnen
     variables:
       start_kwh: '{{ states(''input_number.waschmaschine_start_kwh'') | float(0) }}'
@@ -1337,6 +1360,9 @@
       stromkosten_eur: '{{ ([states(''sensor.waschmaschine_switch_0_energy'') | float(0)
         - states(''input_number.waschmaschine_start_kwh'') | float(0), 0] | max *
         (strompreis_eur_kwh | float(0))) | round(3) }}'
+      laufzeit_min: '{% set start_ts = as_timestamp(states(''input_datetime.waschmaschine_startzeit''),
+        none) %}{% if start_ts is not none %}{{ ((now().timestamp() - start_ts) /
+        60) | round(0) | int }}{% else %}0{% endif %}'
   - alias: Start-Zählerstand sofort zurücksetzen
     action: input_number.set_value
     target:
@@ -1354,23 +1380,23 @@
     - alias: Push an Andreas
       action: notify.mobile_app_andreas_iphone_15pro_max
       data:
-        title: 🧺 Waschmaschine
-        message: 'Fertig! Verbrauch: {{ verbrauch_kwh }} kWh · Strompreis: {{ strompreis_ct
-          }} ct/kWh · Kosten: {{ stromkosten_eur }} €'
+        title: "\U0001F9FA Waschmaschine"
+        message: "⏱ {{ laufzeit_min }} min · ⚡ {{ verbrauch_kwh }} kWh · \U0001F4B6
+          {{ stromkosten_eur }} €"
     - alias: Push an Karo
       action: notify.karo_iphone
       data:
-        title: 🧺 Waschmaschine
-        message: 'Fertig! Verbrauch: {{ verbrauch_kwh }} kWh · Strompreis: {{ strompreis_ct
-          }} ct/kWh · Kosten: {{ stromkosten_eur }} €'
+        title: "\U0001F9FA Waschmaschine"
+        message: "⏱ {{ laufzeit_min }} min · ⚡ {{ verbrauch_kwh }} kWh · \U0001F4B6
+          {{ stromkosten_eur }} €"
     - alias: Telegram an Andreas
       action: telegram_bot.send_message
       data:
         chat_id: 988178587
         parse_mode: html
-        message: '🧺 <b>Waschmaschine fertig!</b> ⚡ Verbrauch: {{ verbrauch_kwh }}
-          kWh 💡 Strompreis: {{ strompreis_ct }} ct/kWh 💶 Stromkosten: {{ stromkosten_eur
-          }} €'
+        message: "\U0001F9FA <b>Waschmaschine fertig!</b>\n⏱ Laufzeit: {{ laufzeit_min
+          }} min\n⚡ Verbrauch: {{ verbrauch_kwh }} kWh\n\U0001F4A1 Strompreis: {{
+          strompreis_ct }} ct/kWh\n\U0001F4B6 Stromkosten: {{ stromkosten_eur }} €"
     - alias: Sonos TTS
       if:
       - condition: state
@@ -1383,8 +1409,9 @@
         data:
           cache: false
           media_player_entity_id: media_player.sonos_all
-          message: 'Sir, die Waschmaschine ist fertig. Verbrauch: {{ verbrauch_kwh
-            }} Kilowattstunden, Stromkosten: {{ stromkosten_eur }} Euro.'
+          message: 'Sir, die Waschmaschine ist fertig. Laufzeit: {{ laufzeit_min }}
+            Minuten, Verbrauch: {{ verbrauch_kwh }} Kilowattstunden, Stromkosten:
+            {{ stromkosten_eur }} Euro.'
           language: de-DE
     - alias: Lichter blinken
       repeat:
@@ -1405,6 +1432,23 @@
           then:
           - delay:
               seconds: 5
+    - alias: Browser Navigation & Popup
+      sequence:
+      - action: browser_mod.navigate
+        data:
+          path: /wasch-kueche
+      - delay:
+          seconds: 1
+      - action: browser_mod.popup
+        data:
+          title: "\U0001F9FA Waschmaschine fertig!"
+          content:
+            type: markdown
+            content: "⏱ **Laufzeit:** {{ laufzeit_min }} min\n\n⚡ **Verbrauch:** {{
+              verbrauch_kwh }} kWh\n\n\U0001F4B6 **Stromkosten:** {{ stromkosten_eur
+              }} €"
+          right_button: OK
+          dismissable: true
   - alias: Schränke 2 Minuten grün pulsieren
     repeat:
       count: 24
@@ -1471,11 +1515,17 @@
     data:
       value: '{{ states("sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy") | float(0)
         }}'
+  - alias: Startzeitpunkt speichern
+    action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.spulmaschine_startzeit
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
   mode: single
 - id: spuelmaschine_fertig_2
   alias: Spülmaschine – Fertig
   description: Meldet das Ende des Spülgangs und lässt das Unterschrank-Licht 2 Minuten
-    grün pulsieren.
+    grün pulsieren. Erkennt auch Zyklen die während eines HA-Neustarts liefen.
   triggers:
   - alias: Ende erkennen
     trigger: numeric_state
@@ -1483,6 +1533,11 @@
     below: 2
     for:
       minutes: 8
+    id: normal
+  - alias: Nach HA-Neustart prüfen
+    trigger: homeassistant
+    event: start
+    id: neustart
   conditions:
   - alias: Automationen aktiv
     condition: state
@@ -1498,6 +1553,17 @@
       | float(0) - states(''input_number.spuelmaschine_start_kwh'') | float(0)) >
       0.02 }}'
   actions:
+  - alias: 'Bei HA-Neustart: 3 Minuten warten bis Sensoren stabil'
+    if:
+    - condition: trigger
+      id: neustart
+    then:
+    - delay:
+        minutes: 3
+  - alias: Leistung muss unter 2W sein (Maschine wirklich fertig)
+    condition: numeric_state
+    entity_id: sensor.shellyplugsg3_8cbfea9829f4_switch_0_power
+    below: 2
   - alias: Variablen berechnen
     variables:
       verbrauch_kwh: '{{ [states(''sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy'')
@@ -1511,9 +1577,9 @@
       stromkosten_eur: '{{ ([states(''sensor.shellyplugsg3_8cbfea9829f4_switch_0_energy'')
         | float(0) - states(''input_number.spuelmaschine_start_kwh'') | float(0),
         0] | max * (strompreis_eur_kwh | float(0))) | round(3) }}'
-      laufzeit_min: '{% set start = as_datetime(states(''input_datetime.spuelmaschine_start_zeit''))
-        %}{% if start is not none %}{{ ((now() - start).total_seconds() / 60) | round(0)
-        | int }}{% else %}0{% endif %}'
+      laufzeit_min: '{% set start_ts = as_timestamp(states(''input_datetime.spulmaschine_startzeit''),
+        none) %}{% if start_ts is not none %}{{ ((now().timestamp() - start_ts) /
+        60) | round(0) | int }}{% else %}0{% endif %}'
       tabs_verbleibend: '{{ [(states(''input_number.spulmaschine_tabs'') | int(0))
         - 1, 0] | max }}'
       vol_wohnzimmer: '{{ state_attr(''media_player.wohnzimmer'', ''volume_level'')
@@ -1539,31 +1605,24 @@
     - alias: Push an Andreas
       action: notify.mobile_app_andreas_iphone_15pro_max
       data:
-        title: 🍽️ Spülmaschine fertig
-        message: ⏱ {{ laufzeit_min }} min · ⚡ {{ verbrauch_kwh }} kWh · 💶 {{ stromkosten_eur
-          }} € · 🧼 {{ tabs_verbleibend }} Tabs übrig
+        title: "\U0001F37D️ Spülmaschine fertig"
+        message: "⏱ {{ laufzeit_min }} min · ⚡ {{ verbrauch_kwh }} kWh · \U0001F4B6
+          {{ stromkosten_eur }} € · \U0001F9F4 {{ tabs_verbleibend }} Tabs übrig"
     - alias: Push an Karo
       action: notify.karo_iphone
       data:
-        title: 🍽️ Spülmaschine fertig
-        message: ⏱ {{ laufzeit_min }} min · ⚡ {{ verbrauch_kwh }} kWh · 💶 {{ stromkosten_eur
-          }} € · 🧼 {{ tabs_verbleibend }} Tabs übrig
+        title: "\U0001F37D️ Spülmaschine fertig"
+        message: "⏱ {{ laufzeit_min }} min · ⚡ {{ verbrauch_kwh }} kWh · \U0001F4B6
+          {{ stromkosten_eur }} € · \U0001F9F4 {{ tabs_verbleibend }} Tabs übrig"
     - alias: Telegram an Andreas
       action: telegram_bot.send_message
       data:
         chat_id: 988178587
         parse_mode: html
-        message: '🍽️ <b>Spülmaschine fertig!</b>
-
-          ⏱ Laufzeit: {{ laufzeit_min }} min
-
-          ⚡ Verbrauch: {{ verbrauch_kwh }} kWh
-
-          💡 Strompreis: {{ strompreis_ct }} ct/kWh
-
-          💶 Stromkosten: {{ stromkosten_eur }} €
-
-          🧼 Tabs übrig: {{ tabs_verbleibend }}'
+        message: "\U0001F37D️ <b>Spülmaschine fertig!</b>\n⏱ Laufzeit: {{ laufzeit_min
+          }} min\n⚡ Verbrauch: {{ verbrauch_kwh }} kWh\n\U0001F4A1 Strompreis: {{
+          strompreis_ct }} ct/kWh\n\U0001F4B6 Stromkosten: {{ stromkosten_eur }} €\n\U0001F9F4
+          Tabs übrig: {{ tabs_verbleibend }}"
     - alias: Sonos TTS synchron
       if:
       - condition: state
@@ -1616,6 +1675,17 @@
         action: media_player.unjoin
         target:
           entity_id: media_player.sonos_tisch
+    - alias: Browser Popup
+      action: browser_mod.popup
+      data:
+        title: "\U0001F37D️ Spülmaschine fertig!"
+        content:
+          type: markdown
+          content: "⏱ **Laufzeit:** {{ laufzeit_min }} min\n\n⚡ **Verbrauch:** {{
+            verbrauch_kwh }} kWh\n\n\U0001F4B6 **Stromkosten:** {{ stromkosten_eur
+            }} €\n\n\U0001F9F4 **Tabs übrig:** {{ tabs_verbleibend }}"
+        right_button: OK
+        dismissable: true
   - alias: Unterschrank 2 Minuten grün pulsieren
     repeat:
       count: 24
@@ -1972,13 +2042,13 @@
   - parallel:
     - action: notify.mobile_app_andreas_iphone_15pro_max
       data:
-        title: 💧 Wasserzähler ablesen!
+        title: "\U0001F4A7 Wasserzähler ablesen!"
         message: 'Letzter Tag des Monats – bitte Kalt- und Warmwasser ablesen und
           im HA Dashboard eintragen. Kalt: {{ states(''input_number.wasser_kalt_zaehlerstand'')
           }} m³ | Warm: {{ states(''input_number.wasser_warm_zaehlerstand'') }} m³'
     - action: notify.mobile_app_karo_iphone
       data:
-        title: 💧 Wasserzähler ablesen!
+        title: "\U0001F4A7 Wasserzähler ablesen!"
         message: 'Letzter Tag des Monats – bitte Kalt- und Warmwasser ablesen und
           im HA Dashboard eintragen. Kalt: {{ states(''input_number.wasser_kalt_zaehlerstand'')
           }} m³ | Warm: {{ states(''input_number.wasser_warm_zaehlerstand'') }} m³'
@@ -1986,11 +2056,11 @@
       data:
         chat_id: 988178587
         parse_mode: markdown
-        message: '💧 *Monatliche Wasserzähler-Ablesung* ━━━━━━━━━━━━━━━━━━ Bitte heute
-          die Zählerstände ablesen und im Dashboard eintragen: 🔵 Kaltwasser Nr. 28012348  Stand:
-          {{ states(''input_number.wasser_kalt_zaehlerstand'') }} m³ 🔴 Warmwasser
-          Nr. 28012458  Stand: {{ states(''input_number.wasser_warm_zaehlerstand'')
-          }} m³ 👉 Dashboard → Wasser → Zählerstand eingeben'
+        message: "\U0001F4A7 *Monatliche Wasserzähler-Ablesung* ━━━━━━━━━━━━━━━━━━
+          Bitte heute die Zählerstände ablesen und im Dashboard eintragen: \U0001F535
+          Kaltwasser Nr. 28012348  Stand: {{ states('input_number.wasser_kalt_zaehlerstand')
+          }} m³ \U0001F534 Warmwasser Nr. 28012458  Stand: {{ states('input_number.wasser_warm_zaehlerstand')
+          }} m³ \U0001F449 Dashboard → Wasser → Zählerstand eingeben"
   mode: single
 - id: '1774999000000'
   alias: Energie – Täglicher Gerätebericht (23:00)
@@ -2009,175 +2079,98 @@
       chat_id: 988178587
       disable_notification: true
       parse_mode: markdown
-      message: '⚡ *Tagesverbrauch {{ now().strftime("%d.%m.%Y") }}*
-
-        Strompreis: {{ states("input_number.input_number_strompreis_ct") | float(0)
-        | round(2) }} ct/kWh
-
-
-        *🏠 Haus gesamt*
-
-        Verbrauch: {{ states("sensor.haus_gesamt_tag") | float(0) | round(3) }} kWh  |  Kosten:
-        {{ states("sensor.haus_gesamt_kosten_tag") | float(0) | round(2) }} €
-
-        ─────────────────
-
-        *🍽️ Küche*
-
-        {% if states("sensor.kuehlschrank_tag") | float(0) > 0 %}Kühlschrank:    {{
-        states("sensor.kuehlschrank_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.kuche_kuhlschrank_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.spuelmaschine_tag") | float(0) > 0 %}Spülmaschine:   {{
-        states("sensor.spuelmaschine_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.kuche_spulmaschine_kosten_tag_2")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.kaffeemaschine_tag") | float(0) > 0 %}Kaffeemaschine:
-        {{ states("sensor.kaffeemaschine_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.kuche_kaffeemaschine_kosten_tag_2") | float(0) | round(3) }}
-        €
-
-        {% endif %}{% if states("sensor.dunstabzugshaube_tag") | float(0) > 0 %}Dunstabzug:     {{
-        states("sensor.dunstabzugshaube_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.kuche_dunstabzugshaube_kosten_tag") | float(0) | round(3) }}
-        €
-
-        {% endif %}{% if states("sensor.unterschrank_tag") | float(0) > 0 %}Unterschrank:   {{
-        states("sensor.unterschrank_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.kuche_unterschrank_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🖥️ Büro*
-
-        {% if states("sensor.buero_schreibtisch_tag") | float(0) > 0 %}Schreibtisch
-        A: {{ states("sensor.buero_schreibtisch_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.buro_schreibtisch_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.buero_schreibtisch_karo_tag") | float(0) >
-        0 %}Schreibtisch K: {{ states("sensor.buero_schreibtisch_karo_tag") | float(0)
-        | round(3) }} kWh  |  {{ states("sensor.buro_schreibtisch_karo_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.buero_doppeldose_tag") | float(0) > 0 %}Doppeldose:     {{
-        states("sensor.buero_doppeldose_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.buro_doppeldose_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.buero_deckenlampe_tag") | float(0) > 0 %}Deckenlampe:    {{
-        states("sensor.buero_deckenlampe_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.buro_deckenlampe_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🛏️ Schlafzimmer*
-
-        {% if states("sensor.bett_tag") | float(0) > 0 %}Bett:           {{ states("sensor.bett_tag")
-        | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_bett_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.bettgestell_tag") | float(0) > 0 %}Bettgestell:    {{
-        states("sensor.bettgestell_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_bettgestell_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.nachttisch_rechts_steckdose_tag") | float(0)
-        > 0 %}Nachttisch R:   {{ states("sensor.nachttisch_rechts_steckdose_tag")
-        | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_nachttisch_rechts_steckdose_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.nachttisch_links_tag") | float(0) > 0 %}Nachttisch
-        L:   {{ states("sensor.nachttisch_links_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.schlafzimmer_nachttisch_links_kosten_tag") | float(0) | round(3)
-        }} €
-
-        {% endif %}{% if states("sensor.schraenke_tag") | float(0) > 0 %}Schränke:       {{
-        states("sensor.schraenke_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_schranke_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.schlafzimmer_deckenlampe_tag") | float(0)
-        > 0 %}Deckenlampe:    {{ states("sensor.schlafzimmer_deckenlampe_tag") | float(0)
-        | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_deckenlampe_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🛋️ Wohnzimmer*
-
-        {% if states("sensor.sonos_beam_5_1_tag") | float(0) > 0 %}Sonos Beam:     {{
-        states("sensor.sonos_beam_5_1_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_sonos_beam_5_1_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.sonos_tisch_tag") | float(0) > 0 %}Sonos Tisch:    {{
-        states("sensor.sonos_tisch_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_sonos_tisch_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.sonos_lampe_tag") | float(0) > 0 %}Sonos Lampe:    {{
-        states("sensor.sonos_lampe_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_sonos_lampe_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.stehlampe_rechts_tag") | float(0) > 0 %}Stehlampe
-        R:    {{ states("sensor.stehlampe_rechts_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.wohnzimmer_stehlampe_rechts_kosten_tag") | float(0) | round(3)
-        }} €
-
-        {% endif %}{% if states("sensor.ambilight_tag") | float(0) > 0 %}Ambilight:      {{
-        states("sensor.ambilight_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_ambilight_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🚿 Bad / Sonstiges*
-
-        {% if states("sensor.homepod_badezimmer_tag") | float(0) > 0 %}HomePod Bad:    {{
-        states("sensor.homepod_badezimmer_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.badezimmer_homepod_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.abstellkammer_tag") | float(0) > 0 %}Abstellkammer:  {{
-        states("sensor.abstellkammer_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.abstellkammer_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.wandlampe_tag") | float(0) > 0 %}Wandlampe:      {{
-        states("sensor.wandlampe_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wandlampe_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.balkon_steckdose_tag") | float(0) > 0 %}Balkon:         {{
-        states("sensor.balkon_steckdose_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.balkon_steckdose_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.futternapf_steckdose_tag") | float(0) > 0
-        %}Futternapf:     {{ states("sensor.futternapf_steckdose_tag") | float(0)
-        | round(3) }} kWh  |  {{ states("sensor.futternapf_steckdose_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🫧 Waschküche*
-
-        Waschmaschine:  {{ states("sensor.waschmaschine_tag") | float(0) | round(3)
-        }} kWh  |  {{ states("sensor.waschkuche_waschmaschine_kosten_tag") | float(0)
-        | round(3) }} €
-
-        ─────────────────
-
-        *🔧 Filter-Status*
-
-        Letzter Wechsel:  {{ as_datetime(states("input_datetime.filter_letzter_wechsel")).strftime("%d.%m.%Y")
-        }}
-
-        Nächster Wechsel: {{ as_datetime(states("input_datetime.filter_naechster_wechsel")).strftime("%d.%m.%Y")
-        }}
-
-        Fällig in: {{ states("sensor.filter_tage_bis_fallig") }} Tagen  |  Bestand:
-        {{ states("input_number.filter_bestand") | int }} Stück
-
-        ─────────────────
-
-        *🗑️ Mülltonnen*
-
-        🟢 {{ states("sensor.restmull") }}
-
-        🟡 {{ states("sensor.biomull") }}
-
-        ⬜ {{ states("sensor.glasbox") }}'
+      message: "⚡ *Tagesverbrauch {{ now().strftime(\"%d.%m.%Y\") }}*\nStrompreis:
+        {{ states(\"input_number.input_number_strompreis_ct\") | float(0) | round(2)
+        }} ct/kWh\n\n*\U0001F3E0 Haus gesamt*\nVerbrauch: {{ states(\"sensor.haus_gesamt_tag\")
+        | float(0) | round(3) }} kWh  |  Kosten: {{ states(\"sensor.haus_gesamt_kosten_tag\")
+        | float(0) | round(2) }} €\n─────────────────\n*\U0001F37D️ Küche*\n{% if
+        states(\"sensor.kuehlschrank_tag\") | float(0) > 0 %}Kühlschrank:    {{ states(\"sensor.kuehlschrank_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kuhlschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.spuelmaschine_tag\")
+        | float(0) > 0 %}Spülmaschine:   {{ states(\"sensor.spuelmaschine_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_spulmaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.kaffeemaschine_tag\")
+        | float(0) > 0 %}Kaffeemaschine: {{ states(\"sensor.kaffeemaschine_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kaffeemaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) > 0 %}Dunstabzug:     {{ states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_dunstabzugshaube_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.unterschrank_tag\")
+        | float(0) > 0 %}Unterschrank:   {{ states(\"sensor.unterschrank_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_unterschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F5A5️ Büro*\n{%
+        if states(\"sensor.buero_schreibtisch_tag\") | float(0) > 0 %}Schreibtisch
+        A: {{ states(\"sensor.buero_schreibtisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.buro_schreibtisch_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.buero_schreibtisch_karo_tag\") | float(0)
+        > 0 %}Schreibtisch K: {{ states(\"sensor.buero_schreibtisch_karo_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_schreibtisch_karo_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_doppeldose_tag\")
+        | float(0) > 0 %}Doppeldose:     {{ states(\"sensor.buero_doppeldose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_doppeldose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CF️ Schlafzimmer*\n{%
+        if states(\"sensor.bett_tag\") | float(0) > 0 %}Bett:           {{ states(\"sensor.bett_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bett_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.bettgestell_tag\")
+        | float(0) > 0 %}Bettgestell:    {{ states(\"sensor.bettgestell_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bettgestell_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) > 0 %}Nachttisch R:   {{ states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_rechts_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_links_tag\")
+        | float(0) > 0 %}Nachttisch L:   {{ states(\"sensor.nachttisch_links_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_links_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schraenke_tag\")
+        | float(0) > 0 %}Schränke:       {{ states(\"sensor.schraenke_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_schranke_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CB️ Wohnzimmer*\n{%
+        if states(\"sensor.sonos_beam_5_1_tag\") | float(0) > 0 %}Sonos Beam:     {{
+        states(\"sensor.sonos_beam_5_1_tag\") | float(0) | round(3) }} kWh  |  {{
+        states(\"sensor.wohnzimmer_sonos_beam_5_1_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.sonos_tisch_tag\") | float(0) > 0 %}Sonos
+        Tisch:    {{ states(\"sensor.sonos_tisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.wohnzimmer_sonos_tisch_kosten_tag\") | float(0) |
+        round(3) }} €\n{% endif %}{% if states(\"sensor.sonos_lampe_tag\") | float(0)
+        > 0 %}Sonos Lampe:    {{ states(\"sensor.sonos_lampe_tag\") | float(0) | round(3)
+        }} kWh  |  {{ states(\"sensor.wohnzimmer_sonos_lampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) > 0 %}Stehlampe R:    {{ states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_stehlampe_rechts_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.ambilight_tag\")
+        | float(0) > 0 %}Ambilight:      {{ states(\"sensor.ambilight_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_ambilight_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6BF Bad
+        / Sonstiges*\n{% if states(\"sensor.homepod_badezimmer_tag\") | float(0) >
+        0 %}HomePod Bad:    {{ states(\"sensor.homepod_badezimmer_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.badezimmer_homepod_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.abstellkammer_tag\")
+        | float(0) > 0 %}Abstellkammer:  {{ states(\"sensor.abstellkammer_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.abstellkammer_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.wandlampe_tag\")
+        | float(0) > 0 %}Wandlampe:      {{ states(\"sensor.wandlampe_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wandlampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.balkon_steckdose_tag\")
+        | float(0) > 0 %}Balkon:         {{ states(\"sensor.balkon_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.balkon_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) > 0 %}Futternapf:     {{ states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.futternapf_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001FAE7 Waschküche*\nWaschmaschine:
+        \ {{ states(\"sensor.waschmaschine_tag\") | float(0) | round(3) }} kWh  |
+        \ {{ states(\"sensor.waschkuche_waschmaschine_kosten_tag\") | float(0) | round(3)
+        }} €\n─────────────────\n*\U0001F527 Filter-Status*\nLetzter Wechsel:  {{
+        as_datetime(states(\"input_datetime.filter_letzter_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nNächster Wechsel: {{ as_datetime(states(\"input_datetime.filter_naechster_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nFällig in: {{ states(\"sensor.filter_tage_bis_fallig\") }} Tagen  |  Bestand:
+        {{ states(\"input_number.filter_bestand\") | int }} Stück\n─────────────────\n*\U0001F5D1️
+        Mülltonnen*\n\U0001F7E2 {{ states(\"sensor.restmull\") }}\n\U0001F7E1 {{ states(\"sensor.biomull\")
+        }}\n⬜ {{ states(\"sensor.glasbox\") }}"
   mode: single
 - id: wasser_jahresanfang_setzen
   alias: Wasser – Jahresanfang automatisch setzen
@@ -2202,12 +2195,10 @@
   - action: notify.persistent_notification
     data:
       notification_id: wasser_jahresanfang_{{ now().year }}
-      title: 🎉 Wasser Jahresanfang {{ now().year }}
-      message: 'Jahresanfangsstände gesetzt:
-
-        🔵 Kaltwasser: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³
-
-        🔴 Warmwasser: {{ states("input_number.wasser_warm_zaehlerstand") }} m³'
+      title: "\U0001F389 Wasser Jahresanfang {{ now().year }}"
+      message: "Jahresanfangsstände gesetzt:\n\U0001F535 Kaltwasser: {{ states(\"input_number.wasser_kalt_zaehlerstand\")
+        }} m³\n\U0001F534 Warmwasser: {{ states(\"input_number.wasser_warm_zaehlerstand\")
+        }} m³"
   mode: single
 - id: heizung_monatliche_ablesung_erinnerung
   alias: Heizung – Monatliche Ablesung Erinnerung
@@ -2223,7 +2214,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🔥 Wärmemengenzähler ablesen!
+      title: "\U0001F525 Wärmemengenzähler ablesen!"
       message: 'Letzter Tag des Monats – bitte Heizungszähler ablesen und eintragen.
         Aktuell: {{ states("input_number.heizung_zaehlerstand") }} kWh'
   mode: single
@@ -2245,10 +2236,9 @@
   - action: persistent_notification.create
     data:
       notification_id: heizung_jahresanfang_{{ now().year }}
-      title: 🎉 Heizung Jahresanfang {{ now().year }}
-      message: 'Jahresanfangsstand gesetzt:
-
-        🔥 Wärmemengenzähler: {{ states("input_number.heizung_zaehlerstand") }} kWh'
+      title: "\U0001F389 Heizung Jahresanfang {{ now().year }}"
+      message: "Jahresanfangsstand gesetzt:\n\U0001F525 Wärmemengenzähler: {{ states(\"input_number.heizung_zaehlerstand\")
+        }} kWh"
   mode: single
 - id: wasser_ablesung_faellig_setzen
   alias: Wasser – Ablesung fällig setzen
@@ -2266,7 +2256,7 @@
       entity_id: input_boolean.wasser_ablesung_fallig
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 💧 Wasserzähler ablesen!
+      title: "\U0001F4A7 Wasserzähler ablesen!"
       message: 'Letzter Tag des Monats – bitte Kalt- und Warmwasser ablesen und eintragen.
 
         Kalt: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³ | Warm: {{
@@ -2285,7 +2275,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 💧 Wasserzähler noch nicht abgelesen!
+      title: "\U0001F4A7 Wasserzähler noch nicht abgelesen!"
       message: 'Bitte noch Kalt- und Warmwasser ablesen und im Dashboard eintragen.
 
         Kalt: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³ | Warm: {{
@@ -2307,7 +2297,7 @@
       entity_id: input_boolean.heizung_ablesung_fallig
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🔥 Wärmemengenzähler ablesen!
+      title: "\U0001F525 Wärmemengenzähler ablesen!"
       message: 'Letzter Tag des Monats – bitte Heizungszähler ablesen und eintragen.
 
         Aktuell: {{ states("input_number.heizung_zaehlerstand") }} kWh'
@@ -2325,7 +2315,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🔥 Heizungszähler noch nicht abgelesen!
+      title: "\U0001F525 Heizungszähler noch nicht abgelesen!"
       message: 'Bitte noch den Wärmemengenzähler ablesen und im Dashboard eintragen.
 
         Aktuell: {{ states("input_number.heizung_zaehlerstand") }} kWh'
@@ -2379,9 +2369,9 @@
   conditions:
   - alias: Nur bei Wechsel von > 0 auf 0
     condition: template
-    value_template: "{{ trigger.to_state is not none\n   and (trigger.to_state.state\
-      \ | int(0)) <= 0\n   and (trigger.from_state is not none)\n   and (trigger.from_state.state\
-      \ | int(0)) > 0 }}\n"
+    value_template: "{{ trigger.to_state is not none\n   and (trigger.to_state.state
+      | int(0)) <= 0\n   and (trigger.from_state is not none)\n   and (trigger.from_state.state
+      | int(0)) > 0 }}\n"
   actions:
   - alias: Letzte Kauf-Erinnerung setzen
     action: input_datetime.set_datetime
@@ -2390,12 +2380,13 @@
     data:
       datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
   - alias: Telegram Kauf-Erinnerung
-    action: notify.telegram_bot_8004651348_988178587
+    action: telegram_bot.send_message
     data:
-      message: '🛒 Filterbestand leer. Bitte neue Filter kaufen. Aktueller Bestand:
-        {{ states(''input_number.filter_bestand'') | int(0) }}
-
-        '
+      target:
+        - 988178587
+      parse_mode: html
+      message: "\U0001F6D2 Filterbestand leer. Bitte neue Filter kaufen. Aktueller
+        Bestand: {{ states('input_number.filter_bestand') | int(0) }}\n"
   mode: single
 - id: '1774781819666'
   alias: NFC – Filter getauscht
@@ -2410,9 +2401,8 @@
     data:
       chat_id: 988178587
       parse_mode: html
-      message: '🔧 <b>Filter getauscht</b>
-
-        ✅ Filter wurde soeben per NFC-Tag als getauscht markiert.'
+      message: "\U0001F527 <b>Filter getauscht</b>\n✅ Filter wurde soeben per NFC-Tag
+        als getauscht markiert."
   mode: single
 - id: filter_einkaufsliste
   alias: Filter – Einkaufsliste wenn Bestand niedrig
@@ -2426,23 +2416,18 @@
     target:
       entity_id: todo.einkaufsliste_2
     data:
-      item: 🔧 Luftfilter nachkaufen (Bestand niedrig!)
+      item: "\U0001F527 Luftfilter nachkaufen (Bestand niedrig!)"
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🛒 Filter nachkaufen!
+      title: "\U0001F6D2 Filter nachkaufen!"
       message: Nur noch {{ states('input_number.filter_bestand') | int(0) }} Filter
         auf Lager – zur Einkaufsliste hinzugefügt!
   - action: telegram_bot.send_message
     data:
       chat_id: 988178587
       parse_mode: markdown
-      message: '🛒 *Filter nachkaufen!*
-
-
-        Nur noch {{ states(''input_number.filter_bestand'') | int(0) }} Filter auf
-        Lager.
-
-        Zur Einkaufsliste hinzugefügt ✅'
+      message: "\U0001F6D2 *Filter nachkaufen!*\n\nNur noch {{ states('input_number.filter_bestand')
+        | int(0) }} Filter auf Lager.\nZur Einkaufsliste hinzugefügt ✅"
   mode: single
 - id: ha_einkaufsliste_sync
   alias: Einkaufsliste – täglich iOS sync
@@ -2458,7 +2443,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🛒 Einkaufsliste synchronisieren
+      title: "\U0001F6D2 Einkaufsliste synchronisieren"
       message: Neue Einträge in der HA Einkaufsliste – jetzt mit iOS Erinnerungen
         sync?
       data:
@@ -2506,7 +2491,7 @@
   conditions: []
   actions:
   - data:
-      title: Lidl Einkauf 🛒
+      title: "Lidl Einkauf \U0001F6D2"
       message: Du bist bei Lidl. Tippe hier für deine Einkaufsliste!
       data:
         navigation_target: /todo-list/todo.einkaufsliste
@@ -2539,7 +2524,7 @@
     action: browser_mod.popup
   mode: single
 - id: '1779600538896'
-  alias: 🖨️ Niimbot Print
+  alias: "\U0001F5A8️ Niimbot Print"
   description: Druckt den Text aus input_text.niimbot_text
   triggers:
   - entity_id: input_text.niimbot_text
@@ -2629,6 +2614,7 @@
   - id: closed
     entity_id: binary_sensor.ikea_sensor_03_balkontur
     to: 'off'
+    for: 00:00:05
     trigger: state
   - id: sunrise_off
     trigger: sun
@@ -2673,7 +2659,7 @@
         data:
           chat_id: 988178587
           parse_mode: html
-          message: 🌿 Die Balkontür ist geschlossen
+          message: "\U0001F33F Die Balkontür ist geschlossen"
     - conditions:
       - condition: trigger
         id: open_10min
@@ -2687,17 +2673,17 @@
           - parallel:
             - action: notify.mobile_app_andreas_iphone_15pro_max
               data:
-                title: 🌿 Balkon
+                title: "\U0001F33F Balkon"
                 message: Die Balkontür ist noch offen
             - action: notify.mobile_app_karo_iphone
               data:
-                title: 🌿 Balkon
+                title: "\U0001F33F Balkon"
                 message: Die Balkontür ist noch offen
             - action: telegram_bot.send_message
               data:
                 chat_id: 988178587
                 parse_mode: html
-                message: 🌿 Die Balkontür ist noch offen
+                message: "\U0001F33F Die Balkontür ist noch offen"
           - delay: 00:05:00
   mode: restart
 - id: '1763366715360'
@@ -2760,6 +2746,7 @@
         - wait_for_trigger:
           - entity_id: binary_sensor.ikea_sensor_08_tur
             to: 'off'
+            for: 00:00:05
             trigger: state
           continue_on_timeout: false
         - target:
@@ -2798,12 +2785,12 @@
         data:
           title: Fertig mit lüften
           message: Schließe die Büro Fenster
-      - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_8004651348_988178587
+      - action: telegram_bot.send_message
         data:
-          title: Schliesse das Fenster
-          message: Wohnzimmer Fenster ist Offen
+          target:
+            - 988178587
+          parse_mode: html
+          message: "Schliesse das Fenster – Wohnzimmer Fenster ist Offen"
       - action: notify.send_message
         target:
           entity_id: notify.andreas_s_sonos_beam_sprechen
@@ -2842,7 +2829,7 @@
       hvac_mode: cool
   mode: single
 - id: '1779883168078'
-  alias: 🔥 Advanced Heating Control V5
+  alias: "\U0001F525 Advanced Heating Control V5"
   description: ''
   use_blueprint:
     path: panhans/advanced_heating_control.yaml
@@ -2903,12 +2890,12 @@
       actions:
       - action: notify.mobile_app_andreas_iphone_15pro_max
         data:
-          title: 🔋 Batterie Warnung
-          message: "{% if sensors | length == 1 %}\n  {{ state_attr(sensors[0], 'friendly_name')\
-            \ }} hat nur noch **{{ states(sensors[0]) }}%** Batterie.\n{% else %}\n\
-            \  Folgende Geräte haben eine niedrige Batterie:\n  {% for s in sensors\
-            \ | sort(attribute='state') %}\n    - {{ state_attr(s, 'friendly_name')\
-            \ }} (**{{ states(s) }}%**)\n  {% endfor %}\n{% endif %}\n"
+          title: "\U0001F50B Batterie Warnung"
+          message: "{% if sensors | length == 1 %}\n  {{ state_attr(sensors[0], 'friendly_name')
+            }} hat nur noch **{{ states(sensors[0]) }}%** Batterie.\n{% else %}\n
+            \ Folgende Geräte haben eine niedrige Batterie:\n  {% for s in sensors
+            | sort(attribute='state') %}\n    - {{ state_attr(s, 'friendly_name')
+            }} (**{{ states(s) }}%**)\n  {% endfor %}\n{% endif %}\n"
       - action: telegram_bot.send_message
         data:
           config_entry_id: 01K0QD26T4HR7H28QG76XRZCWJ
@@ -3540,12 +3527,11 @@
     data:
       chat_id: 988178587
       parse_mode: html
-      message: '📊 <b>iPad Plug – Monatsauswertung</b>
-
-        🔢 Ladezyklen: {{ states(''input_number.ipad_plug_ladezyklen_monat'') | int
-        }} ⚡ Verbrauch: {{ states(''input_number.ipad_plug_kwh_monat'') | float |
-        round(3) | string | replace(''.'', '','') }} kWh 💶 Kosten: {{ states(''input_number.ipad_plug_kosten_monat'')
-        | float | round(2) | string | replace(''.'', '','') }} €'
+      message: "\U0001F4CA <b>iPad Plug – Monatsauswertung</b>\n\U0001F522 Ladezyklen:
+        {{ states('input_number.ipad_plug_ladezyklen_monat') | int }} ⚡ Verbrauch:
+        {{ states('input_number.ipad_plug_kwh_monat') | float | round(3) | string
+        | replace('.', ',') }} kWh \U0001F4B6 Kosten: {{ states('input_number.ipad_plug_kosten_monat')
+        | float | round(2) | string | replace('.', ',') }} €"
   - action: input_number.set_value
     target:
       entity_id: input_number.ipad_plug_kwh_monat
@@ -3610,180 +3596,101 @@
       chat_id: 988178587
       disable_notification: true
       parse_mode: markdown
-      message: '⚡ *Tagesverbrauch {{ now().strftime("%d.%m.%Y") }}*
-
-        Strompreis: {{ states("sensor.strompreis_aktiv_eur_kwh") | float(0) * 100
-        | round(2) }} ct/kWh
-
-
-        *🏠 Haus gesamt*
-
-        Verbrauch: {{ states("sensor.haus_gesamt_tag") | float(0) | round(3) }} kWh  |  Kosten:
-        {{ states("sensor.haus_gesamt_kosten_tag") | float(0) | round(2) }} €
-
-        ─────────────────
-
-        *🍽️ Küche*
-
-        {% if states("sensor.kuehlschrank_tag") | float(0) > 0 %}Kühlschrank:    {{
-        states("sensor.kuehlschrank_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.kuche_kuhlschrank_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.spuelmaschine_tag") | float(0) > 0 %}Spülmaschine:   {{
-        states("sensor.spuelmaschine_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.kuche_spulmaschine_kosten_tag_2")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.kaffeemaschine_tag") | float(0) > 0 %}Kaffeemaschine:
-        {{ states("sensor.kaffeemaschine_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.kuche_kaffeemaschine_kosten_tag_2") | float(0) | round(3) }}
-        €
-
-        {% endif %}{% if states("sensor.dunstabzugshaube_tag") | float(0) > 0 %}Dunstabzug:     {{
-        states("sensor.dunstabzugshaube_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.kuche_dunstabzugshaube_kosten_tag") | float(0) | round(3) }}
-        €
-
-        {% endif %}{% if states("sensor.unterschrank_tag") | float(0) > 0 %}Unterschrank:   {{
-        states("sensor.unterschrank_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.kuche_unterschrank_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🖥️ Büro*
-
-        {% if states("sensor.buero_schreibtisch_tag") | float(0) > 0 %}Schreibtisch
-        A: {{ states("sensor.buero_schreibtisch_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.buro_schreibtisch_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.buero_schreibtisch_karo_tag") | float(0) >
-        0 %}Schreibtisch K: {{ states("sensor.buero_schreibtisch_karo_tag") | float(0)
-        | round(3) }} kWh  |  {{ states("sensor.buro_schreibtisch_karo_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.buero_doppeldose_tag") | float(0) > 0 %}Doppeldose:     {{
-        states("sensor.buero_doppeldose_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.buro_doppeldose_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.buero_deckenlampe_tag") | float(0) > 0 %}Deckenlampe:    {{
-        states("sensor.buero_deckenlampe_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.buro_deckenlampe_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.ipad_plug_tag") | float(0) > 0 %}iPad Plug:      {{
-        states("sensor.ipad_plug_tag") | float(0) | round(3) }} kWh  |  {{ (states("sensor.ipad_plug_tag")
-        | float(0) * states("sensor.strompreis_aktiv_eur_kwh") | float(0)) | round(3)
-        }} €
-
-        {% endif %}─────────────────
-
-        *🛏️ Schlafzimmer*
-
-        {% if states("sensor.bett_tag") | float(0) > 0 %}Bett:           {{ states("sensor.bett_tag")
-        | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_bett_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.bettgestell_tag") | float(0) > 0 %}Bettgestell:    {{
-        states("sensor.bettgestell_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_bettgestell_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.nachttisch_rechts_steckdose_tag") | float(0)
-        > 0 %}Nachttisch R:   {{ states("sensor.nachttisch_rechts_steckdose_tag")
-        | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_nachttisch_rechts_steckdose_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.nachttisch_links_tag") | float(0) > 0 %}Nachttisch
-        L:   {{ states("sensor.nachttisch_links_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.schlafzimmer_nachttisch_links_kosten_tag") | float(0) | round(3)
-        }} €
-
-        {% endif %}{% if states("sensor.schraenke_tag") | float(0) > 0 %}Schränke:       {{
-        states("sensor.schraenke_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_schranke_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.schlafzimmer_deckenlampe_tag") | float(0)
-        > 0 %}Deckenlampe:    {{ states("sensor.schlafzimmer_deckenlampe_tag") | float(0)
-        | round(3) }} kWh  |  {{ states("sensor.schlafzimmer_deckenlampe_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🛋️ Wohnzimmer*
-
-        {% if states("sensor.sonos_beam_5_1_tag") | float(0) > 0 %}Sonos Beam:     {{
-        states("sensor.sonos_beam_5_1_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_sonos_beam_5_1_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.sonos_tisch_tag") | float(0) > 0 %}Sonos Tisch:    {{
-        states("sensor.sonos_tisch_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_sonos_tisch_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.sonos_lampe_tag") | float(0) > 0 %}Sonos Lampe:    {{
-        states("sensor.sonos_lampe_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_sonos_lampe_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.stehlampe_rechts_tag") | float(0) > 0 %}Stehlampe
-        R:    {{ states("sensor.stehlampe_rechts_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.wohnzimmer_stehlampe_rechts_kosten_tag") | float(0) | round(3)
-        }} €
-
-        {% endif %}{% if states("sensor.ambilight_tag") | float(0) > 0 %}Ambilight:      {{
-        states("sensor.ambilight_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wohnzimmer_ambilight_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🚿 Bad / Sonstiges*
-
-        {% if states("sensor.homepod_badezimmer_tag") | float(0) > 0 %}HomePod Bad:    {{
-        states("sensor.homepod_badezimmer_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.badezimmer_homepod_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.abstellkammer_tag") | float(0) > 0 %}Abstellkammer:  {{
-        states("sensor.abstellkammer_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.abstellkammer_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.wandlampe_tag") | float(0) > 0 %}Wandlampe:      {{
-        states("sensor.wandlampe_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.wandlampe_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.balkon_steckdose_tag") | float(0) > 0 %}Balkon:         {{
-        states("sensor.balkon_steckdose_tag") | float(0) | round(3) }} kWh  |  {{
-        states("sensor.balkon_steckdose_kosten_tag") | float(0) | round(3) }} €
-
-        {% endif %}{% if states("sensor.futternapf_steckdose_tag") | float(0) > 0
-        %}Futternapf:     {{ states("sensor.futternapf_steckdose_tag") | float(0)
-        | round(3) }} kWh  |  {{ states("sensor.futternapf_steckdose_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🫧 Waschküche*
-
-        {% if states("sensor.waschmaschine_tag") | float(0) > 0 %}Waschmaschine:  {{
-        states("sensor.waschmaschine_tag") | float(0) | round(3) }} kWh  |  {{ states("sensor.waschkuche_waschmaschine_kosten_tag")
-        | float(0) | round(3) }} €
-
-        {% endif %}─────────────────
-
-        *🔧 Filter-Status*
-
-        Letzter Wechsel:  {{ as_datetime(states("input_datetime.filter_letzter_wechsel")).strftime("%d.%m.%Y")
-        }}
-
-        Nächster Wechsel: {{ as_datetime(states("input_datetime.filter_naechster_wechsel")).strftime("%d.%m.%Y")
-        }}
-
-        Fällig in: {{ states("sensor.filter_tage_bis_fallig") }} Tagen  |  Bestand:
-        {{ states("input_number.filter_bestand") | int }} Stück
-
-        ─────────────────
-
-        *🗑️ Mülltonnen*
-
-        🟢 {{ states("sensor.restmull") }}
-
-        🟡 {{ states("sensor.biomull") }}
-
-        ⬜ {{ states("sensor.glasbox") }}'
+      message: "⚡ *Tagesverbrauch {{ now().strftime(\"%d.%m.%Y\") }}*\nStrompreis:
+        {{ states(\"sensor.strompreis_aktiv_eur_kwh\") | float(0) * 100 | round(2)
+        }} ct/kWh\n\n*\U0001F3E0 Haus gesamt*\nVerbrauch: {{ states(\"sensor.haus_gesamt_tag\")
+        | float(0) | round(3) }} kWh  |  Kosten: {{ states(\"sensor.haus_gesamt_kosten_tag\")
+        | float(0) | round(2) }} €\n─────────────────\n*\U0001F37D️ Küche*\n{% if
+        states(\"sensor.kuehlschrank_tag\") | float(0) > 0 %}Kühlschrank:    {{ states(\"sensor.kuehlschrank_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kuhlschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.spuelmaschine_tag\")
+        | float(0) > 0 %}Spülmaschine:   {{ states(\"sensor.spuelmaschine_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_spulmaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.kaffeemaschine_tag\")
+        | float(0) > 0 %}Kaffeemaschine: {{ states(\"sensor.kaffeemaschine_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_kaffeemaschine_kosten_tag_2\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) > 0 %}Dunstabzug:     {{ states(\"sensor.dunstabzugshaube_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_dunstabzugshaube_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.unterschrank_tag\")
+        | float(0) > 0 %}Unterschrank:   {{ states(\"sensor.unterschrank_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.kuche_unterschrank_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F5A5️ Büro*\n{%
+        if states(\"sensor.buero_schreibtisch_tag\") | float(0) > 0 %}Schreibtisch
+        A: {{ states(\"sensor.buero_schreibtisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.buro_schreibtisch_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.buero_schreibtisch_karo_tag\") | float(0)
+        > 0 %}Schreibtisch K: {{ states(\"sensor.buero_schreibtisch_karo_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_schreibtisch_karo_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_doppeldose_tag\")
+        | float(0) > 0 %}Doppeldose:     {{ states(\"sensor.buero_doppeldose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_doppeldose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.buero_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.buro_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.ipad_plug_tag\")
+        | float(0) > 0 %}iPad Plug:      {{ states(\"sensor.ipad_plug_tag\") | float(0)
+        | round(3) }} kWh  |  {{ (states(\"sensor.ipad_plug_tag\") | float(0) * states(\"sensor.strompreis_aktiv_eur_kwh\")
+        | float(0)) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CF️ Schlafzimmer*\n{%
+        if states(\"sensor.bett_tag\") | float(0) > 0 %}Bett:           {{ states(\"sensor.bett_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bett_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.bettgestell_tag\")
+        | float(0) > 0 %}Bettgestell:    {{ states(\"sensor.bettgestell_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_bettgestell_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) > 0 %}Nachttisch R:   {{ states(\"sensor.nachttisch_rechts_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_rechts_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.nachttisch_links_tag\")
+        | float(0) > 0 %}Nachttisch L:   {{ states(\"sensor.nachttisch_links_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_nachttisch_links_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schraenke_tag\")
+        | float(0) > 0 %}Schränke:       {{ states(\"sensor.schraenke_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_schranke_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) > 0 %}Deckenlampe:    {{ states(\"sensor.schlafzimmer_deckenlampe_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.schlafzimmer_deckenlampe_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6CB️ Wohnzimmer*\n{%
+        if states(\"sensor.sonos_beam_5_1_tag\") | float(0) > 0 %}Sonos Beam:     {{
+        states(\"sensor.sonos_beam_5_1_tag\") | float(0) | round(3) }} kWh  |  {{
+        states(\"sensor.wohnzimmer_sonos_beam_5_1_kosten_tag\") | float(0) | round(3)
+        }} €\n{% endif %}{% if states(\"sensor.sonos_tisch_tag\") | float(0) > 0 %}Sonos
+        Tisch:    {{ states(\"sensor.sonos_tisch_tag\") | float(0) | round(3) }} kWh
+        \ |  {{ states(\"sensor.wohnzimmer_sonos_tisch_kosten_tag\") | float(0) |
+        round(3) }} €\n{% endif %}{% if states(\"sensor.sonos_lampe_tag\") | float(0)
+        > 0 %}Sonos Lampe:    {{ states(\"sensor.sonos_lampe_tag\") | float(0) | round(3)
+        }} kWh  |  {{ states(\"sensor.wohnzimmer_sonos_lampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) > 0 %}Stehlampe R:    {{ states(\"sensor.stehlampe_rechts_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_stehlampe_rechts_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.ambilight_tag\")
+        | float(0) > 0 %}Ambilight:      {{ states(\"sensor.ambilight_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wohnzimmer_ambilight_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F6BF Bad
+        / Sonstiges*\n{% if states(\"sensor.homepod_badezimmer_tag\") | float(0) >
+        0 %}HomePod Bad:    {{ states(\"sensor.homepod_badezimmer_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.badezimmer_homepod_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.abstellkammer_tag\")
+        | float(0) > 0 %}Abstellkammer:  {{ states(\"sensor.abstellkammer_tag\") |
+        float(0) | round(3) }} kWh  |  {{ states(\"sensor.abstellkammer_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.wandlampe_tag\")
+        | float(0) > 0 %}Wandlampe:      {{ states(\"sensor.wandlampe_tag\") | float(0)
+        | round(3) }} kWh  |  {{ states(\"sensor.wandlampe_kosten_tag\") | float(0)
+        | round(3) }} €\n{% endif %}{% if states(\"sensor.balkon_steckdose_tag\")
+        | float(0) > 0 %}Balkon:         {{ states(\"sensor.balkon_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.balkon_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}{% if states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) > 0 %}Futternapf:     {{ states(\"sensor.futternapf_steckdose_tag\")
+        | float(0) | round(3) }} kWh  |  {{ states(\"sensor.futternapf_steckdose_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001FAE7 Waschküche*\n{%
+        if states(\"sensor.waschmaschine_tag\") | float(0) > 0 %}Waschmaschine:  {{
+        states(\"sensor.waschmaschine_tag\") | float(0) | round(3) }} kWh  |  {{ states(\"sensor.waschkuche_waschmaschine_kosten_tag\")
+        | float(0) | round(3) }} €\n{% endif %}─────────────────\n*\U0001F527 Filter-Status*\nLetzter
+        Wechsel:  {{ as_datetime(states(\"input_datetime.filter_letzter_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nNächster Wechsel: {{ as_datetime(states(\"input_datetime.filter_naechster_wechsel\")).strftime(\"%d.%m.%Y\")
+        }}\nFällig in: {{ states(\"sensor.filter_tage_bis_fallig\") }} Tagen  |  Bestand:
+        {{ states(\"input_number.filter_bestand\") | int }} Stück\n─────────────────\n*\U0001F5D1️
+        Mülltonnen*\n\U0001F7E2 {{ states(\"sensor.restmull\") }}\n\U0001F7E1 {{ states(\"sensor.biomull\")
+        }}\n⬜ {{ states(\"sensor.glasbox\") }}"
   mode: single
 - id: '1774842547874'
   alias: Bewegungsfreiheit Melder test Wohnzimmer
@@ -3902,7 +3809,7 @@
   mode: single
   enabled: false
 - id: '1779551459844'
-  alias: 🖨️ Niimbot Test Print
+  alias: "\U0001F5A8️ Niimbot Test Print"
   description: Druckt ein Test-Label auf der Niimbot B1
   triggers:
   - entity_id: input_button.niimbot_test_print
@@ -3936,10 +3843,10 @@
         align: center
 - id: '1780118515763'
   alias: Hund – Gefüttert-Status täglich zurücksetzen
-  description: Setzt beide Hund-gefüttert-Status jeden Morgen um 05:30 Uhr zurück
+  description: Setzt beide Hund-gefüttert-Status jeden Morgen zurück (Zeit konfigurierbar)
   triggers:
   - platform: time
-    at: 05:30:00
+    at: input_datetime.hund_reset_zeit
   actions:
   - action: input_boolean.turn_off
     target:
@@ -3948,10 +3855,10 @@
       - input_boolean.hund_gefuettert_abends
   mode: single
 - id: '1780118752474'
-  alias: Hund – Morgens füttern Erinnerung (Wochentag 06:00)
+  alias: Hund – Morgens füttern Erinnerung (Wochentag)
   triggers:
   - platform: time
-    at: 06:00:00
+    at: input_datetime.hund_erinnerung_morgens_wt
   conditions:
   - condition: time
     weekday:
@@ -3968,13 +3875,10 @@
     data:
       chat_id: 988178587
       parse_mode: html
-      message: '🐶 <b>Hund füttern!</b>
-
-
-        ⏰ Morgensfütterung noch nicht erledigt!'
+      message: "\U0001F436 <b>Hund füttern!</b>\n\n⏰ Morgensfütterung noch nicht erledigt!"
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🐶 Hund füttern!
+      title: "\U0001F436 Hund füttern!"
       message: Morgensfütterung noch nicht erledigt!
   - if:
     - condition: state
@@ -3983,6 +3887,9 @@
     - condition: state
       entity_id: input_boolean.hund_erinnerung_tts
       state: 'on'
+    - condition: state
+      entity_id: input_boolean.ich_schlafe_noch
+      state: 'off'
     then:
     - action: tts.speak
       target:
@@ -3993,10 +3900,10 @@
         language: de-DE
   mode: single
 - id: '1780118757875'
-  alias: Hund – Morgens füttern Erinnerung (Wochenende 08:00)
+  alias: Hund – Morgens füttern Erinnerung (Wochenende)
   triggers:
   - platform: time
-    at: 08:00:00
+    at: input_datetime.hund_erinnerung_morgens_we
   conditions:
   - condition: time
     weekday:
@@ -4010,13 +3917,10 @@
     data:
       chat_id: 988178587
       parse_mode: html
-      message: '🐶 <b>Hund füttern!</b>
-
-
-        ⏰ Morgensfütterung noch nicht erledigt!'
+      message: "\U0001F436 <b>Hund füttern!</b>\n\n⏰ Morgensfütterung noch nicht erledigt!"
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🐶 Hund füttern!
+      title: "\U0001F436 Hund füttern!"
       message: Morgensfütterung noch nicht erledigt!
   - if:
     - condition: state
@@ -4025,6 +3929,9 @@
     - condition: state
       entity_id: input_boolean.hund_erinnerung_tts
       state: 'on'
+    - condition: state
+      entity_id: input_boolean.ich_schlafe_noch
+      state: 'off'
     then:
     - action: tts.speak
       target:
@@ -4035,10 +3942,10 @@
         language: de-DE
   mode: single
 - id: '1780118763469'
-  alias: Hund – Abends füttern Erinnerung (18:30)
+  alias: Hund – Abends füttern Erinnerung
   description: ''
   triggers:
-  - at: '18:30:00'
+  - at: input_datetime.hund_erinnerung_abends
     trigger: time
   conditions:
   - condition: state
@@ -4049,13 +3956,11 @@
     data:
       chat_id: 988178587
       parse_mode: html
-      message: '🐶 <b>Hund füttern!</b>
-
-
-        🌙 Abendsfütterung noch nicht erledigt!'
+      message: "\U0001F436 <b>Hund füttern!</b>\n\n\U0001F319 Abendsfütterung noch
+        nicht erledigt!"
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🐶 Hund füttern!
+      title: "\U0001F436 Hund füttern!"
       message: Abendsfütterung noch nicht erledigt!
   - if:
     - condition: state
@@ -4075,10 +3980,10 @@
         language: de-DE
   mode: single
 - id: '1780120395657'
-  alias: 'Hund – Kritisch: Morgens nicht gefüttert (Wochentag 07:00)'
+  alias: 'Hund – Kritisch: Morgens nicht gefüttert (Wochentag)'
   triggers:
   - platform: time
-    at: 07:00:00
+    at: input_datetime.hund_kritisch_morgens_wt
   conditions:
   - condition: time
     weekday:
@@ -4093,7 +3998,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🚨 Hund NOCH NICHT gefüttert!
+      title: "\U0001F6A8 Hund NOCH NICHT gefüttert!"
       message: Morgensfütterung ist überfällig!
       data:
         push:
@@ -4103,10 +4008,10 @@
             volume: 1
   mode: single
 - id: '1780120398241'
-  alias: 'Hund – Kritisch: Morgens nicht gefüttert (Wochenende 09:00)'
+  alias: 'Hund – Kritisch: Morgens nicht gefüttert (Wochenende)'
   triggers:
   - platform: time
-    at: 09:00:00
+    at: input_datetime.hund_kritisch_morgens_we
   conditions:
   - condition: time
     weekday:
@@ -4118,7 +4023,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🚨 Hund NOCH NICHT gefüttert!
+      title: "\U0001F6A8 Hund NOCH NICHT gefüttert!"
       message: Morgensfütterung ist überfällig!
       data:
         push:
@@ -4128,10 +4033,10 @@
             volume: 1
   mode: single
 - id: '1780120400360'
-  alias: 'Hund – Kritisch: Abends nicht gefüttert (20:00)'
+  alias: 'Hund – Kritisch: Abends nicht gefüttert'
   triggers:
   - platform: time
-    at: '20:00:00'
+    at: input_datetime.hund_kritisch_abends
   conditions:
   - condition: state
     entity_id: input_boolean.hund_gefuettert_abends
@@ -4139,7 +4044,7 @@
   actions:
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🚨 Hund NOCH NICHT gefüttert!
+      title: "\U0001F6A8 Hund NOCH NICHT gefüttert!"
       message: Abendsfütterung ist überfällig!
       data:
         push:
@@ -4164,7 +4069,7 @@
       option: Sonstiges
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 📦 Lagerort gesetzt
+      title: "\U0001F4E6 Lagerort gesetzt"
       message: Aktiver Lagerort → Sonstiges
       data:
         push:
@@ -4198,7 +4103,7 @@
       option: Vorratskammer
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🥫 Lagerort gesetzt
+      title: "\U0001F96B Lagerort gesetzt"
       message: Aktiver Lagerort → Vorratskammer
       data:
         push:
@@ -4232,7 +4137,7 @@
       option: Kühlschrank
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🧊 Lagerort gesetzt
+      title: "\U0001F9CA Lagerort gesetzt"
       message: Aktiver Lagerort → Kühlschrank
       data:
         push:
@@ -4266,7 +4171,7 @@
       option: Schrank
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🚪 Lagerort gesetzt
+      title: "\U0001F6AA Lagerort gesetzt"
       message: Aktiver Lagerort → Schrank
       data:
         push:
@@ -4300,7 +4205,7 @@
       option: Gefrierschrank
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🧊 Lagerort gesetzt
+      title: "\U0001F9CA Lagerort gesetzt"
       message: Aktiver Lagerort → Gefrierschrank
       data:
         push:
@@ -4330,7 +4235,7 @@
     data: {}
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🗑️ Ausbuchen aktiv
+      title: "\U0001F5D1️ Ausbuchen aktiv"
       message: Nächster Scan bucht das Produkt aus dem Inventar aus.
       data:
         push:
@@ -4393,7 +4298,7 @@
       option: Umbuchen
   - action: notify.mobile_app_andreas_iphone_15pro_max
     data:
-      title: 🔄 Umbuchen aktiv
+      title: "\U0001F504 Umbuchen aktiv"
       message: 'Ziel: {{ states(''input_select.off_lagerplatz'') }} — Nächsten Artikel
         scannen.'
   - condition: state
@@ -4406,4 +4311,50 @@
       message: 'Umbuchen aktiv. Ziel: {{ states(''input_select.off_lagerplatz'') }}.
         Nächsten Artikel scannen.'
       language: de-DE
+  mode: single
+- id: kamera_bewegung_browser_popup
+  alias: Kamera – Bewegung erkannt Popup
+  description: Zeigt ein Browser-Popup mit Kamerabild wenn Bewegung erkannt wird.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.camera_hub_g2h_38a4_motion_sensor_2
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automationen_ein_aus
+    state: 'on'
+  actions:
+  - action: browser_mod.more_info
+    data:
+      entity: camera.camera_hub_g2h_38a4_camera_stream_management0_2
+  mode: single
+- id: '1780852775156'
+  alias: TTS Lautstärke – Master Slider
+  description: Setzt die Lautstärke aller Sonos-Lautsprecher wenn der TTS-Master-Regler
+    verändert wird.
+  triggers:
+  - trigger: state
+    entity_id: input_number.tts_lautstarke
+  conditions: []
+  actions:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.sonos_all
+    data:
+      volume_level: '{{ (states(''input_number.tts_lautstarke'') | float(40)) / 100
+        }}'
+  mode: single
+- id: '1780891570714'
+  alias: Hund – Schlaf-Modus automatisch zurücksetzen (12:00)
+  triggers:
+  - platform: time
+    at: '12:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.ich_schlafe_noch
+    state: 'on'
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.ich_schlafe_noch
   mode: single

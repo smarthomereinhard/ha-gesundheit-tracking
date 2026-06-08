@@ -1,0 +1,833 @@
+# /config/packages/filter_wartung.yaml
+# ============================================================
+# FILTER-WARTUNG (echter Timer) + Erinnerung + Bestand + Einkaufsliste
+# ============================================================
+
+input_text:
+  filter_ean_1:
+    name: "Filter EAN – BRITA Maxtra+"
+    icon: mdi:barcode
+    max: 14
+    pattern: '^\d{8,14}$|^$'
+
+  filter_ean_2:
+    name: "Filter EAN – Typ 2"
+    icon: mdi:barcode
+    max: 14
+    pattern: '^\d{8,14}$|^$'
+
+  filter_ean_scan:
+    name: "Filter EAN scannen / eingeben"
+    icon: mdi:barcode-scan
+    max: 14
+    pattern: '^\d{8,14}$|^$'
+
+input_select:
+  filter_aktiver_typ:
+    name: "Aktiver Filter Typ"
+    icon: mdi:air-filter
+    options:
+      - "BRITA Maxtra+"
+      - "Filter Typ 2"
+
+input_number:
+  filter_intervall_tage:
+    name: "Filter Intervall (Tage)"
+    icon: mdi:calendar-range
+    unit_of_measurement: "d"
+    min: 1
+    max: 365
+    step: 1
+    mode: box
+
+  filter_bestand:
+    name: "Filter Bestand"
+    icon: mdi:air-filter
+    unit_of_measurement: "Stk"
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+
+input_datetime:
+  filter_letzter_wechsel:
+    name: "Filter letzter Wechsel"
+    icon: mdi:calendar-check
+    has_date: true
+    has_time: true
+
+  filter_naechster_wechsel:
+    name: "Filter nächster Wechsel"
+    icon: mdi:calendar-clock
+    has_date: true
+    has_time: true
+
+  filter_letzte_erinnerung:
+    name: "Filter letzte Erinnerung"
+    icon: mdi:bell-check
+    has_date: true
+    has_time: true
+
+  filter_letzte_kauf_erinnerung:
+    name: "Filter letzte Kauf-Erinnerung"
+    icon: mdi:cart-check
+    has_date: true
+    has_time: true
+
+input_button:
+  filter_getauscht:
+    name: "Filter getauscht"
+    icon: mdi:filter-check
+
+  filter_ean_einbuchen:
+    name: "Filter einbuchen"
+    icon: mdi:basket-plus
+
+timer:
+  filter_countdown:
+    name: "Filter Countdown"
+    duration: "00:10:00"
+
+template:
+  - sensor:
+      - name: "Filter Tage seit Wechsel"
+        unique_id: filter_tage_seit_wechsel
+        icon: mdi:counter
+        unit_of_measurement: "d"
+        state_class: measurement
+        state: >
+          {% set ts = as_timestamp(states('input_datetime.filter_letzter_wechsel'), 0) %}
+          {% if ts == 0 %}
+            0
+          {% else %}
+            {{ ((as_timestamp(now()) - ts) / 86400) | round(0) | int(0) }}
+          {% endif %}
+
+      - name: "Filter Tage bis fällig"
+        unique_id: filter_tage_bis_fallig
+        icon: mdi:calendar-arrow-right
+        unit_of_measurement: "d"
+        state_class: measurement
+        state: >
+          {% set next_ts = as_timestamp(states('input_datetime.filter_naechster_wechsel'), 0) %}
+          {% if next_ts == 0 %}
+            0
+          {% else %}
+            {{ (((next_ts - as_timestamp(now())) / 86400) | round(0)) | int(0) }}
+          {% endif %}
+
+      - name: "Filter Nächster Wechsel (Timestamp)"
+        unique_id: filter_nachster_wechsel_timestamp
+        device_class: timestamp
+        icon: mdi:calendar-clock
+        state: >
+          {% set s = states('input_datetime.filter_naechster_wechsel') %}
+          {% if s in ['unknown', 'unavailable', 'none', ''] %}
+            {{ none }}
+          {% else %}
+            {{ as_local(as_datetime(s)).isoformat() }}
+          {% endif %}
+
+      - name: "Filter Nächster Wechsel (Sensor)"
+        unique_id: filter_nachster_wechsel_sensor
+        icon: mdi:calendar-clock
+        state: >
+          {% set d = states('sensor.filter_tage_bis_fallig') | int(0) %}
+          {% if d < 0 %}
+            Überfällig seit {{ d | abs }} Tagen
+          {% elif d == 0 %}
+            Heute fällig
+          {% elif d == 1 %}
+            Morgen fällig
+          {% else %}
+            In {{ d }} Tagen
+          {% endif %}
+
+      - name: "Filter Bestand Status"
+        unique_id: filter_bestand_status
+        icon: mdi:air-filter
+        state: >
+          {% set c = states('input_number.filter_bestand') | int(0) %}
+          {% if c <= 0 %}
+            Nachkaufen
+          {% elif c == 1 %}
+            Noch 1 Filter auf Lager
+          {% else %}
+            Noch {{ c }} Filter auf Lager
+          {% endif %}
+
+      - name: "Filter Aktive EAN"
+        unique_id: filter_aktive_ean
+        icon: mdi:barcode
+        state: >
+          {% if is_state('input_select.filter_aktiver_typ', 'BRITA Maxtra+') %}
+            {{ states('input_text.filter_ean_1') }}
+          {% else %}
+            {{ states('input_text.filter_ean_2') }}
+          {% endif %}
+
+automation:
+  - id: wartung_filter_wechsel_speichern_button
+    alias: "Wartung – Filter: Wechsel speichern (Button)"
+    description: "Button -> letzter Wechsel = jetzt, nächster Wechsel = Intervall, Timer starten, Erinnerung zurücksetzen, Bestand reduzieren."
+    triggers:
+      - trigger: state
+        entity_id: input_button.filter_getauscht
+    conditions: []
+    actions:
+      - alias: "Variablen berechnen"
+        variables:
+          interval_days: "{{ states('input_number.filter_intervall_tage') | int(30) }}"
+          next_dt: "{{ (now() + timedelta(days=interval_days)).strftime('%Y-%m-%d %H:%M:%S') }}"
+          duration_hms: "{{ (interval_days * 24) ~ ':00:00' }}"
+          stock_old: "{{ states('input_number.filter_bestand') | int(0) }}"
+          stock_new: "{{ [stock_old - 1, 0] | max }}"
+
+      - alias: "Letzten Wechsel speichern"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzter_wechsel
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+      - alias: "Nächsten Wechsel speichern"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_naechster_wechsel
+        data:
+          datetime: "{{ next_dt }}"
+
+      - alias: "Letzte Erinnerung zurücksetzen"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzte_erinnerung
+        data:
+          datetime: "1970-01-01 00:00:00"
+
+      - alias: "Bestand reduzieren"
+        action: input_number.set_value
+        target:
+          entity_id: input_number.filter_bestand
+        data:
+          value: "{{ stock_new }}"
+
+      - alias: "Timer starten (Intervall)"
+        action: timer.start
+        target:
+          entity_id: timer.filter_countdown
+        data:
+          duration: "{{ duration_hms }}"
+
+      - alias: "Vorratsverwaltung: Bestand im Sheet abziehen"
+        variables:
+          aktiver_typ: "{{ states('input_select.filter_aktiver_typ') }}"
+          aktive_ean: >
+            {% if states('input_select.filter_aktiver_typ') == 'BRITA Maxtra+' %}
+              {{ states('input_text.filter_ean_1') }}
+            {% else %}
+              {{ states('input_text.filter_ean_2') }}
+            {% endif %}
+          aktive_marke: >
+            {% if states('input_select.filter_aktiver_typ') == 'BRITA Maxtra+' %}
+              BRITA
+            {% else %}
+              Typ 2
+            {% endif %}
+
+      - alias: "Sheet-Update senden"
+        action: rest_command.off_sheet_anlegen
+        data:
+          barcode: "{{ aktive_ean | trim }}"
+          bestand: "{{ stock_new }}"
+          produkt: "{{ aktiver_typ }}"
+          marke: "{{ aktive_marke }}"
+          kategorie: "Haushalt"
+          menge: "1 Stk"
+          lagerplatz: "Vorrat"
+
+      - alias: "Telegram Bestätigung"
+        action: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >
+            ✅ Filterwechsel gespeichert.
+            Typ: {{ aktiver_typ }}
+            EAN: {{ aktive_ean | trim }}
+            Intervall: {{ interval_days }} Tage
+            Nächster Wechsel: {{ next_dt }}
+            Verbleibender Bestand: {{ stock_new }}
+    mode: single
+
+  - id: wartung_filter_neu_berechnen_bei_datum_intervall
+    alias: "Wartung – Filter: Neu berechnen bei Datum/Intervall"
+    description: "Wenn letzter Wechsel oder Intervall geändert wird -> nächster Wechsel + Timer-Restzeit aktualisieren."
+    triggers:
+      - trigger: state
+        entity_id: input_datetime.filter_letzter_wechsel
+      - trigger: state
+        entity_id: input_number.filter_intervall_tage
+    conditions:
+      - alias: "Nur wenn letzter Wechsel gesetzt ist"
+        condition: template
+        value_template: "{{ as_timestamp(states('input_datetime.filter_letzter_wechsel'), 0) > 0 }}"
+    actions:
+      - alias: "Variablen berechnen"
+        variables:
+          interval_days: "{{ states('input_number.filter_intervall_tage') | int(30) }}"
+          last_ts: "{{ as_timestamp(states('input_datetime.filter_letzter_wechsel'), 0) }}"
+          next_ts: "{{ last_ts + (interval_days * 86400) }}"
+          remaining: "{{ (next_ts - as_timestamp(now())) | int(0) }}"
+          next_dt: "{{ next_ts | timestamp_custom('%Y-%m-%d %H:%M:%S', true) }}"
+          duration_hms: >
+            {% set rem = (next_ts - as_timestamp(now())) | int(0) %}
+            {% if rem <= 0 %}
+              00:00:00
+            {% else %}
+              {% set h = rem // 3600 %}
+              {% set m = (rem % 3600) // 60 %}
+              {% set s = rem % 60 %}
+              {{ '%d:%02d:%02d' | format(h, m, s) }}
+            {% endif %}
+
+      - alias: "Nächsten Wechsel speichern"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_naechster_wechsel
+        data:
+          datetime: "{{ next_dt }}"
+
+      - alias: "Timer an Restzeit anpassen"
+        choose:
+          - conditions:
+              - alias: "Restzeit > 0"
+                condition: template
+                value_template: "{{ remaining > 0 }}"
+            sequence:
+              - alias: "Timer starten (Restzeit)"
+                action: timer.start
+                target:
+                  entity_id: timer.filter_countdown
+                data:
+                  duration: "{{ duration_hms }}"
+        default:
+          - alias: "Timer stoppen (überfällig)"
+            action: timer.cancel
+            target:
+              entity_id: timer.filter_countdown
+    mode: single
+
+  - id: wartung_filter_timer_nach_neustart_wiederherstellen
+    alias: "Wartung – Filter: Timer nach Neustart wiederherstellen"
+    description: "Nach HA-Start: Timer anhand nächstem Wechsel wieder starten (Restzeit)."
+    triggers:
+      - trigger: homeassistant
+        event: start
+    conditions: []
+    actions:
+      - alias: "Warten bis States geladen"
+        delay: "00:00:10"
+
+      - alias: "EAN 1 setzen falls leer"
+        if:
+          - condition: template
+            value_template: "{{ states('input_text.filter_ean_1') in ['', 'unknown', 'unavailable'] }}"
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.filter_ean_1
+            data:
+              value: "4006387074845"
+
+      - alias: "EAN 2 setzen falls leer"
+        if:
+          - condition: template
+            value_template: "{{ states('input_text.filter_ean_2') in ['', 'unknown', 'unavailable'] }}"
+        then:
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.filter_ean_2
+            data:
+              value: "4311536966033"
+
+      - alias: "Variablen berechnen"
+        variables:
+          last_ts: "{{ as_timestamp(states('input_datetime.filter_letzter_wechsel'), 0) }}"
+          next_ts: "{{ as_timestamp(states('input_datetime.filter_naechster_wechsel'), 0) }}"
+          remaining: "{{ (next_ts - as_timestamp(now())) | int(0) }}"
+          duration_hms: >
+            {% set rem = (next_ts - as_timestamp(now())) | int(0) %}
+            {% if rem <= 0 %}
+              00:00:00
+            {% else %}
+              {% set h = rem // 3600 %}
+              {% set m = (rem % 3600) // 60 %}
+              {% set s = rem % 60 %}
+              {{ '%d:%02d:%02d' | format(h, m, s) }}
+            {% endif %}
+
+      - alias: "Timer starten, wenn gültig"
+        choose:
+          - conditions:
+              - alias: "Letzter + nächster Wechsel vorhanden & Restzeit > 0"
+                condition: template
+                value_template: "{{ last_ts > 0 and next_ts > 0 and remaining > 0 }}"
+            sequence:
+              - alias: "Timer starten (Restzeit)"
+                action: timer.start
+                target:
+                  entity_id: timer.filter_countdown
+                data:
+                  duration: "{{ duration_hms }}"
+        default:
+          - alias: "Timer stoppen (nichts wiederherzustellen)"
+            action: timer.cancel
+            target:
+              entity_id: timer.filter_countdown
+    mode: single
+
+  - id: wartung_filter_erinnerung_timer_fertig
+    alias: "Wartung – Filter: Erinnerung wenn fällig (Timer)"
+    description: "Wenn Timer abläuft -> Push + Telegram + letzte Erinnerung setzen."
+    triggers:
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.filter_countdown
+    conditions: []
+    actions:
+      - alias: "Letzte Erinnerung setzen"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzte_erinnerung
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+      - alias: "Benachrichtigungen parallel senden"
+        parallel:
+          - alias: "Push an Andreas"
+            action: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "🔧 Filter fällig!"
+              message: >
+                Letzter Wechsel: {{ states('input_datetime.filter_letzter_wechsel') }}
+                Bitte Filter tauschen.
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Push an Karo"
+            action: notify.mobile_app_karo_iphone
+            data:
+              title: "🔧 Filter fällig!"
+              message: >
+                Letzter Wechsel: {{ states('input_datetime.filter_letzter_wechsel') }}
+                Bitte Filter tauschen.
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Telegram Erinnerung"
+            action: telegram_bot.send_message
+            data:
+              target:
+                - 988178587
+              parse_mode: html
+              message: >
+                ⚠️ Filter fällig!
+                Letzter Wechsel: {{ states('input_datetime.filter_letzter_wechsel') }}
+                Bitte Filter tauschen (Button: Filter getauscht).
+
+    mode: single
+
+  - id: wartung_filter_taegliche_pruefung_fallback
+    alias: "Wartung – Filter: Tägliche Prüfung (Fallback, 1x/Tag)"
+    description: "Fallback: Täglich 09:00 prüfen. Bei fällig/überfällig -> Push + Telegram (max. 1x pro Tag)."
+    triggers:
+      - trigger: time
+        at: "09:00:00"
+    conditions:
+      - alias: "Nur wenn nächster Wechsel gesetzt ist"
+        condition: template
+        value_template: "{{ as_timestamp(states('input_datetime.filter_naechster_wechsel'), 0) > 0 }}"
+      - alias: "Nur wenn fällig oder überfällig"
+        condition: template
+        value_template: "{{ states('sensor.filter_tage_bis_fallig') | int(0) <= 0 }}"
+      - alias: "Nur wenn heute noch nicht erinnert"
+        condition: template
+        value_template: >
+          {% set lr = as_timestamp(states('input_datetime.filter_letzte_erinnerung'), 0) %}
+          {% if lr == 0 %}
+            true
+          {% else %}
+            {{ now().date() != (lr | timestamp_local | as_datetime).date() }}
+          {% endif %}
+    actions:
+      - alias: "Letzte Erinnerung setzen"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzte_erinnerung
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+      - alias: "Benachrichtigungen parallel senden"
+        parallel:
+          - alias: "Push an Andreas"
+            action: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "🔧 Filter fällig!"
+              message: >
+                Nächster Wechsel war: {{ states('input_datetime.filter_naechster_wechsel') }}
+                Letzter Wechsel: {{ states('input_datetime.filter_letzter_wechsel') }}
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Push an Karo"
+            action: notify.mobile_app_karo_iphone
+            data:
+              title: "🔧 Filter fällig!"
+              message: >
+                Nächster Wechsel war: {{ states('input_datetime.filter_naechster_wechsel') }}
+                Letzter Wechsel: {{ states('input_datetime.filter_letzter_wechsel') }}
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Telegram Fallback-Erinnerung"
+            action: telegram_bot.send_message
+            data:
+              target:
+                - 988178587
+              parse_mode: html
+              message: >
+                🔁 Filter fällig (Fallback-Check).
+                Nächster Wechsel war: {{ states('input_datetime.filter_naechster_wechsel') }}
+                Letzter Wechsel: {{ states('input_datetime.filter_letzter_wechsel') }}
+    mode: single
+
+  - id: wartung_filter_bestand_eins_erinnerung_und_einkaufsliste
+    alias: "Wartung – Filter: Erinnerung bei 1 Stück + Einkaufsliste"
+    description: "Wenn nur noch 1 Filter auf Lager ist -> Push + Telegram + Einkaufsliste."
+    triggers:
+      - trigger: state
+        entity_id: input_number.filter_bestand
+    conditions:
+      - alias: "Nur wenn Bestand genau auf 1 fällt"
+        condition: template
+        value_template: >
+          {{ trigger.to_state is not none
+             and (trigger.to_state.state | int(0)) == 1
+             and (trigger.from_state is not none)
+             and (trigger.from_state.state | int(0)) > 1 }}
+    actions:
+      - alias: "Benachrichtigungen parallel senden"
+        parallel:
+          - alias: "Push an Andreas"
+            action: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "🛒 Filter Bestand niedrig"
+              message: "Nur noch 1 Filter auf Lager – bitte nachkaufen!"
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Push an Karo"
+            action: notify.mobile_app_karo_iphone
+            data:
+              title: "🛒 Filter Bestand niedrig"
+              message: "Nur noch 1 Filter auf Lager – bitte nachkaufen!"
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Telegram Erinnerung"
+            action: telegram_bot.send_message
+            data:
+              target:
+                - 988178587
+              parse_mode: html
+              message: >
+                🛒 Nur noch 1 Filter auf Lager.
+                Bitte neue Filter einkaufen.
+                Aktueller Bestand: {{ states('input_number.filter_bestand') | int(0) }}
+          - alias: "Auf Einkaufsliste setzen"
+            action: shopping_list.add_item
+            data:
+              name: "Filter nachkaufen"
+    mode: single
+
+  - id: wartung_filter_bestand_leer_erinnerung
+    alias: "Wartung – Filter: Kauf-Erinnerung bei leerem Bestand"
+    description: "Wenn der Bestand auf 0 fällt -> Push + Telegram."
+    triggers:
+      - trigger: state
+        entity_id: input_number.filter_bestand
+    conditions:
+      - alias: "Nur bei Wechsel von > 0 auf 0"
+        condition: template
+        value_template: >
+          {{ trigger.to_state is not none
+             and (trigger.to_state.state | int(0)) <= 0
+             and (trigger.from_state is not none)
+             and (trigger.from_state.state | int(0)) > 0 }}
+    actions:
+      - alias: "Letzte Kauf-Erinnerung setzen"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzte_kauf_erinnerung
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+      - alias: "Benachrichtigungen parallel senden"
+        parallel:
+          - alias: "Push an Andreas"
+            action: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "🚨 Kein Filter mehr auf Lager!"
+              message: "Filterbestand leer – bitte sofort neue Filter kaufen!"
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Push an Karo"
+            action: notify.mobile_app_karo_iphone
+            data:
+              title: "🚨 Kein Filter mehr auf Lager!"
+              message: "Filterbestand leer – bitte sofort neue Filter kaufen!"
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Telegram Kauf-Erinnerung"
+            action: telegram_bot.send_message
+            data:
+              target:
+                - 988178587
+              parse_mode: html
+              message: >
+                🛒 Filterbestand leer.
+                Bitte neue Filter kaufen.
+                Aktueller Bestand: {{ states('input_number.filter_bestand') | int(0) }}
+    mode: single
+
+  - id: wartung_filter_bestand_kauf_erinnerung_reset
+    alias: "Wartung – Filter: Kauf-Erinnerung zurücksetzen bei Nachkauf"
+    description: "Wenn der Bestand manuell wieder erhöht wird -> Kauf-Erinnerung zurücksetzen."
+    triggers:
+      - trigger: state
+        entity_id: input_number.filter_bestand
+    conditions:
+      - alias: "Nur wenn neuer Bestand > 0"
+        condition: template
+        value_template: >
+          {{ trigger.to_state is not none and (trigger.to_state.state | int(0)) > 0 }}
+    actions:
+      - alias: "Letzte Kauf-Erinnerung zurücksetzen"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzte_kauf_erinnerung
+        data:
+          datetime: "1970-01-01 00:00:00"
+    mode: single
+
+  - id: wartung_filter_ean_scan_einbuchen
+    alias: "Wartung – Filter: EAN einbuchen (Button)"
+    description: "EAN eingeben + Button drücken → wird exakt wie in der Vorratsverwaltung eingebucht."
+    triggers:
+      - trigger: state
+        entity_id: input_button.filter_ean_einbuchen
+    conditions:
+      - alias: "EAN muss eine der Filter-EANs sein und mindestens 8 Stellen haben"
+        condition: template
+        value_template: >
+          {{ states('input_text.filter_ean_scan') | trim in [
+            states('input_text.filter_ean_1') | trim,
+            states('input_text.filter_ean_2') | trim,
+            '4006387074845',
+            '4311536966033'
+          ] and states('input_text.filter_ean_scan') | trim | length >= 8 }}
+    actions:
+      - alias: "Variablen"
+        variables:
+          gescannte_ean: "{{ states('input_text.filter_ean_scan') | trim }}"
+          filter_name: >
+            {% if states('input_text.filter_ean_scan') | trim in [states('input_text.filter_ean_1') | trim, '4006387074845'] %}
+              BRITA Maxtra+
+            {% else %}
+              Filter Typ 2
+            {% endif %}
+          filter_marke: >
+            {% if states('input_text.filter_ean_scan') | trim in [states('input_text.filter_ean_1') | trim, '4006387074845'] %}
+              BRITA
+            {% else %}
+              Typ 2
+            {% endif %}
+
+      - alias: "Manuellen Produktnamen setzen (Fallback falls EAN nicht in OpenFoodFacts)"
+        action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_name
+        data:
+          value: "{{ filter_name | trim }}"
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_marke
+        data:
+          value: "{{ filter_marke | trim }}"
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.off_manuell_kategorie
+        data:
+          value: "Haushalt"
+
+      - alias: "Lagerplatz setzen"
+        action: input_select.select_option
+        target:
+          entity_id: input_select.off_lagerplatz
+        data:
+          option: "Vorratskammer"
+
+      - alias: "Barcode in Vorratsverwaltung setzen"
+        action: input_text.set_value
+        target:
+          entity_id: input_text.off_barcode_eingabe
+        data:
+          value: "{{ gescannte_ean }}"
+
+      - alias: "Produkt-Lookup starten (wie beim Scannen in Vorratsverwaltung)"
+        action: script.off_barcode_lookup
+
+      - delay: "00:00:03"
+
+      - alias: "Einbuchen via Vorratsverwaltung (Todo, Sheet, Log, Telegram)"
+        action: script.off_einbuchen
+
+      - alias: "EAN-Feld leeren"
+        action: input_text.set_value
+        target:
+          entity_id: input_text.filter_ean_scan
+        data:
+          value: ""
+    mode: single
+
+  - id: wartung_filter_bestand_sync_von_vorratsverwaltung
+    alias: "Wartung – Filter: Bestand sync aus Vorratsverwaltung"
+    description: "Wenn ein Filter-EAN ein- oder ausgebucht wird, HA-Bestand synchronisieren."
+    triggers:
+      - trigger: state
+        entity_id: input_text.letzte_buchung_ean
+    conditions:
+      - alias: "Nur wenn EAN eine der beiden Filter-EANs ist"
+        condition: template
+        value_template: >
+          {{ trigger.to_state.state | trim in [
+            states('input_text.filter_ean_1') | trim,
+            states('input_text.filter_ean_2') | trim,
+            '4006387074845',
+            '4311536966033'
+          ] }}
+      - alias: "Nur wenn Bestand-Wert vorhanden"
+        condition: template
+        value_template: >
+          {{ states('input_text.letzte_buchung_bestand') | int(-1) >= 0 }}
+    actions:
+      - alias: "Bestand aus Vorratsverwaltung übernehmen"
+        action: input_number.set_value
+        target:
+          entity_id: input_number.filter_bestand
+        data:
+          value: "{{ states('input_text.letzte_buchung_bestand') | int(0) }}"
+
+      - alias: "Aktiven Filter-Typ anpassen falls nötig"
+        choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ trigger.to_state.state | trim == states('input_text.filter_ean_1') | trim
+                     or trigger.to_state.state | trim == '4006387074845' }}
+            sequence:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.filter_aktiver_typ
+                data:
+                  option: "BRITA Maxtra+"
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ trigger.to_state.state | trim == states('input_text.filter_ean_2') | trim
+                     or trigger.to_state.state | trim == '4311536966033' }}
+            sequence:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.filter_aktiver_typ
+                data:
+                  option: "Filter Typ 2"
+
+      - alias: "Telegram Bestätigung"
+        action: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >
+            {% set modus = states('input_text.letzte_buchung_modus') %}
+            {% set produkt = states('input_text.letzte_buchung_produkt') %}
+            {% set neuer_bestand = states('input_text.letzte_buchung_bestand') | int(0) %}
+            {% if 'Einbuchen' in modus %}📥{% else %}📤{% endif %} Filter-Bestand synchronisiert.
+            Produkt: {{ produkt }}
+            Modus: {{ modus }}
+            Neuer Bestand: {{ neuer_bestand }} Stk.
+    mode: single
+
+  - id: wartung_filter_bestand_leer_fallback
+    alias: "Wartung – Filter: Kauf-Erinnerung täglich bei leerem Bestand"
+    description: "Fallback: Täglich 10:00 erinnern, solange kein Filter mehr auf Lager ist (max. 1x pro Tag)."
+    triggers:
+      - trigger: time
+        at: "10:00:00"
+    conditions:
+      - alias: "Nur wenn Bestand leer ist"
+        condition: template
+        value_template: "{{ states('input_number.filter_bestand') | int(0) <= 0 }}"
+      - alias: "Nur wenn heute noch keine Kauf-Erinnerung gesendet wurde"
+        condition: template
+        value_template: >
+          {% set lr = as_timestamp(states('input_datetime.filter_letzte_kauf_erinnerung'), 0) %}
+          {% if lr == 0 %}
+            true
+          {% else %}
+            {{ now().date() != (lr | timestamp_local | as_datetime).date() }}
+          {% endif %}
+    actions:
+      - alias: "Letzte Kauf-Erinnerung setzen"
+        action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.filter_letzte_kauf_erinnerung
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+      - alias: "Benachrichtigungen parallel senden"
+        parallel:
+          - alias: "Push an Andreas"
+            action: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "🚨 Kein Filter mehr auf Lager!"
+              message: "Filterbestand leer – bitte neue Filter kaufen!"
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Push an Karo"
+            action: notify.mobile_app_karo_iphone
+            data:
+              title: "🚨 Kein Filter mehr auf Lager!"
+              message: "Filterbestand leer – bitte neue Filter kaufen!"
+              data:
+                push:
+                  interruption-level: active
+          - alias: "Telegram Kauf-Fallback"
+            action: telegram_bot.send_message
+            data:
+              target:
+                - 988178587
+              parse_mode: html
+              message: >
+                🔁 Erinnerung: Keine Filter mehr auf Lager.
+                Bitte neue Filter kaufen.
+                Aktueller Bestand: {{ states('input_number.filter_bestand') | int(0) }}
+    mode: single

@@ -1,0 +1,2004 @@
+title: Medikamente
+views:
+  - title: Medikamente
+    path: medikamente
+    icon: mdi:pill
+    type: sections
+    sections:
+
+      ##############################################
+      # STATUS-ÜBERSICHT
+      ##############################################
+      - title: "📊 Übersicht"
+        cards:
+          - type: custom:mushroom-title-card
+            title: "💊 Medikamente"
+            subtitle: Einnahme-Protokoll, Vorrat & Erinnerungen
+
+          - type: tile
+            entity: input_boolean.medikament_testmodus
+            name: "🧪 Testmodus – Kein Alarm · Kein TTS · Kein Licht"
+            icon: mdi:test-tube
+            color: orange
+
+          - type: custom:mushroom-template-card
+            primary: "📖 Dashboard-Anleitung"
+            secondary: Antippen für Erklärung & Hilfe
+            icon: mdi:information-outline
+            icon_color: blue
+            fill_container: true
+            layout: horizontal
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikamente – Anleitung"
+                  dismissable: true
+                  right_button: "Verstanden ✓"
+                  content:
+                    type: markdown
+                    content: "## 💊 Medikamente – Anleitung\n\n---\n\n### 📊 Übersicht (oben)\n- **Chips-Leiste** – Name jedes Medikaments · 🟢 grün = aktiv, ⚫ grau = inaktiv\n- **Offene Erinnerungen** – 🔴 rot solange Einnahme nicht bestätigt wurde\n- **Vorrat kritisch** – 🔴 rot wenn Bestand ≤ Warnschwelle\n\n---\n\n### 💊 Jede Medikament-Karte\n**Statuskarte** – Name, aktive Zeitslots (🌅🕛🌙), Dosierung und Mahlzeit-Hinweis\n\n**Info-Zeile** (zwei Felder nebeneinander)\n- *Letzte Einnahme* – 🟢 grün wenn heute · 🟡 amber wenn älter\n- *Vorrat* – Stückzahl + berechnete Packungen (z. B. 150 Stück ≈ 0.8 Pkg.)\n\n**Aktiv-Schalter** – alle Erinnerungen für dieses Medikament ein/aus\n\n---\n\n### ⚙️ Einstellungen (Zahnrad-Expander)\n\n| Feld | Bedeutung |\n|---|---|\n| Name | Freiname des Medikaments |\n| PZN | Pharmazentralnummer für die Apotheke |\n| Dosierung | z. B. »1 Tablette« |\n| Mahlzeit | Egal / Vor dem Essen / Nach dem Essen / Zum Essen |\n| Wochentage | Täglich / Werktags / Mo·Mi·Fr / usw. |\n\n**Zeitslots** – jeden Slot einzeln aktivieren und Uhrzeit setzen:\n- 🌅 **Morgens** – Toggle + Uhrzeit\n- 🕛 **Mittags** – Toggle + Uhrzeit\n- 🌙 **Abends** – Toggle + Uhrzeit\n\n| Feld | Bedeutung |\n|---|---|\n| Vorrat (Stück) | Aktueller Gesamtbestand |\n| Packungsgröße | Stück pro Packung (z. B. 200) |\n| ➕ Packung einbuchen | Antippen = +1 Packung zum Vorrat |\n| Warnung ab | Warnung wenn Vorrat ≤ diesem Wert |\n| Hinweis | Freitext (z. B. »mit Wasser nehmen«) |\n\n🛒 **Arznei-Liste** – fügt Medikament + PZN + Stückzahl in die Todo-Liste *Arznei* ein\n\n📋 **Gelber Info-Button** – zeigt Beschreibung, Einnahme-Hinweise und Nebenwirkungen des Medikaments in einem Popup\n\n🗑️ **Roter Reset-Button** – öffnet eine Sicherheitsabfrage und setzt **alle** Einstellungen des Medikaments auf leer/Standard zurück (Name, PZN, Vorrat, Zeitslots, usw.)\n\n---\n\n### 🔔 Erinnerungsablauf\n1. Zum eingestellten Zeitpunkt → **Push-Notification** mit Zeitslot + Mahlzeit-Hinweis\n2. Wenn zuhause → **Licht blinkt rot** + **TTS über Sonos**\n3. Alle **15 Min. Wiederholung** bis zur Bestätigung\n4. »✅ Genommen« → Zeitstempel gesetzt · Vorrat −1 · Licht kurz grün\n\n*Nur aktiv wenn:* Medikament aktiv + Zeitslot aktiv + Wochentag passt\n\n---\n\n### 📦 Vorrat & Packungsverwaltung\n- **Packungsgröße** einmalig eintragen (z. B. 200 Stück/Packung)\n- **Anfangsvorrat** = Packungen × Größe manuell setzen (z. B. 2 × 200 = 400)\n- Jede bestätigte Einnahme → Vorrat automatisch −1\n- Neue Packung → **➕ Packung einbuchen** antippen\n- Täglich **08:00 Uhr**: Prüfung → Push + Todo-Eintrag in *Arznei* bei niedrigem Vorrat\n\n---\n\n### 🧪 Testmodus\nDer **Testmodus-Schalter** oben im Dashboard erlaubt das Testen der Erinnerungen ohne Alarm:\n\n| Modus | Verhalten |\n|---|---|\n| **Normal (aus)** | iOS Critical Push + Licht blinkt rot + TTS Sonos |\n| **Testmodus (an)** | Nur stille Telegram-Nachricht – kein Alarm, kein Licht, kein TTS |\n\nDie Bestätigung (»✅ Genommen«), der Vorrats-Abzug und der Zeitstempel funktionieren im Testmodus **genauso** wie normal.\n\n⚠️ Nach dem Test **Testmodus wieder ausschalten**, damit echte Alarme wieder kommen!"
+
+          - type: custom:mushroom-chips-card
+            alignment: justify
+            chips:
+              - type: template
+                entity: input_boolean.medikament_testmodus
+                icon: mdi:test-tube
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_testmodus', 'on') %}orange{% else %}grey{% endif %}
+                content: >-
+                  {% if is_state('input_boolean.medikament_testmodus', 'on') %}🧪 TEST AN{% else %}Test{% endif %}
+                tap_action:
+                  action: toggle
+              - type: template
+                entity: input_boolean.medikament_1_aktiv
+                icon: mdi:pill
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_1_aktiv', 'on') %}green{% else %}grey{% endif %}
+                content: >-
+                  {% set name = states('input_text.medikament_1_name') %}
+                  {{ name if name | trim != '' else 'Med 1' }}
+              - type: template
+                entity: input_boolean.medikament_2_aktiv
+                icon: mdi:pill
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_2_aktiv', 'on') %}green{% else %}grey{% endif %}
+                content: >-
+                  {% set name = states('input_text.medikament_2_name') %}
+                  {{ name if name | trim != '' else 'Med 2' }}
+              - type: template
+                entity: input_boolean.medikament_3_aktiv
+                icon: mdi:pill
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_3_aktiv', 'on') %}green{% else %}grey{% endif %}
+                content: >-
+                  {% set name = states('input_text.medikament_3_name') %}
+                  {{ name if name | trim != '' else 'Med 3' }}
+              - type: template
+                entity: input_boolean.medikament_4_aktiv
+                icon: mdi:pill
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_4_aktiv', 'on') %}green{% else %}grey{% endif %}
+                content: >-
+                  {% set name = states('input_text.medikament_4_name') %}
+                  {{ name if name | trim != '' else 'Med 4' }}
+              - type: template
+                entity: input_boolean.medikament_5_aktiv
+                icon: mdi:pill
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_5_aktiv', 'on') %}green{% else %}grey{% endif %}
+                content: >-
+                  {% set name = states('input_text.medikament_5_name') %}
+                  {{ name if name | trim != '' else 'Med 5' }}
+              - type: template
+                entity: input_boolean.medikament_6_aktiv
+                icon: mdi:pill
+                icon_color: >-
+                  {% if is_state('input_boolean.medikament_6_aktiv', 'on') %}green{% else %}grey{% endif %}
+                content: >-
+                  {% set name = states('input_text.medikament_6_name') %}
+                  {{ name if name | trim != '' else 'Med 6' }}
+
+          - type: custom:mushroom-template-card
+            primary: Offene Erinnerungen
+            secondary: >-
+              {% set offen = namespace(liste=[]) %}
+              {% for i in range(1, 7) %}
+                {% if is_state('input_boolean.medikament_' ~ i ~ '_offen', 'on') %}
+                  {% set n = states('input_text.medikament_' ~ i ~ '_name') %}
+                  {% set offen.liste = offen.liste + [n if n | trim != '' else 'Medikament ' ~ i] %}
+                {% endif %}
+              {% endfor %}
+              {% if offen.liste | length > 0 %}{{ offen.liste | join(' · ') }}{% else %}Alle erledigt ✓{% endif %}
+            icon: mdi:bell-ring
+            icon_color: >-
+              {% set any = namespace(v=false) %}
+              {% for i in range(1,7) %}{% if is_state('input_boolean.medikament_'~i~'_offen','on') %}{% set any.v=true %}{% endif %}{% endfor %}
+              {{ 'red' if any.v else 'green' }}
+            badge_icon: >-
+              {% set any = namespace(v=false) %}
+              {% for i in range(1,7) %}{% if is_state('input_boolean.medikament_'~i~'_offen','on') %}{% set any.v=true %}{% endif %}{% endfor %}
+              {{ 'mdi:alert-circle' if any.v else 'mdi:check-circle' }}
+            badge_color: >-
+              {% set any = namespace(v=false) %}
+              {% for i in range(1,7) %}{% if is_state('input_boolean.medikament_'~i~'_offen','on') %}{% set any.v=true %}{% endif %}{% endfor %}
+              {{ 'red' if any.v else 'green' }}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+
+          - type: custom:mushroom-template-card
+            primary: Vorrat kritisch
+            secondary: >-
+              {% set n = namespace(liste=[]) %}
+              {% for i in range(1, 7) %}
+                {% set v = states('input_number.medikament_'~i~'_vorrat') | int(-1) %}
+                {% set w = states('input_number.medikament_'~i~'_vorrat_warnung') | int(10) %}
+                {% if is_state('input_boolean.medikament_'~i~'_aktiv','on') and v >= 0 and v <= w %}
+                  {% set nm = states('input_text.medikament_'~i~'_name') or ('Med '~i) %}
+                  {% set n.liste = n.liste + [nm~' ('~v~')'] %}
+                {% endif %}
+              {% endfor %}
+              {% if n.liste | length > 0 %}{{ n.liste | join(' · ') }}{% else %}Alle Vorräte ausreichend ✓{% endif %}
+            icon: mdi:pill-multiple
+            icon_color: >-
+              {% set any = namespace(v=false) %}
+              {% for i in range(1,7) %}
+                {% set v = states('input_number.medikament_'~i~'_vorrat') | int(-1) %}
+                {% set w = states('input_number.medikament_'~i~'_vorrat_warnung') | int(10) %}
+                {% if is_state('input_boolean.medikament_'~i~'_aktiv','on') and v >= 0 and v <= w %}{% set any.v=true %}{% endif %}
+              {% endfor %}
+              {{ 'red' if any.v else 'green' }}
+            badge_icon: >-
+              {% set any = namespace(v=false) %}
+              {% for i in range(1,7) %}
+                {% set v = states('input_number.medikament_'~i~'_vorrat') | int(-1) %}
+                {% set w = states('input_number.medikament_'~i~'_vorrat_warnung') | int(10) %}
+                {% if is_state('input_boolean.medikament_'~i~'_aktiv','on') and v >= 0 and v <= w %}{% set any.v=true %}{% endif %}
+              {% endfor %}
+              {{ 'mdi:alert-circle' if any.v else 'mdi:check-circle' }}
+            badge_color: >-
+              {% set any = namespace(v=false) %}
+              {% for i in range(1,7) %}
+                {% set v = states('input_number.medikament_'~i~'_vorrat') | int(-1) %}
+                {% set w = states('input_number.medikament_'~i~'_vorrat_warnung') | int(10) %}
+                {% if is_state('input_boolean.medikament_'~i~'_aktiv','on') and v >= 0 and v <= w %}{% set any.v=true %}{% endif %}
+              {% endfor %}
+              {{ 'red' if any.v else 'green' }}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+
+      ##############################################
+      # MEDIKAMENT 1
+      ##############################################
+      - type: custom:expander-card
+        title: "💊 Medikament 1"
+        expanded: true
+        icon: mdi:pill
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set name = states('input_text.medikament_1_name') %}
+              {{ name if name | trim != '' else 'Medikament 1' }}
+            secondary: >-
+              {% if is_state('input_boolean.medikament_1_aktiv', 'on') %}
+                {% set slots = namespace(s=[]) %}
+                {% if is_state('input_boolean.medikament_1_morgen_aktiv','on') %}{% set slots.s = slots.s + ['🌅 '~states('input_datetime.medikament_1_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_1_mittag_aktiv','on') %}{% set slots.s = slots.s + ['🕛 '~states('input_datetime.medikament_1_mittag_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_1_abend_aktiv','on') %}{% set slots.s = slots.s + ['🌙 '~states('input_datetime.medikament_1_abend_zeit')[:5]] %}{% endif %}
+                {% set dos = states('input_text.medikament_1_dosierung') %}
+                {% set mahlzeit = states('input_select.medikament_1_mahlzeit') %}
+                {{ slots.s | join(' · ') if slots.s else 'Kein Zeitslot aktiv' }}
+                {%- if dos | trim != '' %} · {{ dos }}{% endif %}
+                {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                {%- if is_state('input_boolean.medikament_1_offen','on') %} · ⚠️ offen{% endif %}
+              {% else %}Inaktiv{% endif %}
+            icon: mdi:pill
+            icon_color: >-
+              {% if is_state('input_boolean.medikament_1_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_1_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            badge_icon: >-
+              {% if is_state('input_boolean.medikament_1_offen','on') %}mdi:bell-ring
+              {% elif is_state('input_boolean.medikament_1_aktiv','on') %}mdi:check-circle
+              {% else %}mdi:minus-circle{% endif %}
+            badge_color: >-
+              {% if is_state('input_boolean.medikament_1_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_1_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte Einnahme
+                secondary: >-
+                  {% set l = states('input_datetime.medikament_1_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓
+                    {% else %}{{ as_timestamp(l)|timestamp_custom('%d.%m.%Y') }}{% endif %}
+                  {% else %}Noch nicht erfasst{% endif %}
+                icon: mdi:clock-check-outline
+                icon_color: >-
+                  {% set l = states('input_datetime.medikament_1_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}amber{% endif %}
+                  {% else %}grey{% endif %}
+                fill_container: true
+                layout: horizontal
+              - type: custom:mushroom-template-card
+                primary: Vorrat
+                secondary: >-
+                  {% set v = states('input_number.medikament_1_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_1_vorrat_warnung') | int(10) %}
+                  {% set g = states('input_number.medikament_1_packung_groesse') | int(0) %}
+                  {{ v }} Stück{%- if g > 0 %} (≈{{ (v/g)|round(1) }} Pkg.){%- endif %}{%- if v <= w %} · ⚠️ Nachbestellen!{% endif %}
+                icon: mdi:pill-multiple
+                icon_color: >-
+                  {% set v = states('input_number.medikament_1_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_1_vorrat_warnung') | int(10) %}
+                  {% if v <= w %}red{% elif v <= w*2 %}amber{% else %}green{% endif %}
+                fill_container: true
+                layout: horizontal
+          - type: custom:mushroom-template-card
+            primary: "✅ Jetzt genommen"
+            secondary: >-
+              {% set l = states('input_datetime.medikament_1_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓{% else %}Antippen zum Bestätigen{% endif %}
+            icon: mdi:check-circle
+            icon_color: >-
+              {% set l = states('input_datetime.medikament_1_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}grey{% endif %}
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: perform-action
+              perform_action: script.medikament_genommen
+              data:
+                med_nr: 1
+          - type: tile
+            entity: input_boolean.medikament_1_aktiv
+            name: Aktiv
+            color: green
+          - type: custom:mushroom-template-card
+            primary: >-
+              {%- set name = states('input_text.medikament_1_name') %}
+              📋 {{ name if name | trim != '' else 'Medikament 1' }} – Info & Hinweise
+            secondary: Beschreibung · Einnahme · Nebenwirkungen
+            icon: mdi:text-box-outline
+            icon_color: amber
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.5); }
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikament-Info"
+                  dismissable: true
+                  right_button: "Schließen"
+                  content:
+                    type: markdown
+                    content: |-
+                      {%- set name = states('input_text.medikament_1_name') %}
+                      ## 💊 {{ name if name | trim != '' else 'Medikament 1' }}
+
+                      ---
+
+                      ### Anwendungsgebiete
+
+                      - Bluthochdruck
+                      - Herzschwäche
+                      - Herzschwäche nach Herzinfarkt
+                      - Vorbeugung gegen Herzinfarkt und Schlaganfall bei erhöhtem Risiko
+                      - Nichtdiabetische Nierenerkrankung (Glomerulopathie)
+                      - Nierenerkrankung bei Diabetes
+
+                      ---
+
+                      ### Dosierung und Anwendungshinweise
+
+                      **1 Tablette · 1-mal täglich · morgens** (unabhängig von der Mahlzeit)
+
+                      **½ Tablette · 2-mal täglich · morgens und abends** (unabhängig von der Mahlzeit)
+
+                      **½–1 Tablette · 1-mal täglich · morgens** (unabhängig von der Mahlzeit)
+
+                      Die Gesamtdosis nicht ohne Rücksprache mit Arzt oder Apotheker überschreiten.
+
+                      **Anwendung:** Mit ausreichend Flüssigkeit (z.B. 1 Glas Wasser) einnehmen.
+
+                      **Dauer:** Zeitlich nicht begrenzt, richtet sich nach Erkrankung – nur vom Arzt zu bestimmen.
+
+                      **Überdosierung:** Blutdruckabfall, Pulserniedrigung, Kreislaufversagen möglich → sofort Arzt kontaktieren.
+
+                      **Einnahme vergessen:** Zum nächsten Zeitpunkt normal fortsetzen (keine doppelte Dosis).
+
+                      ---
+
+                      ### Gegenanzeigen
+
+                      **Immer:**
+                      - Überempfindlichkeit gegen Inhaltsstoffe
+                      - Zustand nach Nierentransplantation
+                      - Dialyse
+                      - Überproduktion von Aldosteron in der Nebenniere
+                      - Gestörte Abwehrreaktionen (überschießende Immunreaktionen, Desensibilisierung)
+
+                      **Unter Umständen (Arzt/Apotheker fragen):**
+                      - Hypertrophe Kardiomyopathie
+                      - Verengung einer Herzklappe (Mitral-/Aortenklappe)
+                      - Koronare Herzkrankheit
+                      - Durchblutungsstörung der Hirngefäße
+                      - Eingeschränkte Nieren- oder Leberfunktion
+                      - Verengung einer Nierenarterie
+                      - Flüssigkeits-/Salz-Haushaltsstörungen (Erbrechen, Durchfall)
+                      - Diabetes mellitus
+                      - Neigung zu angioneurotischem Ödem
+                      - Kollagenosen (Lupus erythematodes, Sklerodermie)
+
+                      **Altersgruppen:**
+                      - Kinder unter 18 Jahren: nicht anwenden
+                      - Ab 65 Jahren: engmaschige Kontrolle empfohlen
+
+                      **Schwangerschaft/Stillzeit:** Nicht empfohlen; Abstillen ggf. in Erwägung ziehen.
+
+                      ---
+
+                      ### Nebenwirkungen
+
+                      - **Husten** (vor allem trockener Husten)
+                      - Magen-Darm: Übelkeit, Erbrechen, Durchfall, Bauchschmerzen
+                      - Geschmacksstörungen, Appetitlosigkeit
+                      - Kopfschmerzen, Schwindel, Müdigkeit, Benommenheit
+                      - Schlafstörungen, Depressionen, Missempfindungen
+                      - Bindehautentzündung, Schnupfen
+                      - Hautreaktionen: Juckreiz, Hautausschlag, Nesselausschlag, Schwitzen
+                      - **Angioneurotisches Ödem** (Schwellung Gesicht, Hand, Fuß)
+                      - Blutdruckabfall, Herzklopfen, Pulsbeschleunigung
+                      - Nierenfunktionsstörungen (Kreatinin- und Harnstoffanstieg)
+                      - Erhöhte Kaliumwerte, Leberwertanstieg
+                      - Allgemeine Schwäche, Potenzschwäche, Sodbrennen, Sehstörungen
+
+                      Bei Veränderungen → Arzt oder Apotheker aufsuchen.
+
+                      ---
+
+                      ### Zusammensetzung
+
+                      **Wirkstoff:** Ramipril 10 mg
+
+                      **Hilfsstoffe:** Mikrokristalline Cellulose · Hypromellose · Natriumhydrogencarbonat · Natriumstearylfumarat · Vorverkleisterte Maisstärke
+
+                      ---
+
+                      ### Wirkungsweise
+
+                      **ACE-Hemmer:** Verhindert Freisetzung von Angiotensin, das Blutgefäße verengt und den Blutdruck erhöht. Erweitert Blutgefäße indirekt und entlastet das Herz.
+
+                      ---
+
+                      ### Wichtige Hinweise
+
+                      - Reaktionsvermögen kann beeinträchtigt sein → Vorsicht im Straßenverkehr und bei Maschinenbedienung
+                      - ACE-Hemmer: verstärkte Überempfindlichkeitsreaktionen auf Insektenstiche möglich
+                      - Wechselwirkungen möglich → alle Arzneimittel dem Arzt/Apotheker angeben
+
+                      **Aufbewahrung:** Vor Hitze geschützt aufbewahren.
+
+                      ---
+
+                      *Zu Risiken und Nebenwirkungen lesen Sie die Packungsbeilage und fragen Sie Ihren Arzt oder Apotheker.*
+          - type: custom:expander-card
+            title: "⚙️ Einstellungen"
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: tile
+                entity: input_text.medikament_1_name
+                name: Name
+                icon: mdi:pill
+              - type: tile
+                entity: input_text.medikament_1_pzn
+                name: PZN
+                icon: mdi:identifier
+              - type: tile
+                entity: input_text.medikament_1_dosierung
+                name: Dosierung
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_1_mahlzeit
+                name: Mahlzeit
+                icon: mdi:food-fork-drink
+              - type: tile
+                entity: input_select.medikament_1_tage
+                name: Wochentage
+                icon: mdi:calendar-week
+              - type: tile
+                entity: input_boolean.medikament_1_morgen_aktiv
+                name: "🌅 Morgens aktiv"
+                color: orange
+              - type: tile
+                entity: input_datetime.medikament_1_zeit
+                name: "🌅 Morgens Uhrzeit"
+                icon: mdi:weather-sunny
+              - type: tile
+                entity: input_boolean.medikament_1_mittag_aktiv
+                name: "🕛 Mittags aktiv"
+                color: yellow
+              - type: tile
+                entity: input_datetime.medikament_1_mittag_zeit
+                name: "🕛 Mittags Uhrzeit"
+                icon: mdi:weather-partly-cloudy
+              - type: tile
+                entity: input_boolean.medikament_1_abend_aktiv
+                name: "🌙 Abends aktiv"
+                color: indigo
+              - type: tile
+                entity: input_datetime.medikament_1_abend_zeit
+                name: "🌙 Abends Uhrzeit"
+                icon: mdi:weather-night
+              - type: tile
+                entity: input_number.medikament_1_vorrat
+                name: Vorrat (Stück)
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_number.medikament_1_packung_groesse
+                name: Packungsgröße (Stück / Packung)
+                icon: mdi:package-variant
+              - type: button
+                name: "➕ Packung einbuchen"
+                icon: mdi:plus-circle
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_packung_hinzufuegen
+                  data:
+                    med_nr: 1
+              - type: tile
+                entity: input_number.medikament_1_vorrat_warnung
+                name: Warnung ab (Stück)
+                icon: mdi:alert-outline
+              - type: tile
+                entity: input_text.medikament_1_hinweis
+                name: Hinweis
+                icon: mdi:information-outline
+              - type: tile
+                entity: input_text.medikament_1_beschreibung
+                name: Beschreibung
+                icon: mdi:text-box-outline
+              - type: tile
+                entity: input_text.medikament_1_einnahme
+                name: Einnahme-Hinweise
+                icon: mdi:medical-bag
+              - type: tile
+                entity: input_text.medikament_1_nebenwirkungen
+                name: Nebenwirkungen
+                icon: mdi:alert-circle-outline
+              - type: tile
+                entity: input_boolean.medikament_1_offen
+                name: Erinnerung noch offen
+                color: red
+                icon: mdi:bell-ring
+              - type: custom:mushroom-template-card
+                primary: Zur Arznei-Liste hinzufügen
+                secondary: >-
+                  {% set pzn = states('input_text.medikament_1_pzn') %}
+                  {% if pzn | trim != '' %}PZN: {{ pzn }}{% else %}Kein PZN hinterlegt{% endif %}
+                icon: mdi:cart-plus
+                icon_color: blue
+                fill_container: true
+                layout: horizontal
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_arznei_hinzufuegen
+                  data:
+                    med_nr: 1
+              - type: custom:mushroom-template-card
+                primary: "🗑️ Medikament zurücksetzen"
+                secondary: Alle Einstellungen löschen
+                icon: mdi:delete-forever
+                icon_color: red
+                fill_container: true
+                layout: horizontal
+                card_mod:
+                  style: |
+                    ha-card { background: rgba(244,67,54,0.08); border: 1px solid rgba(244,67,54,0.3); }
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "⚠️ Medikament 1 zurücksetzen?"
+                      dismissable: true
+                      left_button: "❌ Abbrechen"
+                      right_button: "🗑️ Ja, zurücksetzen"
+                      right_button_action:
+                        service: script.medikament_reset
+                        data:
+                          med_nr: 1
+                      content:
+                        type: markdown
+                        content: "### ⚠️ Wirklich zurücksetzen?\n\nFolgendes wird für **Medikament 1** gelöscht:\n\n- Name, PZN, Dosierung, Hinweis\n- Zeitslots, Uhrzeiten, Wochentage, Mahlzeit\n- Vorrat, Packungsgröße, letzte Einnahme\n- Alle Toggles werden deaktiviert\n\n**Dieser Vorgang kann nicht rückgängig gemacht werden!"
+
+      ##############################################
+      # MEDIKAMENT 2
+      ##############################################
+      - type: custom:expander-card
+        title: "💊 Medikament 2"
+        expanded: true
+        icon: mdi:pill
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set name = states('input_text.medikament_2_name') %}
+              {{ name if name | trim != '' else 'Medikament 2' }}
+            secondary: >-
+              {% if is_state('input_boolean.medikament_2_aktiv', 'on') %}
+                {% set slots = namespace(s=[]) %}
+                {% if is_state('input_boolean.medikament_2_morgen_aktiv','on') %}{% set slots.s = slots.s + ['🌅 '~states('input_datetime.medikament_2_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_2_mittag_aktiv','on') %}{% set slots.s = slots.s + ['🕛 '~states('input_datetime.medikament_2_mittag_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_2_abend_aktiv','on') %}{% set slots.s = slots.s + ['🌙 '~states('input_datetime.medikament_2_abend_zeit')[:5]] %}{% endif %}
+                {% set dos = states('input_text.medikament_2_dosierung') %}
+                {% set mahlzeit = states('input_select.medikament_2_mahlzeit') %}
+                {{ slots.s | join(' · ') if slots.s else 'Kein Zeitslot aktiv' }}
+                {%- if dos | trim != '' %} · {{ dos }}{% endif %}
+                {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                {%- if is_state('input_boolean.medikament_2_offen','on') %} · ⚠️ offen{% endif %}
+              {% else %}Inaktiv{% endif %}
+            icon: mdi:pill
+            icon_color: >-
+              {% if is_state('input_boolean.medikament_2_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_2_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            badge_icon: >-
+              {% if is_state('input_boolean.medikament_2_offen','on') %}mdi:bell-ring
+              {% elif is_state('input_boolean.medikament_2_aktiv','on') %}mdi:check-circle
+              {% else %}mdi:minus-circle{% endif %}
+            badge_color: >-
+              {% if is_state('input_boolean.medikament_2_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_2_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte Einnahme
+                secondary: >-
+                  {% set l = states('input_datetime.medikament_2_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓
+                    {% else %}{{ as_timestamp(l)|timestamp_custom('%d.%m.%Y') }}{% endif %}
+                  {% else %}Noch nicht erfasst{% endif %}
+                icon: mdi:clock-check-outline
+                icon_color: >-
+                  {% set l = states('input_datetime.medikament_2_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}amber{% endif %}
+                  {% else %}grey{% endif %}
+                fill_container: true
+                layout: horizontal
+              - type: custom:mushroom-template-card
+                primary: Vorrat
+                secondary: >-
+                  {% set v = states('input_number.medikament_2_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_2_vorrat_warnung') | int(10) %}
+                  {% set g = states('input_number.medikament_2_packung_groesse') | int(0) %}
+                  {{ v }} Stück{%- if g > 0 %} (≈{{ (v/g)|round(1) }} Pkg.){%- endif %}{%- if v <= w %} · ⚠️ Nachbestellen!{% endif %}
+                icon: mdi:pill-multiple
+                icon_color: >-
+                  {% set v = states('input_number.medikament_2_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_2_vorrat_warnung') | int(10) %}
+                  {% if v <= w %}red{% elif v <= w*2 %}amber{% else %}green{% endif %}
+                fill_container: true
+                layout: horizontal
+          - type: custom:mushroom-template-card
+            primary: "✅ Jetzt genommen"
+            secondary: >-
+              {% set l = states('input_datetime.medikament_2_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓{% else %}Antippen zum Bestätigen{% endif %}
+            icon: mdi:check-circle
+            icon_color: >-
+              {% set l = states('input_datetime.medikament_2_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}grey{% endif %}
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: perform-action
+              perform_action: script.medikament_genommen
+              data:
+                med_nr: 2
+          - type: tile
+            entity: input_boolean.medikament_2_aktiv
+            name: Aktiv
+            color: green
+          - type: custom:mushroom-template-card
+            primary: >-
+              {%- set name = states('input_text.medikament_2_name') %}
+              📋 {{ name if name | trim != '' else 'Medikament 2' }} – Info & Hinweise
+            secondary: Beschreibung · Einnahme · Nebenwirkungen
+            icon: mdi:text-box-outline
+            icon_color: amber
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.5); }
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikament-Info"
+                  dismissable: true
+                  right_button: "Schließen"
+                  content:
+                    type: markdown
+                    content: >-
+                      {%- set name = states('input_text.medikament_2_name') %}
+                      {%- set dos = states('input_text.medikament_2_dosierung') %}
+                      {%- set mahlzeit = states('input_select.medikament_2_mahlzeit') %}
+                      {%- set beschr = states('input_text.medikament_2_beschreibung') %}
+                      {%- set einnahme = states('input_text.medikament_2_einnahme') %}
+                      {%- set nw = states('input_text.medikament_2_nebenwirkungen') %}
+                      {%- set hin = states('input_text.medikament_2_hinweis') %}
+                      ## {{ name if name | trim != '' else 'Medikament 2' }}
+                      {{- if dos | trim != '' }} · {{ dos }}{{- endif }}
+                      {{- if mahlzeit != 'Egal' }} · {{ mahlzeit }}{{- endif }}
+
+                      {{- if beschr | trim != '' }}
+
+                      **📋 Beschreibung**
+
+                      {{ beschr }}
+                      {{- endif }}
+                      {{- if einnahme | trim != '' }}
+
+                      **💊 Einnahme-Hinweise**
+
+                      {{ einnahme }}
+                      {{- endif }}
+                      {{- if nw | trim != '' }}
+
+                      **⚠️ Nebenwirkungen**
+
+                      {{ nw }}
+                      {{- endif }}
+                      {{- if hin | trim != '' }}
+
+                      **🔔 Erinnerungs-Hinweis**
+
+                      {{ hin }}
+                      {{- endif }}
+                      {{- if beschr | trim == '' and einnahme | trim == '' and nw | trim == '' and hin | trim == '' }}
+
+                      *Noch keine Informationen hinterlegt.*
+
+                      Fülle die Felder in den ⚙️ Einstellungen aus.
+                      {{- endif }}
+          - type: custom:expander-card
+            title: "⚙️ Einstellungen"
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: tile
+                entity: input_text.medikament_2_name
+                name: Name
+                icon: mdi:pill
+              - type: tile
+                entity: input_text.medikament_2_pzn
+                name: PZN
+                icon: mdi:identifier
+              - type: tile
+                entity: input_text.medikament_2_dosierung
+                name: Dosierung
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_2_mahlzeit
+                name: Mahlzeit
+                icon: mdi:food-fork-drink
+              - type: tile
+                entity: input_select.medikament_2_tage
+                name: Wochentage
+                icon: mdi:calendar-week
+              - type: tile
+                entity: input_boolean.medikament_2_morgen_aktiv
+                name: "🌅 Morgens aktiv"
+                color: orange
+              - type: tile
+                entity: input_datetime.medikament_2_zeit
+                name: "🌅 Morgens Uhrzeit"
+                icon: mdi:weather-sunny
+              - type: tile
+                entity: input_boolean.medikament_2_mittag_aktiv
+                name: "🕛 Mittags aktiv"
+                color: yellow
+              - type: tile
+                entity: input_datetime.medikament_2_mittag_zeit
+                name: "🕛 Mittags Uhrzeit"
+                icon: mdi:weather-partly-cloudy
+              - type: tile
+                entity: input_boolean.medikament_2_abend_aktiv
+                name: "🌙 Abends aktiv"
+                color: indigo
+              - type: tile
+                entity: input_datetime.medikament_2_abend_zeit
+                name: "🌙 Abends Uhrzeit"
+                icon: mdi:weather-night
+              - type: tile
+                entity: input_number.medikament_2_vorrat
+                name: Vorrat (Stück)
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_number.medikament_2_packung_groesse
+                name: Packungsgröße (Stück / Packung)
+                icon: mdi:package-variant
+              - type: button
+                name: "➕ Packung einbuchen"
+                icon: mdi:plus-circle
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_packung_hinzufuegen
+                  data:
+                    med_nr: 2
+              - type: tile
+                entity: input_number.medikament_2_vorrat_warnung
+                name: Warnung ab (Stück)
+                icon: mdi:alert-outline
+              - type: tile
+                entity: input_text.medikament_2_hinweis
+                name: Hinweis
+                icon: mdi:information-outline
+              - type: tile
+                entity: input_text.medikament_2_beschreibung
+                name: Beschreibung
+                icon: mdi:text-box-outline
+              - type: tile
+                entity: input_text.medikament_2_einnahme
+                name: Einnahme-Hinweise
+                icon: mdi:medical-bag
+              - type: tile
+                entity: input_text.medikament_2_nebenwirkungen
+                name: Nebenwirkungen
+                icon: mdi:alert-circle-outline
+              - type: tile
+                entity: input_boolean.medikament_2_offen
+                name: Erinnerung noch offen
+                color: red
+                icon: mdi:bell-ring
+              - type: custom:mushroom-template-card
+                primary: Zur Arznei-Liste hinzufügen
+                secondary: >-
+                  {% set pzn = states('input_text.medikament_2_pzn') %}
+                  {% if pzn | trim != '' %}PZN: {{ pzn }}{% else %}Kein PZN hinterlegt{% endif %}
+                icon: mdi:cart-plus
+                icon_color: blue
+                fill_container: true
+                layout: horizontal
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_arznei_hinzufuegen
+                  data:
+                    med_nr: 2
+              - type: custom:mushroom-template-card
+                primary: "🗑️ Medikament zurücksetzen"
+                secondary: Alle Einstellungen löschen
+                icon: mdi:delete-forever
+                icon_color: red
+                fill_container: true
+                layout: horizontal
+                card_mod:
+                  style: |
+                    ha-card { background: rgba(244,67,54,0.08); border: 1px solid rgba(244,67,54,0.3); }
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "⚠️ Medikament 2 zurücksetzen?"
+                      dismissable: true
+                      left_button: "❌ Abbrechen"
+                      right_button: "🗑️ Ja, zurücksetzen"
+                      right_button_action:
+                        service: script.medikament_reset
+                        data:
+                          med_nr: 2
+                      content:
+                        type: markdown
+                        content: "### ⚠️ Wirklich zurücksetzen?\n\nFolgendes wird für **Medikament 2** gelöscht:\n\n- Name, PZN, Dosierung, Hinweis\n- Zeitslots, Uhrzeiten, Wochentage, Mahlzeit\n- Vorrat, Packungsgröße, letzte Einnahme\n- Alle Toggles werden deaktiviert\n\n**Dieser Vorgang kann nicht rückgängig gemacht werden!"
+
+      ##############################################
+      # MEDIKAMENT 3
+      ##############################################
+      - type: custom:expander-card
+        title: "💊 Medikament 3"
+        expanded: true
+        icon: mdi:pill
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set name = states('input_text.medikament_3_name') %}
+              {{ name if name | trim != '' else 'Medikament 3' }}
+            secondary: >-
+              {% if is_state('input_boolean.medikament_3_aktiv', 'on') %}
+                {% set slots = namespace(s=[]) %}
+                {% if is_state('input_boolean.medikament_3_morgen_aktiv','on') %}{% set slots.s = slots.s + ['🌅 '~states('input_datetime.medikament_3_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_3_mittag_aktiv','on') %}{% set slots.s = slots.s + ['🕛 '~states('input_datetime.medikament_3_mittag_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_3_abend_aktiv','on') %}{% set slots.s = slots.s + ['🌙 '~states('input_datetime.medikament_3_abend_zeit')[:5]] %}{% endif %}
+                {% set dos = states('input_text.medikament_3_dosierung') %}
+                {% set mahlzeit = states('input_select.medikament_3_mahlzeit') %}
+                {{ slots.s | join(' · ') if slots.s else 'Kein Zeitslot aktiv' }}
+                {%- if dos | trim != '' %} · {{ dos }}{% endif %}
+                {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                {%- if is_state('input_boolean.medikament_3_offen','on') %} · ⚠️ offen{% endif %}
+              {% else %}Inaktiv{% endif %}
+            icon: mdi:pill
+            icon_color: >-
+              {% if is_state('input_boolean.medikament_3_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_3_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            badge_icon: >-
+              {% if is_state('input_boolean.medikament_3_offen','on') %}mdi:bell-ring
+              {% elif is_state('input_boolean.medikament_3_aktiv','on') %}mdi:check-circle
+              {% else %}mdi:minus-circle{% endif %}
+            badge_color: >-
+              {% if is_state('input_boolean.medikament_3_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_3_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte Einnahme
+                secondary: >-
+                  {% set l = states('input_datetime.medikament_3_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓
+                    {% else %}{{ as_timestamp(l)|timestamp_custom('%d.%m.%Y') }}{% endif %}
+                  {% else %}Noch nicht erfasst{% endif %}
+                icon: mdi:clock-check-outline
+                icon_color: >-
+                  {% set l = states('input_datetime.medikament_3_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}amber{% endif %}
+                  {% else %}grey{% endif %}
+                fill_container: true
+                layout: horizontal
+              - type: custom:mushroom-template-card
+                primary: Vorrat
+                secondary: >-
+                  {% set v = states('input_number.medikament_3_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_3_vorrat_warnung') | int(10) %}
+                  {% set g = states('input_number.medikament_3_packung_groesse') | int(0) %}
+                  {{ v }} Stück{%- if g > 0 %} (≈{{ (v/g)|round(1) }} Pkg.){%- endif %}{%- if v <= w %} · ⚠️ Nachbestellen!{% endif %}
+                icon: mdi:pill-multiple
+                icon_color: >-
+                  {% set v = states('input_number.medikament_3_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_3_vorrat_warnung') | int(10) %}
+                  {% if v <= w %}red{% elif v <= w*2 %}amber{% else %}green{% endif %}
+                fill_container: true
+                layout: horizontal
+          - type: custom:mushroom-template-card
+            primary: "✅ Jetzt genommen"
+            secondary: >-
+              {% set l = states('input_datetime.medikament_3_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓{% else %}Antippen zum Bestätigen{% endif %}
+            icon: mdi:check-circle
+            icon_color: >-
+              {% set l = states('input_datetime.medikament_3_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}grey{% endif %}
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: perform-action
+              perform_action: script.medikament_genommen
+              data:
+                med_nr: 3
+          - type: tile
+            entity: input_boolean.medikament_3_aktiv
+            name: Aktiv
+            color: green
+          - type: custom:mushroom-template-card
+            primary: >-
+              {%- set name = states('input_text.medikament_3_name') %}
+              📋 {{ name if name | trim != '' else 'Medikament 3' }} – Info & Hinweise
+            secondary: Beschreibung · Einnahme · Nebenwirkungen
+            icon: mdi:text-box-outline
+            icon_color: amber
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.5); }
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikament-Info"
+                  dismissable: true
+                  right_button: "Schließen"
+                  content:
+                    type: markdown
+                    content: >-
+                      {%- set name = states('input_text.medikament_3_name') %}
+                      {%- set dos = states('input_text.medikament_3_dosierung') %}
+                      {%- set mahlzeit = states('input_select.medikament_3_mahlzeit') %}
+                      {%- set beschr = states('input_text.medikament_3_beschreibung') %}
+                      {%- set einnahme = states('input_text.medikament_3_einnahme') %}
+                      {%- set nw = states('input_text.medikament_3_nebenwirkungen') %}
+                      {%- set hin = states('input_text.medikament_3_hinweis') %}
+                      ## {{ name if name | trim != '' else 'Medikament 3' }}
+                      {{- if dos | trim != '' }} · {{ dos }}{{- endif }}
+                      {{- if mahlzeit != 'Egal' }} · {{ mahlzeit }}{{- endif }}
+
+                      {{- if beschr | trim != '' }}
+
+                      **📋 Beschreibung**
+
+                      {{ beschr }}
+                      {{- endif }}
+                      {{- if einnahme | trim != '' }}
+
+                      **💊 Einnahme-Hinweise**
+
+                      {{ einnahme }}
+                      {{- endif }}
+                      {{- if nw | trim != '' }}
+
+                      **⚠️ Nebenwirkungen**
+
+                      {{ nw }}
+                      {{- endif }}
+                      {{- if hin | trim != '' }}
+
+                      **🔔 Erinnerungs-Hinweis**
+
+                      {{ hin }}
+                      {{- endif }}
+                      {{- if beschr | trim == '' and einnahme | trim == '' and nw | trim == '' and hin | trim == '' }}
+
+                      *Noch keine Informationen hinterlegt.*
+
+                      Fülle die Felder in den ⚙️ Einstellungen aus.
+                      {{- endif }}
+          - type: custom:expander-card
+            title: "⚙️ Einstellungen"
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: tile
+                entity: input_text.medikament_3_name
+                name: Name
+                icon: mdi:pill
+              - type: tile
+                entity: input_text.medikament_3_pzn
+                name: PZN
+                icon: mdi:identifier
+              - type: tile
+                entity: input_text.medikament_3_dosierung
+                name: Dosierung
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_3_mahlzeit
+                name: Mahlzeit
+                icon: mdi:food-fork-drink
+              - type: tile
+                entity: input_select.medikament_3_tage
+                name: Wochentage
+                icon: mdi:calendar-week
+              - type: tile
+                entity: input_boolean.medikament_3_morgen_aktiv
+                name: "🌅 Morgens aktiv"
+                color: orange
+              - type: tile
+                entity: input_datetime.medikament_3_zeit
+                name: "🌅 Morgens Uhrzeit"
+                icon: mdi:weather-sunny
+              - type: tile
+                entity: input_boolean.medikament_3_mittag_aktiv
+                name: "🕛 Mittags aktiv"
+                color: yellow
+              - type: tile
+                entity: input_datetime.medikament_3_mittag_zeit
+                name: "🕛 Mittags Uhrzeit"
+                icon: mdi:weather-partly-cloudy
+              - type: tile
+                entity: input_boolean.medikament_3_abend_aktiv
+                name: "🌙 Abends aktiv"
+                color: indigo
+              - type: tile
+                entity: input_datetime.medikament_3_abend_zeit
+                name: "🌙 Abends Uhrzeit"
+                icon: mdi:weather-night
+              - type: tile
+                entity: input_number.medikament_3_vorrat
+                name: Vorrat (Stück)
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_number.medikament_3_packung_groesse
+                name: Packungsgröße (Stück / Packung)
+                icon: mdi:package-variant
+              - type: button
+                name: "➕ Packung einbuchen"
+                icon: mdi:plus-circle
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_packung_hinzufuegen
+                  data:
+                    med_nr: 3
+              - type: tile
+                entity: input_number.medikament_3_vorrat_warnung
+                name: Warnung ab (Stück)
+                icon: mdi:alert-outline
+              - type: tile
+                entity: input_text.medikament_3_hinweis
+                name: Hinweis
+                icon: mdi:information-outline
+              - type: tile
+                entity: input_text.medikament_3_beschreibung
+                name: Beschreibung
+                icon: mdi:text-box-outline
+              - type: tile
+                entity: input_text.medikament_3_einnahme
+                name: Einnahme-Hinweise
+                icon: mdi:medical-bag
+              - type: tile
+                entity: input_text.medikament_3_nebenwirkungen
+                name: Nebenwirkungen
+                icon: mdi:alert-circle-outline
+              - type: tile
+                entity: input_boolean.medikament_3_offen
+                name: Erinnerung noch offen
+                color: red
+                icon: mdi:bell-ring
+              - type: custom:mushroom-template-card
+                primary: Zur Arznei-Liste hinzufügen
+                secondary: >-
+                  {% set pzn = states('input_text.medikament_3_pzn') %}
+                  {% if pzn | trim != '' %}PZN: {{ pzn }}{% else %}Kein PZN hinterlegt{% endif %}
+                icon: mdi:cart-plus
+                icon_color: blue
+                fill_container: true
+                layout: horizontal
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_arznei_hinzufuegen
+                  data:
+                    med_nr: 3
+              - type: custom:mushroom-template-card
+                primary: "🗑️ Medikament zurücksetzen"
+                secondary: Alle Einstellungen löschen
+                icon: mdi:delete-forever
+                icon_color: red
+                fill_container: true
+                layout: horizontal
+                card_mod:
+                  style: |
+                    ha-card { background: rgba(244,67,54,0.08); border: 1px solid rgba(244,67,54,0.3); }
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "⚠️ Medikament 3 zurücksetzen?"
+                      dismissable: true
+                      left_button: "❌ Abbrechen"
+                      right_button: "🗑️ Ja, zurücksetzen"
+                      right_button_action:
+                        service: script.medikament_reset
+                        data:
+                          med_nr: 3
+                      content:
+                        type: markdown
+                        content: "### ⚠️ Wirklich zurücksetzen?\n\nFolgendes wird für **Medikament 3** gelöscht:\n\n- Name, PZN, Dosierung, Hinweis\n- Zeitslots, Uhrzeiten, Wochentage, Mahlzeit\n- Vorrat, Packungsgröße, letzte Einnahme\n- Alle Toggles werden deaktiviert\n\n**Dieser Vorgang kann nicht rückgängig gemacht werden!"
+
+      ##############################################
+      # MEDIKAMENT 4
+      ##############################################
+      - type: custom:expander-card
+        title: "💊 Medikament 4"
+        expanded: true
+        icon: mdi:pill
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set name = states('input_text.medikament_4_name') %}
+              {{ name if name | trim != '' else 'Medikament 4' }}
+            secondary: >-
+              {% if is_state('input_boolean.medikament_4_aktiv', 'on') %}
+                {% set slots = namespace(s=[]) %}
+                {% if is_state('input_boolean.medikament_4_morgen_aktiv','on') %}{% set slots.s = slots.s + ['🌅 '~states('input_datetime.medikament_4_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_4_mittag_aktiv','on') %}{% set slots.s = slots.s + ['🕛 '~states('input_datetime.medikament_4_mittag_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_4_abend_aktiv','on') %}{% set slots.s = slots.s + ['🌙 '~states('input_datetime.medikament_4_abend_zeit')[:5]] %}{% endif %}
+                {% set dos = states('input_text.medikament_4_dosierung') %}
+                {% set mahlzeit = states('input_select.medikament_4_mahlzeit') %}
+                {{ slots.s | join(' · ') if slots.s else 'Kein Zeitslot aktiv' }}
+                {%- if dos | trim != '' %} · {{ dos }}{% endif %}
+                {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                {%- if is_state('input_boolean.medikament_4_offen','on') %} · ⚠️ offen{% endif %}
+              {% else %}Inaktiv{% endif %}
+            icon: mdi:pill
+            icon_color: >-
+              {% if is_state('input_boolean.medikament_4_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_4_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            badge_icon: >-
+              {% if is_state('input_boolean.medikament_4_offen','on') %}mdi:bell-ring
+              {% elif is_state('input_boolean.medikament_4_aktiv','on') %}mdi:check-circle
+              {% else %}mdi:minus-circle{% endif %}
+            badge_color: >-
+              {% if is_state('input_boolean.medikament_4_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_4_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte Einnahme
+                secondary: >-
+                  {% set l = states('input_datetime.medikament_4_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓
+                    {% else %}{{ as_timestamp(l)|timestamp_custom('%d.%m.%Y') }}{% endif %}
+                  {% else %}Noch nicht erfasst{% endif %}
+                icon: mdi:clock-check-outline
+                icon_color: >-
+                  {% set l = states('input_datetime.medikament_4_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}amber{% endif %}
+                  {% else %}grey{% endif %}
+                fill_container: true
+                layout: horizontal
+              - type: custom:mushroom-template-card
+                primary: Vorrat
+                secondary: >-
+                  {% set v = states('input_number.medikament_4_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_4_vorrat_warnung') | int(10) %}
+                  {% set g = states('input_number.medikament_4_packung_groesse') | int(0) %}
+                  {{ v }} Stück{%- if g > 0 %} (≈{{ (v/g)|round(1) }} Pkg.){%- endif %}{%- if v <= w %} · ⚠️ Nachbestellen!{% endif %}
+                icon: mdi:pill-multiple
+                icon_color: >-
+                  {% set v = states('input_number.medikament_4_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_4_vorrat_warnung') | int(10) %}
+                  {% if v <= w %}red{% elif v <= w*2 %}amber{% else %}green{% endif %}
+                fill_container: true
+                layout: horizontal
+          - type: custom:mushroom-template-card
+            primary: "✅ Jetzt genommen"
+            secondary: >-
+              {% set l = states('input_datetime.medikament_4_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓{% else %}Antippen zum Bestätigen{% endif %}
+            icon: mdi:check-circle
+            icon_color: >-
+              {% set l = states('input_datetime.medikament_4_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}grey{% endif %}
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: perform-action
+              perform_action: script.medikament_genommen
+              data:
+                med_nr: 4
+          - type: tile
+            entity: input_boolean.medikament_4_aktiv
+            name: Aktiv
+            color: green
+          - type: custom:mushroom-template-card
+            primary: >-
+              {%- set name = states('input_text.medikament_4_name') %}
+              📋 {{ name if name | trim != '' else 'Medikament 4' }} – Info & Hinweise
+            secondary: Beschreibung · Einnahme · Nebenwirkungen
+            icon: mdi:text-box-outline
+            icon_color: amber
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.5); }
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikament-Info"
+                  dismissable: true
+                  right_button: "Schließen"
+                  content:
+                    type: markdown
+                    content: >-
+                      {%- set name = states('input_text.medikament_4_name') %}
+                      {%- set dos = states('input_text.medikament_4_dosierung') %}
+                      {%- set mahlzeit = states('input_select.medikament_4_mahlzeit') %}
+                      {%- set beschr = states('input_text.medikament_4_beschreibung') %}
+                      {%- set einnahme = states('input_text.medikament_4_einnahme') %}
+                      {%- set nw = states('input_text.medikament_4_nebenwirkungen') %}
+                      {%- set hin = states('input_text.medikament_4_hinweis') %}
+                      ## {{ name if name | trim != '' else 'Medikament 4' }}
+                      {{- if dos | trim != '' }} · {{ dos }}{{- endif }}
+                      {{- if mahlzeit != 'Egal' }} · {{ mahlzeit }}{{- endif }}
+
+                      {{- if beschr | trim != '' }}
+
+                      **📋 Beschreibung**
+
+                      {{ beschr }}
+                      {{- endif }}
+                      {{- if einnahme | trim != '' }}
+
+                      **💊 Einnahme-Hinweise**
+
+                      {{ einnahme }}
+                      {{- endif }}
+                      {{- if nw | trim != '' }}
+
+                      **⚠️ Nebenwirkungen**
+
+                      {{ nw }}
+                      {{- endif }}
+                      {{- if hin | trim != '' }}
+
+                      **🔔 Erinnerungs-Hinweis**
+
+                      {{ hin }}
+                      {{- endif }}
+                      {{- if beschr | trim == '' and einnahme | trim == '' and nw | trim == '' and hin | trim == '' }}
+
+                      *Noch keine Informationen hinterlegt.*
+
+                      Fülle die Felder in den ⚙️ Einstellungen aus.
+                      {{- endif }}
+          - type: custom:expander-card
+            title: "⚙️ Einstellungen"
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: tile
+                entity: input_text.medikament_4_name
+                name: Name
+                icon: mdi:pill
+              - type: tile
+                entity: input_text.medikament_4_pzn
+                name: PZN
+                icon: mdi:identifier
+              - type: tile
+                entity: input_text.medikament_4_dosierung
+                name: Dosierung
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_4_mahlzeit
+                name: Mahlzeit
+                icon: mdi:food-fork-drink
+              - type: tile
+                entity: input_select.medikament_4_tage
+                name: Wochentage
+                icon: mdi:calendar-week
+              - type: tile
+                entity: input_boolean.medikament_4_morgen_aktiv
+                name: "🌅 Morgens aktiv"
+                color: orange
+              - type: tile
+                entity: input_datetime.medikament_4_zeit
+                name: "🌅 Morgens Uhrzeit"
+                icon: mdi:weather-sunny
+              - type: tile
+                entity: input_boolean.medikament_4_mittag_aktiv
+                name: "🕛 Mittags aktiv"
+                color: yellow
+              - type: tile
+                entity: input_datetime.medikament_4_mittag_zeit
+                name: "🕛 Mittags Uhrzeit"
+                icon: mdi:weather-partly-cloudy
+              - type: tile
+                entity: input_boolean.medikament_4_abend_aktiv
+                name: "🌙 Abends aktiv"
+                color: indigo
+              - type: tile
+                entity: input_datetime.medikament_4_abend_zeit
+                name: "🌙 Abends Uhrzeit"
+                icon: mdi:weather-night
+              - type: tile
+                entity: input_number.medikament_4_vorrat
+                name: Vorrat (Stück)
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_number.medikament_4_packung_groesse
+                name: Packungsgröße (Stück / Packung)
+                icon: mdi:package-variant
+              - type: button
+                name: "➕ Packung einbuchen"
+                icon: mdi:plus-circle
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_packung_hinzufuegen
+                  data:
+                    med_nr: 4
+              - type: tile
+                entity: input_number.medikament_4_vorrat_warnung
+                name: Warnung ab (Stück)
+                icon: mdi:alert-outline
+              - type: tile
+                entity: input_text.medikament_4_hinweis
+                name: Hinweis
+                icon: mdi:information-outline
+              - type: tile
+                entity: input_text.medikament_4_beschreibung
+                name: Beschreibung
+                icon: mdi:text-box-outline
+              - type: tile
+                entity: input_text.medikament_4_einnahme
+                name: Einnahme-Hinweise
+                icon: mdi:medical-bag
+              - type: tile
+                entity: input_text.medikament_4_nebenwirkungen
+                name: Nebenwirkungen
+                icon: mdi:alert-circle-outline
+              - type: tile
+                entity: input_boolean.medikament_4_offen
+                name: Erinnerung noch offen
+                color: red
+                icon: mdi:bell-ring
+              - type: custom:mushroom-template-card
+                primary: Zur Arznei-Liste hinzufügen
+                secondary: >-
+                  {% set pzn = states('input_text.medikament_4_pzn') %}
+                  {% if pzn | trim != '' %}PZN: {{ pzn }}{% else %}Kein PZN hinterlegt{% endif %}
+                icon: mdi:cart-plus
+                icon_color: blue
+                fill_container: true
+                layout: horizontal
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_arznei_hinzufuegen
+                  data:
+                    med_nr: 4
+              - type: custom:mushroom-template-card
+                primary: "🗑️ Medikament zurücksetzen"
+                secondary: Alle Einstellungen löschen
+                icon: mdi:delete-forever
+                icon_color: red
+                fill_container: true
+                layout: horizontal
+                card_mod:
+                  style: |
+                    ha-card { background: rgba(244,67,54,0.08); border: 1px solid rgba(244,67,54,0.3); }
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "⚠️ Medikament 4 zurücksetzen?"
+                      dismissable: true
+                      left_button: "❌ Abbrechen"
+                      right_button: "🗑️ Ja, zurücksetzen"
+                      right_button_action:
+                        service: script.medikament_reset
+                        data:
+                          med_nr: 4
+                      content:
+                        type: markdown
+                        content: "### ⚠️ Wirklich zurücksetzen?\n\nFolgendes wird für **Medikament 4** gelöscht:\n\n- Name, PZN, Dosierung, Hinweis\n- Zeitslots, Uhrzeiten, Wochentage, Mahlzeit\n- Vorrat, Packungsgröße, letzte Einnahme\n- Alle Toggles werden deaktiviert\n\n**Dieser Vorgang kann nicht rückgängig gemacht werden!"
+
+      ##############################################
+      # MEDIKAMENT 5
+      ##############################################
+      - type: custom:expander-card
+        title: "💊 Medikament 5"
+        expanded: true
+        icon: mdi:pill
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set name = states('input_text.medikament_5_name') %}
+              {{ name if name | trim != '' else 'Medikament 5' }}
+            secondary: >-
+              {% if is_state('input_boolean.medikament_5_aktiv', 'on') %}
+                {% set slots = namespace(s=[]) %}
+                {% if is_state('input_boolean.medikament_5_morgen_aktiv','on') %}{% set slots.s = slots.s + ['🌅 '~states('input_datetime.medikament_5_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_5_mittag_aktiv','on') %}{% set slots.s = slots.s + ['🕛 '~states('input_datetime.medikament_5_mittag_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_5_abend_aktiv','on') %}{% set slots.s = slots.s + ['🌙 '~states('input_datetime.medikament_5_abend_zeit')[:5]] %}{% endif %}
+                {% set dos = states('input_text.medikament_5_dosierung') %}
+                {% set mahlzeit = states('input_select.medikament_5_mahlzeit') %}
+                {{ slots.s | join(' · ') if slots.s else 'Kein Zeitslot aktiv' }}
+                {%- if dos | trim != '' %} · {{ dos }}{% endif %}
+                {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                {%- if is_state('input_boolean.medikament_5_offen','on') %} · ⚠️ offen{% endif %}
+              {% else %}Inaktiv{% endif %}
+            icon: mdi:pill
+            icon_color: >-
+              {% if is_state('input_boolean.medikament_5_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_5_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            badge_icon: >-
+              {% if is_state('input_boolean.medikament_5_offen','on') %}mdi:bell-ring
+              {% elif is_state('input_boolean.medikament_5_aktiv','on') %}mdi:check-circle
+              {% else %}mdi:minus-circle{% endif %}
+            badge_color: >-
+              {% if is_state('input_boolean.medikament_5_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_5_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte Einnahme
+                secondary: >-
+                  {% set l = states('input_datetime.medikament_5_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓
+                    {% else %}{{ as_timestamp(l)|timestamp_custom('%d.%m.%Y') }}{% endif %}
+                  {% else %}Noch nicht erfasst{% endif %}
+                icon: mdi:clock-check-outline
+                icon_color: >-
+                  {% set l = states('input_datetime.medikament_5_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}amber{% endif %}
+                  {% else %}grey{% endif %}
+                fill_container: true
+                layout: horizontal
+              - type: custom:mushroom-template-card
+                primary: Vorrat
+                secondary: >-
+                  {% set v = states('input_number.medikament_5_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_5_vorrat_warnung') | int(10) %}
+                  {% set g = states('input_number.medikament_5_packung_groesse') | int(0) %}
+                  {{ v }} Stück{%- if g > 0 %} (≈{{ (v/g)|round(1) }} Pkg.){%- endif %}{%- if v <= w %} · ⚠️ Nachbestellen!{% endif %}
+                icon: mdi:pill-multiple
+                icon_color: >-
+                  {% set v = states('input_number.medikament_5_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_5_vorrat_warnung') | int(10) %}
+                  {% if v <= w %}red{% elif v <= w*2 %}amber{% else %}green{% endif %}
+                fill_container: true
+                layout: horizontal
+          - type: custom:mushroom-template-card
+            primary: "✅ Jetzt genommen"
+            secondary: >-
+              {% set l = states('input_datetime.medikament_5_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓{% else %}Antippen zum Bestätigen{% endif %}
+            icon: mdi:check-circle
+            icon_color: >-
+              {% set l = states('input_datetime.medikament_5_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}grey{% endif %}
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: perform-action
+              perform_action: script.medikament_genommen
+              data:
+                med_nr: 5
+          - type: tile
+            entity: input_boolean.medikament_5_aktiv
+            name: Aktiv
+            color: green
+          - type: custom:mushroom-template-card
+            primary: >-
+              {%- set name = states('input_text.medikament_5_name') %}
+              📋 {{ name if name | trim != '' else 'Medikament 5' }} – Info & Hinweise
+            secondary: Beschreibung · Einnahme · Nebenwirkungen
+            icon: mdi:text-box-outline
+            icon_color: amber
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.5); }
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikament-Info"
+                  dismissable: true
+                  right_button: "Schließen"
+                  content:
+                    type: markdown
+                    content: >-
+                      {%- set name = states('input_text.medikament_5_name') %}
+                      {%- set dos = states('input_text.medikament_5_dosierung') %}
+                      {%- set mahlzeit = states('input_select.medikament_5_mahlzeit') %}
+                      {%- set beschr = states('input_text.medikament_5_beschreibung') %}
+                      {%- set einnahme = states('input_text.medikament_5_einnahme') %}
+                      {%- set nw = states('input_text.medikament_5_nebenwirkungen') %}
+                      {%- set hin = states('input_text.medikament_5_hinweis') %}
+                      ## {{ name if name | trim != '' else 'Medikament 5' }}
+                      {{- if dos | trim != '' }} · {{ dos }}{{- endif }}
+                      {{- if mahlzeit != 'Egal' }} · {{ mahlzeit }}{{- endif }}
+
+                      {{- if beschr | trim != '' }}
+
+                      **📋 Beschreibung**
+
+                      {{ beschr }}
+                      {{- endif }}
+                      {{- if einnahme | trim != '' }}
+
+                      **💊 Einnahme-Hinweise**
+
+                      {{ einnahme }}
+                      {{- endif }}
+                      {{- if nw | trim != '' }}
+
+                      **⚠️ Nebenwirkungen**
+
+                      {{ nw }}
+                      {{- endif }}
+                      {{- if hin | trim != '' }}
+
+                      **🔔 Erinnerungs-Hinweis**
+
+                      {{ hin }}
+                      {{- endif }}
+                      {{- if beschr | trim == '' and einnahme | trim == '' and nw | trim == '' and hin | trim == '' }}
+
+                      *Noch keine Informationen hinterlegt.*
+
+                      Fülle die Felder in den ⚙️ Einstellungen aus.
+                      {{- endif }}
+          - type: custom:expander-card
+            title: "⚙️ Einstellungen"
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: tile
+                entity: input_text.medikament_5_name
+                name: Name
+                icon: mdi:pill
+              - type: tile
+                entity: input_text.medikament_5_pzn
+                name: PZN
+                icon: mdi:identifier
+              - type: tile
+                entity: input_text.medikament_5_dosierung
+                name: Dosierung
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_5_mahlzeit
+                name: Mahlzeit
+                icon: mdi:food-fork-drink
+              - type: tile
+                entity: input_select.medikament_5_tage
+                name: Wochentage
+                icon: mdi:calendar-week
+              - type: tile
+                entity: input_boolean.medikament_5_morgen_aktiv
+                name: "🌅 Morgens aktiv"
+                color: orange
+              - type: tile
+                entity: input_datetime.medikament_5_zeit
+                name: "🌅 Morgens Uhrzeit"
+                icon: mdi:weather-sunny
+              - type: tile
+                entity: input_boolean.medikament_5_mittag_aktiv
+                name: "🕛 Mittags aktiv"
+                color: yellow
+              - type: tile
+                entity: input_datetime.medikament_5_mittag_zeit
+                name: "🕛 Mittags Uhrzeit"
+                icon: mdi:weather-partly-cloudy
+              - type: tile
+                entity: input_boolean.medikament_5_abend_aktiv
+                name: "🌙 Abends aktiv"
+                color: indigo
+              - type: tile
+                entity: input_datetime.medikament_5_abend_zeit
+                name: "🌙 Abends Uhrzeit"
+                icon: mdi:weather-night
+              - type: tile
+                entity: input_number.medikament_5_vorrat
+                name: Vorrat (Stück)
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_number.medikament_5_packung_groesse
+                name: Packungsgröße (Stück / Packung)
+                icon: mdi:package-variant
+              - type: button
+                name: "➕ Packung einbuchen"
+                icon: mdi:plus-circle
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_packung_hinzufuegen
+                  data:
+                    med_nr: 5
+              - type: tile
+                entity: input_number.medikament_5_vorrat_warnung
+                name: Warnung ab (Stück)
+                icon: mdi:alert-outline
+              - type: tile
+                entity: input_text.medikament_5_hinweis
+                name: Hinweis
+                icon: mdi:information-outline
+              - type: tile
+                entity: input_text.medikament_5_beschreibung
+                name: Beschreibung
+                icon: mdi:text-box-outline
+              - type: tile
+                entity: input_text.medikament_5_einnahme
+                name: Einnahme-Hinweise
+                icon: mdi:medical-bag
+              - type: tile
+                entity: input_text.medikament_5_nebenwirkungen
+                name: Nebenwirkungen
+                icon: mdi:alert-circle-outline
+              - type: tile
+                entity: input_boolean.medikament_5_offen
+                name: Erinnerung noch offen
+                color: red
+                icon: mdi:bell-ring
+              - type: custom:mushroom-template-card
+                primary: Zur Arznei-Liste hinzufügen
+                secondary: >-
+                  {% set pzn = states('input_text.medikament_5_pzn') %}
+                  {% if pzn | trim != '' %}PZN: {{ pzn }}{% else %}Kein PZN hinterlegt{% endif %}
+                icon: mdi:cart-plus
+                icon_color: blue
+                fill_container: true
+                layout: horizontal
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_arznei_hinzufuegen
+                  data:
+                    med_nr: 5
+              - type: custom:mushroom-template-card
+                primary: "🗑️ Medikament zurücksetzen"
+                secondary: Alle Einstellungen löschen
+                icon: mdi:delete-forever
+                icon_color: red
+                fill_container: true
+                layout: horizontal
+                card_mod:
+                  style: |
+                    ha-card { background: rgba(244,67,54,0.08); border: 1px solid rgba(244,67,54,0.3); }
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "⚠️ Medikament 5 zurücksetzen?"
+                      dismissable: true
+                      left_button: "❌ Abbrechen"
+                      right_button: "🗑️ Ja, zurücksetzen"
+                      right_button_action:
+                        service: script.medikament_reset
+                        data:
+                          med_nr: 5
+                      content:
+                        type: markdown
+                        content: "### ⚠️ Wirklich zurücksetzen?\n\nFolgendes wird für **Medikament 5** gelöscht:\n\n- Name, PZN, Dosierung, Hinweis\n- Zeitslots, Uhrzeiten, Wochentage, Mahlzeit\n- Vorrat, Packungsgröße, letzte Einnahme\n- Alle Toggles werden deaktiviert\n\n**Dieser Vorgang kann nicht rückgängig gemacht werden!"
+
+      ##############################################
+      # MEDIKAMENT 6
+      ##############################################
+      - type: custom:expander-card
+        title: "💊 Medikament 6"
+        expanded: true
+        icon: mdi:pill
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set name = states('input_text.medikament_6_name') %}
+              {{ name if name | trim != '' else 'Medikament 6' }}
+            secondary: >-
+              {% if is_state('input_boolean.medikament_6_aktiv', 'on') %}
+                {% set slots = namespace(s=[]) %}
+                {% if is_state('input_boolean.medikament_6_morgen_aktiv','on') %}{% set slots.s = slots.s + ['🌅 '~states('input_datetime.medikament_6_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_6_mittag_aktiv','on') %}{% set slots.s = slots.s + ['🕛 '~states('input_datetime.medikament_6_mittag_zeit')[:5]] %}{% endif %}
+                {% if is_state('input_boolean.medikament_6_abend_aktiv','on') %}{% set slots.s = slots.s + ['🌙 '~states('input_datetime.medikament_6_abend_zeit')[:5]] %}{% endif %}
+                {% set dos = states('input_text.medikament_6_dosierung') %}
+                {% set mahlzeit = states('input_select.medikament_6_mahlzeit') %}
+                {{ slots.s | join(' · ') if slots.s else 'Kein Zeitslot aktiv' }}
+                {%- if dos | trim != '' %} · {{ dos }}{% endif %}
+                {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                {%- if is_state('input_boolean.medikament_6_offen','on') %} · ⚠️ offen{% endif %}
+              {% else %}Inaktiv{% endif %}
+            icon: mdi:pill
+            icon_color: >-
+              {% if is_state('input_boolean.medikament_6_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_6_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            badge_icon: >-
+              {% if is_state('input_boolean.medikament_6_offen','on') %}mdi:bell-ring
+              {% elif is_state('input_boolean.medikament_6_aktiv','on') %}mdi:check-circle
+              {% else %}mdi:minus-circle{% endif %}
+            badge_color: >-
+              {% if is_state('input_boolean.medikament_6_offen','on') %}red
+              {% elif is_state('input_boolean.medikament_6_aktiv','on') %}green
+              {% else %}grey{% endif %}
+            multiline_secondary: false
+            fill_container: true
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Letzte Einnahme
+                secondary: >-
+                  {% set l = states('input_datetime.medikament_6_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓
+                    {% else %}{{ as_timestamp(l)|timestamp_custom('%d.%m.%Y') }}{% endif %}
+                  {% else %}Noch nicht erfasst{% endif %}
+                icon: mdi:clock-check-outline
+                icon_color: >-
+                  {% set l = states('input_datetime.medikament_6_letzte_einnahme') %}
+                  {% if l not in ['unavailable','unknown',''] %}
+                    {% if as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}amber{% endif %}
+                  {% else %}grey{% endif %}
+                fill_container: true
+                layout: horizontal
+              - type: custom:mushroom-template-card
+                primary: Vorrat
+                secondary: >-
+                  {% set v = states('input_number.medikament_6_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_6_vorrat_warnung') | int(10) %}
+                  {% set g = states('input_number.medikament_6_packung_groesse') | int(0) %}
+                  {{ v }} Stück{%- if g > 0 %} (≈{{ (v/g)|round(1) }} Pkg.){%- endif %}{%- if v <= w %} · ⚠️ Nachbestellen!{% endif %}
+                icon: mdi:pill-multiple
+                icon_color: >-
+                  {% set v = states('input_number.medikament_6_vorrat') | int(0) %}
+                  {% set w = states('input_number.medikament_6_vorrat_warnung') | int(10) %}
+                  {% if v <= w %}red{% elif v <= w*2 %}amber{% else %}green{% endif %}
+                fill_container: true
+                layout: horizontal
+          - type: custom:mushroom-template-card
+            primary: "✅ Jetzt genommen"
+            secondary: >-
+              {% set l = states('input_datetime.medikament_6_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}Heute · {{ as_timestamp(l)|timestamp_custom('%H:%M') }} Uhr ✓{% else %}Antippen zum Bestätigen{% endif %}
+            icon: mdi:check-circle
+            icon_color: >-
+              {% set l = states('input_datetime.medikament_6_letzte_einnahme') %}
+              {% if l not in ['unavailable','unknown',''] and as_timestamp(l)|timestamp_custom('%Y-%m-%d') == now().strftime('%Y-%m-%d') %}green{% else %}grey{% endif %}
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: perform-action
+              perform_action: script.medikament_genommen
+              data:
+                med_nr: 6
+          - type: tile
+            entity: input_boolean.medikament_6_aktiv
+            name: Aktiv
+            color: green
+          - type: custom:mushroom-template-card
+            primary: >-
+              {%- set name = states('input_text.medikament_6_name') %}
+              📋 {{ name if name | trim != '' else 'Medikament 6' }} – Info & Hinweise
+            secondary: Beschreibung · Einnahme · Nebenwirkungen
+            icon: mdi:text-box-outline
+            icon_color: amber
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.5); }
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: "💊 Medikament-Info"
+                  dismissable: true
+                  right_button: "Schließen"
+                  content:
+                    type: markdown
+                    content: >-
+                      {%- set name = states('input_text.medikament_6_name') %}
+                      {%- set dos = states('input_text.medikament_6_dosierung') %}
+                      {%- set mahlzeit = states('input_select.medikament_6_mahlzeit') %}
+                      {%- set beschr = states('input_text.medikament_6_beschreibung') %}
+                      {%- set einnahme = states('input_text.medikament_6_einnahme') %}
+                      {%- set nw = states('input_text.medikament_6_nebenwirkungen') %}
+                      {%- set hin = states('input_text.medikament_6_hinweis') %}
+                      ## {{ name if name | trim != '' else 'Medikament 6' }}
+                      {{- if dos | trim != '' }} · {{ dos }}{{- endif }}
+                      {{- if mahlzeit != 'Egal' }} · {{ mahlzeit }}{{- endif }}
+
+                      {{- if beschr | trim != '' }}
+
+                      **📋 Beschreibung**
+
+                      {{ beschr }}
+                      {{- endif }}
+                      {{- if einnahme | trim != '' }}
+
+                      **💊 Einnahme-Hinweise**
+
+                      {{ einnahme }}
+                      {{- endif }}
+                      {{- if nw | trim != '' }}
+
+                      **⚠️ Nebenwirkungen**
+
+                      {{ nw }}
+                      {{- endif }}
+                      {{- if hin | trim != '' }}
+
+                      **🔔 Erinnerungs-Hinweis**
+
+                      {{ hin }}
+                      {{- endif }}
+                      {{- if beschr | trim == '' and einnahme | trim == '' and nw | trim == '' and hin | trim == '' }}
+
+                      *Noch keine Informationen hinterlegt.*
+
+                      Fülle die Felder in den ⚙️ Einstellungen aus.
+                      {{- endif }}
+          - type: custom:expander-card
+            title: "⚙️ Einstellungen"
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: tile
+                entity: input_text.medikament_6_name
+                name: Name
+                icon: mdi:pill
+              - type: tile
+                entity: input_text.medikament_6_pzn
+                name: PZN
+                icon: mdi:identifier
+              - type: tile
+                entity: input_text.medikament_6_dosierung
+                name: Dosierung
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_6_mahlzeit
+                name: Mahlzeit
+                icon: mdi:food-fork-drink
+              - type: tile
+                entity: input_select.medikament_6_tage
+                name: Wochentage
+                icon: mdi:calendar-week
+              - type: tile
+                entity: input_boolean.medikament_6_morgen_aktiv
+                name: "🌅 Morgens aktiv"
+                color: orange
+              - type: tile
+                entity: input_datetime.medikament_6_zeit
+                name: "🌅 Morgens Uhrzeit"
+                icon: mdi:weather-sunny
+              - type: tile
+                entity: input_boolean.medikament_6_mittag_aktiv
+                name: "🕛 Mittags aktiv"
+                color: yellow
+              - type: tile
+                entity: input_datetime.medikament_6_mittag_zeit
+                name: "🕛 Mittags Uhrzeit"
+                icon: mdi:weather-partly-cloudy
+              - type: tile
+                entity: input_boolean.medikament_6_abend_aktiv
+                name: "🌙 Abends aktiv"
+                color: indigo
+              - type: tile
+                entity: input_datetime.medikament_6_abend_zeit
+                name: "🌙 Abends Uhrzeit"
+                icon: mdi:weather-night
+              - type: tile
+                entity: input_number.medikament_6_vorrat
+                name: Vorrat (Stück)
+                icon: mdi:pill-multiple
+              - type: tile
+                entity: input_number.medikament_6_packung_groesse
+                name: Packungsgröße (Stück / Packung)
+                icon: mdi:package-variant
+              - type: button
+                name: "➕ Packung einbuchen"
+                icon: mdi:plus-circle
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_packung_hinzufuegen
+                  data:
+                    med_nr: 6
+              - type: tile
+                entity: input_number.medikament_6_vorrat_warnung
+                name: Warnung ab (Stück)
+                icon: mdi:alert-outline
+              - type: tile
+                entity: input_text.medikament_6_hinweis
+                name: Hinweis
+                icon: mdi:information-outline
+              - type: tile
+                entity: input_text.medikament_6_beschreibung
+                name: Beschreibung
+                icon: mdi:text-box-outline
+              - type: tile
+                entity: input_text.medikament_6_einnahme
+                name: Einnahme-Hinweise
+                icon: mdi:medical-bag
+              - type: tile
+                entity: input_text.medikament_6_nebenwirkungen
+                name: Nebenwirkungen
+                icon: mdi:alert-circle-outline
+              - type: tile
+                entity: input_boolean.medikament_6_offen
+                name: Erinnerung noch offen
+                color: red
+                icon: mdi:bell-ring
+              - type: custom:mushroom-template-card
+                primary: Zur Arznei-Liste hinzufügen
+                secondary: >-
+                  {% set pzn = states('input_text.medikament_6_pzn') %}
+                  {% if pzn | trim != '' %}PZN: {{ pzn }}{% else %}Kein PZN hinterlegt{% endif %}
+                icon: mdi:cart-plus
+                icon_color: blue
+                fill_container: true
+                layout: horizontal
+                tap_action:
+                  action: perform-action
+                  perform_action: script.medikament_arznei_hinzufuegen
+                  data:
+                    med_nr: 6
+              - type: custom:mushroom-template-card
+                primary: "🗑️ Medikament zurücksetzen"
+                secondary: Alle Einstellungen löschen
+                icon: mdi:delete-forever
+                icon_color: red
+                fill_container: true
+                layout: horizontal
+                card_mod:
+                  style: |
+                    ha-card { background: rgba(244,67,54,0.08); border: 1px solid rgba(244,67,54,0.3); }
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "⚠️ Medikament 6 zurücksetzen?"
+                      dismissable: true
+                      left_button: "❌ Abbrechen"
+                      right_button: "🗑️ Ja, zurücksetzen"
+                      right_button_action:
+                        service: script.medikament_reset
+                        data:
+                          med_nr: 6
+                      content:
+                        type: markdown
+                        content: "### ⚠️ Wirklich zurücksetzen?\n\nFolgendes wird für **Medikament 6** gelöscht:\n\n- Name, PZN, Dosierung, Hinweis\n- Zeitslots, Uhrzeiten, Wochentage, Mahlzeit\n- Vorrat, Packungsgröße, letzte Einnahme\n- Alle Toggles werden deaktiviert\n\n**Dieser Vorgang kann nicht rückgängig gemacht werden!"

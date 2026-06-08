@@ -1,0 +1,1045 @@
+##############################################################
+# MEDIKAMENTE – Helfer, Automationen & Script
+##############################################################
+
+input_boolean:
+  # Meds 4-6 Haupt-Flags
+  medikament_4_aktiv:
+    name: "Medikament 4 aktiv"
+    icon: mdi:pill
+  medikament_4_offen:
+    name: "Medikament 4 Erinnerung offen"
+    icon: mdi:bell-ring
+  medikament_5_aktiv:
+    name: "Medikament 5 aktiv"
+    icon: mdi:pill
+  medikament_5_offen:
+    name: "Medikament 5 Erinnerung offen"
+    icon: mdi:bell-ring
+  medikament_6_aktiv:
+    name: "Medikament 6 aktiv"
+    icon: mdi:pill
+  medikament_6_offen:
+    name: "Medikament 6 Erinnerung offen"
+    icon: mdi:bell-ring
+  medikament_testmodus:
+    name: "Medikamente – Testmodus"
+    icon: mdi:test-tube
+  # Zeitslots Meds 1-6
+  medikament_1_morgen_aktiv:
+    name: "Medikament 1 Morgens aktiv"
+    icon: mdi:weather-sunny
+  medikament_1_mittag_aktiv:
+    name: "Medikament 1 Mittags aktiv"
+    icon: mdi:weather-partly-cloudy
+  medikament_1_abend_aktiv:
+    name: "Medikament 1 Abends aktiv"
+    icon: mdi:weather-night
+  medikament_2_morgen_aktiv:
+    name: "Medikament 2 Morgens aktiv"
+    icon: mdi:weather-sunny
+  medikament_2_mittag_aktiv:
+    name: "Medikament 2 Mittags aktiv"
+    icon: mdi:weather-partly-cloudy
+  medikament_2_abend_aktiv:
+    name: "Medikament 2 Abends aktiv"
+    icon: mdi:weather-night
+  medikament_3_morgen_aktiv:
+    name: "Medikament 3 Morgens aktiv"
+    icon: mdi:weather-sunny
+  medikament_3_mittag_aktiv:
+    name: "Medikament 3 Mittags aktiv"
+    icon: mdi:weather-partly-cloudy
+  medikament_3_abend_aktiv:
+    name: "Medikament 3 Abends aktiv"
+    icon: mdi:weather-night
+  medikament_4_morgen_aktiv:
+    name: "Medikament 4 Morgens aktiv"
+    icon: mdi:weather-sunny
+  medikament_4_mittag_aktiv:
+    name: "Medikament 4 Mittags aktiv"
+    icon: mdi:weather-partly-cloudy
+  medikament_4_abend_aktiv:
+    name: "Medikament 4 Abends aktiv"
+    icon: mdi:weather-night
+  medikament_5_morgen_aktiv:
+    name: "Medikament 5 Morgens aktiv"
+    icon: mdi:weather-sunny
+  medikament_5_mittag_aktiv:
+    name: "Medikament 5 Mittags aktiv"
+    icon: mdi:weather-partly-cloudy
+  medikament_5_abend_aktiv:
+    name: "Medikament 5 Abends aktiv"
+    icon: mdi:weather-night
+  medikament_6_morgen_aktiv:
+    name: "Medikament 6 Morgens aktiv"
+    icon: mdi:weather-sunny
+  medikament_6_mittag_aktiv:
+    name: "Medikament 6 Mittags aktiv"
+    icon: mdi:weather-partly-cloudy
+  medikament_6_abend_aktiv:
+    name: "Medikament 6 Abends aktiv"
+    icon: mdi:weather-night
+
+input_text:
+  medikament_1_dosierung:
+    name: "Medikament 1 Dosierung"
+    icon: mdi:pill-multiple
+  medikament_2_dosierung:
+    name: "Medikament 2 Dosierung"
+    icon: mdi:pill-multiple
+  medikament_3_dosierung:
+    name: "Medikament 3 Dosierung"
+    icon: mdi:pill-multiple
+  medikament_4_name:
+    name: "Medikament 4 Name"
+    icon: mdi:pill
+  medikament_4_pzn:
+    name: "Medikament 4 PZN"
+    icon: mdi:identifier
+    max: 20
+  medikament_4_hinweis:
+    name: "Medikament 4 Hinweis"
+    icon: mdi:information-outline
+  medikament_4_dosierung:
+    name: "Medikament 4 Dosierung"
+    icon: mdi:pill-multiple
+  medikament_5_name:
+    name: "Medikament 5 Name"
+    icon: mdi:pill
+  medikament_5_pzn:
+    name: "Medikament 5 PZN"
+    icon: mdi:identifier
+    max: 20
+  medikament_5_hinweis:
+    name: "Medikament 5 Hinweis"
+    icon: mdi:information-outline
+  medikament_5_dosierung:
+    name: "Medikament 5 Dosierung"
+    icon: mdi:pill-multiple
+  medikament_6_name:
+    name: "Medikament 6 Name"
+    icon: mdi:pill
+  medikament_6_pzn:
+    name: "Medikament 6 PZN"
+    icon: mdi:identifier
+    max: 20
+  medikament_6_hinweis:
+    name: "Medikament 6 Hinweis"
+    icon: mdi:information-outline
+  medikament_6_dosierung:
+    name: "Medikament 6 Dosierung"
+    icon: mdi:pill-multiple
+  medikament_1_beschreibung:
+    name: "Medikament 1 Beschreibung"
+    icon: mdi:text-box-outline
+    max: 255
+  medikament_1_einnahme:
+    name: "Medikament 1 Einnahme-Hinweise"
+    icon: mdi:medical-bag
+    max: 255
+  medikament_1_nebenwirkungen:
+    name: "Medikament 1 Nebenwirkungen"
+    icon: mdi:alert-circle-outline
+    max: 255
+  medikament_2_beschreibung:
+    name: "Medikament 2 Beschreibung"
+    icon: mdi:text-box-outline
+    max: 255
+  medikament_2_einnahme:
+    name: "Medikament 2 Einnahme-Hinweise"
+    icon: mdi:medical-bag
+    max: 255
+  medikament_2_nebenwirkungen:
+    name: "Medikament 2 Nebenwirkungen"
+    icon: mdi:alert-circle-outline
+    max: 255
+  medikament_3_beschreibung:
+    name: "Medikament 3 Beschreibung"
+    icon: mdi:text-box-outline
+    max: 255
+  medikament_3_einnahme:
+    name: "Medikament 3 Einnahme-Hinweise"
+    icon: mdi:medical-bag
+    max: 255
+  medikament_3_nebenwirkungen:
+    name: "Medikament 3 Nebenwirkungen"
+    icon: mdi:alert-circle-outline
+    max: 255
+  medikament_4_beschreibung:
+    name: "Medikament 4 Beschreibung"
+    icon: mdi:text-box-outline
+    max: 255
+  medikament_4_einnahme:
+    name: "Medikament 4 Einnahme-Hinweise"
+    icon: mdi:medical-bag
+    max: 255
+  medikament_4_nebenwirkungen:
+    name: "Medikament 4 Nebenwirkungen"
+    icon: mdi:alert-circle-outline
+    max: 255
+  medikament_5_beschreibung:
+    name: "Medikament 5 Beschreibung"
+    icon: mdi:text-box-outline
+    max: 255
+  medikament_5_einnahme:
+    name: "Medikament 5 Einnahme-Hinweise"
+    icon: mdi:medical-bag
+    max: 255
+  medikament_5_nebenwirkungen:
+    name: "Medikament 5 Nebenwirkungen"
+    icon: mdi:alert-circle-outline
+    max: 255
+  medikament_6_beschreibung:
+    name: "Medikament 6 Beschreibung"
+    icon: mdi:text-box-outline
+    max: 255
+  medikament_6_einnahme:
+    name: "Medikament 6 Einnahme-Hinweise"
+    icon: mdi:medical-bag
+    max: 255
+  medikament_6_nebenwirkungen:
+    name: "Medikament 6 Nebenwirkungen"
+    icon: mdi:alert-circle-outline
+    max: 255
+
+input_datetime:
+  medikament_1_letzte_einnahme:
+    name: "Medikament 1 Letzte Einnahme"
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+  medikament_2_letzte_einnahme:
+    name: "Medikament 2 Letzte Einnahme"
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+  medikament_3_letzte_einnahme:
+    name: "Medikament 3 Letzte Einnahme"
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+  medikament_4_zeit:
+    name: "Medikament 4 Morgens Uhrzeit"
+    icon: mdi:weather-sunny
+    has_date: false
+    has_time: true
+  medikament_4_mittag_zeit:
+    name: "Medikament 4 Mittags Uhrzeit"
+    icon: mdi:weather-partly-cloudy
+    has_date: false
+    has_time: true
+  medikament_4_abend_zeit:
+    name: "Medikament 4 Abends Uhrzeit"
+    icon: mdi:weather-night
+    has_date: false
+    has_time: true
+  medikament_4_letzte_einnahme:
+    name: "Medikament 4 Letzte Einnahme"
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+  medikament_5_zeit:
+    name: "Medikament 5 Morgens Uhrzeit"
+    icon: mdi:weather-sunny
+    has_date: false
+    has_time: true
+  medikament_5_mittag_zeit:
+    name: "Medikament 5 Mittags Uhrzeit"
+    icon: mdi:weather-partly-cloudy
+    has_date: false
+    has_time: true
+  medikament_5_abend_zeit:
+    name: "Medikament 5 Abends Uhrzeit"
+    icon: mdi:weather-night
+    has_date: false
+    has_time: true
+  medikament_5_letzte_einnahme:
+    name: "Medikament 5 Letzte Einnahme"
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+  medikament_6_zeit:
+    name: "Medikament 6 Morgens Uhrzeit"
+    icon: mdi:weather-sunny
+    has_date: false
+    has_time: true
+  medikament_6_mittag_zeit:
+    name: "Medikament 6 Mittags Uhrzeit"
+    icon: mdi:weather-partly-cloudy
+    has_date: false
+    has_time: true
+  medikament_6_abend_zeit:
+    name: "Medikament 6 Abends Uhrzeit"
+    icon: mdi:weather-night
+    has_date: false
+    has_time: true
+  medikament_6_letzte_einnahme:
+    name: "Medikament 6 Letzte Einnahme"
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+  # Mittag/Abend Zeiten für Meds 1-3
+  medikament_1_mittag_zeit:
+    name: "Medikament 1 Mittags Uhrzeit"
+    icon: mdi:weather-partly-cloudy
+    has_date: false
+    has_time: true
+  medikament_1_abend_zeit:
+    name: "Medikament 1 Abends Uhrzeit"
+    icon: mdi:weather-night
+    has_date: false
+    has_time: true
+  medikament_2_mittag_zeit:
+    name: "Medikament 2 Mittags Uhrzeit"
+    icon: mdi:weather-partly-cloudy
+    has_date: false
+    has_time: true
+  medikament_2_abend_zeit:
+    name: "Medikament 2 Abends Uhrzeit"
+    icon: mdi:weather-night
+    has_date: false
+    has_time: true
+  medikament_3_mittag_zeit:
+    name: "Medikament 3 Mittags Uhrzeit"
+    icon: mdi:weather-partly-cloudy
+    has_date: false
+    has_time: true
+  medikament_3_abend_zeit:
+    name: "Medikament 3 Abends Uhrzeit"
+    icon: mdi:weather-night
+    has_date: false
+    has_time: true
+
+input_number:
+  medikament_1_vorrat:
+    name: "Medikament 1 Vorrat"
+    icon: mdi:pill-multiple
+    min: 0
+    max: 999
+    step: 1
+    mode: box
+  medikament_1_vorrat_warnung:
+    name: "Medikament 1 Warnung ab"
+    icon: mdi:alert-outline
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+  medikament_2_vorrat:
+    name: "Medikament 2 Vorrat"
+    icon: mdi:pill-multiple
+    min: 0
+    max: 999
+    step: 1
+    mode: box
+  medikament_2_vorrat_warnung:
+    name: "Medikament 2 Warnung ab"
+    icon: mdi:alert-outline
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+  medikament_3_vorrat:
+    name: "Medikament 3 Vorrat"
+    icon: mdi:pill-multiple
+    min: 0
+    max: 999
+    step: 1
+    mode: box
+  medikament_3_vorrat_warnung:
+    name: "Medikament 3 Warnung ab"
+    icon: mdi:alert-outline
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+  medikament_4_vorrat:
+    name: "Medikament 4 Vorrat"
+    icon: mdi:pill-multiple
+    min: 0
+    max: 999
+    step: 1
+    mode: box
+  medikament_4_vorrat_warnung:
+    name: "Medikament 4 Warnung ab"
+    icon: mdi:alert-outline
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+  medikament_5_vorrat:
+    name: "Medikament 5 Vorrat"
+    icon: mdi:pill-multiple
+    min: 0
+    max: 999
+    step: 1
+    mode: box
+  medikament_5_vorrat_warnung:
+    name: "Medikament 5 Warnung ab"
+    icon: mdi:alert-outline
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+  medikament_6_vorrat:
+    name: "Medikament 6 Vorrat"
+    icon: mdi:pill-multiple
+    min: 0
+    max: 999
+    step: 1
+    mode: box
+  medikament_6_vorrat_warnung:
+    name: "Medikament 6 Warnung ab"
+    icon: mdi:alert-outline
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+  medikament_1_packung_groesse:
+    name: "Medikament 1 Packungsgröße"
+    icon: mdi:package-variant
+    min: 1
+    max: 9999
+    step: 1
+    mode: box
+  medikament_2_packung_groesse:
+    name: "Medikament 2 Packungsgröße"
+    icon: mdi:package-variant
+    min: 1
+    max: 9999
+    step: 1
+    mode: box
+  medikament_3_packung_groesse:
+    name: "Medikament 3 Packungsgröße"
+    icon: mdi:package-variant
+    min: 1
+    max: 9999
+    step: 1
+    mode: box
+  medikament_4_packung_groesse:
+    name: "Medikament 4 Packungsgröße"
+    icon: mdi:package-variant
+    min: 1
+    max: 9999
+    step: 1
+    mode: box
+  medikament_5_packung_groesse:
+    name: "Medikament 5 Packungsgröße"
+    icon: mdi:package-variant
+    min: 1
+    max: 9999
+    step: 1
+    mode: box
+  medikament_6_packung_groesse:
+    name: "Medikament 6 Packungsgröße"
+    icon: mdi:package-variant
+    min: 1
+    max: 9999
+    step: 1
+    mode: box
+
+input_select:
+  medikament_1_tage:
+    name: "Medikament 1 Wochentage"
+    icon: mdi:calendar-week
+    options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_2_tage:
+    name: "Medikament 2 Wochentage"
+    icon: mdi:calendar-week
+    options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_3_tage:
+    name: "Medikament 3 Wochentage"
+    icon: mdi:calendar-week
+    options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_4_tage:
+    name: "Medikament 4 Wochentage"
+    icon: mdi:calendar-week
+    options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_5_tage:
+    name: "Medikament 5 Wochentage"
+    icon: mdi:calendar-week
+    options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_6_tage:
+    name: "Medikament 6 Wochentage"
+    icon: mdi:calendar-week
+    options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_1_mahlzeit:
+    name: "Medikament 1 Mahlzeit"
+    icon: mdi:food-fork-drink
+    options: ["Egal","Vor dem Essen","Nach dem Essen","Zum Essen"]
+  medikament_2_mahlzeit:
+    name: "Medikament 2 Mahlzeit"
+    icon: mdi:food-fork-drink
+    options: ["Egal","Vor dem Essen","Nach dem Essen","Zum Essen"]
+  medikament_3_mahlzeit:
+    name: "Medikament 3 Mahlzeit"
+    icon: mdi:food-fork-drink
+    options: ["Egal","Vor dem Essen","Nach dem Essen","Zum Essen"]
+  medikament_4_mahlzeit:
+    name: "Medikament 4 Mahlzeit"
+    icon: mdi:food-fork-drink
+    options: ["Egal","Vor dem Essen","Nach dem Essen","Zum Essen"]
+  medikament_5_mahlzeit:
+    name: "Medikament 5 Mahlzeit"
+    icon: mdi:food-fork-drink
+    options: ["Egal","Vor dem Essen","Nach dem Essen","Zum Essen"]
+  medikament_6_mahlzeit:
+    name: "Medikament 6 Mahlzeit"
+    icon: mdi:food-fork-drink
+    options: ["Egal","Vor dem Essen","Nach dem Essen","Zum Essen"]
+
+
+script:
+  medikament_reset:
+    alias: "Medikament – Alles zurücksetzen"
+    mode: parallel
+    fields:
+      med_nr:
+        description: "Medikament Nummer (1-6)"
+    sequence:
+      - service: input_text.set_value
+        target:
+          entity_id: "input_text.medikament_{{ med_nr }}_name"
+        data:
+          value: ""
+      - service: input_text.set_value
+        target:
+          entity_id: "input_text.medikament_{{ med_nr }}_pzn"
+        data:
+          value: ""
+      - service: input_text.set_value
+        target:
+          entity_id: "input_text.medikament_{{ med_nr }}_dosierung"
+        data:
+          value: ""
+      - service: input_text.set_value
+        target:
+          entity_id: "input_text.medikament_{{ med_nr }}_hinweis"
+        data:
+          value: ""
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_aktiv"
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_offen"
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_morgen_aktiv"
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_mittag_aktiv"
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_abend_aktiv"
+      - service: input_number.set_value
+        target:
+          entity_id: "input_number.medikament_{{ med_nr }}_vorrat"
+        data:
+          value: 0
+      - service: input_number.set_value
+        target:
+          entity_id: "input_number.medikament_{{ med_nr }}_vorrat_warnung"
+        data:
+          value: 10
+      - service: input_number.set_value
+        target:
+          entity_id: "input_number.medikament_{{ med_nr }}_packung_groesse"
+        data:
+          value: 1
+      - service: input_select.select_option
+        target:
+          entity_id: "input_select.medikament_{{ med_nr }}_tage"
+        data:
+          option: "Täglich"
+      - service: input_select.select_option
+        target:
+          entity_id: "input_select.medikament_{{ med_nr }}_mahlzeit"
+        data:
+          option: "Egal"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_letzte_einnahme"
+        data:
+          datetime: "2000-01-01 00:00:00"
+
+  medikament_arznei_hinzufuegen:
+    alias: "Medikament – Zur Arznei-Liste hinzufügen"
+    mode: parallel
+    fields:
+      med_nr:
+        description: "Medikament Nummer (1-6)"
+    sequence:
+      - service: todo.add_item
+        target:
+          entity_id: todo.arznei
+        data:
+          item: >-
+            {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
+            {% set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') -%}
+            {% if pzn | trim != '' %} · PZN {{ pzn }}{% endif %}
+            ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+
+  medikament_packung_hinzufuegen:
+    alias: "Medikament – Packung einbuchen"
+    mode: parallel
+    fields:
+      med_nr:
+        description: "Medikament Nummer (1-6)"
+    sequence:
+      - service: input_number.set_value
+        target:
+          entity_id: "input_number.medikament_{{ med_nr }}_vorrat"
+        data:
+          value: >-
+            {{ (states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0)) +
+               (states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(1)) }}
+
+  medikament_genommen:
+    alias: "Medikament – Als genommen markieren"
+    mode: parallel
+    fields:
+      med_nr:
+        description: "Medikament Nummer (1-6)"
+    sequence:
+      - variables:
+          item_alt: >-
+            {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
+            {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_offen"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_letzte_einnahme"
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: input_number.decrement
+        target:
+          entity_id: "input_number.medikament_{{ med_nr }}_vorrat"
+      - variables:
+          item_neu: >-
+            {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
+            {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+      - service: todo.update_item
+        target:
+          entity_id: todo.arznei
+        data:
+          item: "{{ item_alt }}"
+          rename: "{{ item_neu }}"
+        continue_on_error: true
+
+  medikament_alarm:
+    alias: "Medikamente - Licht & TTS Alarm"
+    mode: parallel
+    fields:
+      nachricht:
+        description: "TTS Nachricht"
+        default: "Nimm deine Medikamente!"
+    sequence:
+      - service: scene.create
+        data:
+          scene_id: medikament_licht_backup
+          snapshot_entities:
+            - light.schlafzimmer
+      - variables:
+          war_am_spielen: "{{ is_state('media_player.schlafzimmer_3', 'playing') }}"
+          vol_vorher: "{{ state_attr('media_player.schlafzimmer_3', 'volume_level') | float(0.1) }}"
+      - if:
+          - condition: template
+            value_template: "{{ war_am_spielen }}"
+        then:
+          - service: media_player.media_pause
+            target:
+              entity_id: media_player.schlafzimmer_3
+          - delay:
+              seconds: 1
+      - service: media_player.volume_set
+        target:
+          entity_id: media_player.schlafzimmer_3
+        data:
+          volume_level: 0.5
+      - delay:
+          seconds: 4
+      - parallel:
+          - sequence:
+              - repeat:
+                  count: 15
+                  sequence:
+                    - service: light.turn_on
+                      target:
+                        entity_id: light.schlafzimmer
+                      data:
+                        rgb_color: [255, 0, 0]
+                        brightness: 255
+                        transition: 0.6
+                    - delay:
+                        milliseconds: 700
+                    - service: light.turn_on
+                      target:
+                        entity_id: light.schlafzimmer
+                      data:
+                        rgb_color: [255, 0, 0]
+                        brightness: 30
+                        transition: 0.6
+                    - delay:
+                        milliseconds: 700
+          - sequence:
+              - service: tts.speak
+                target:
+                  entity_id: tts.home_assistant_cloud
+                data:
+                  media_player_entity_id: media_player.schlafzimmer_3
+                  message: "{{ nachricht }}"
+              - wait_template: "{{ not is_state('media_player.schlafzimmer_3', 'playing') }}"
+                timeout:
+                  seconds: 30
+                continue_on_timeout: true
+              - delay:
+                  seconds: 2
+      - service: scene.turn_on
+        target:
+          entity_id: scene.medikament_licht_backup
+      - service: media_player.volume_set
+        target:
+          entity_id: media_player.schlafzimmer_3
+        data:
+          volume_level: "{{ vol_vorher }}"
+      - if:
+          - condition: template
+            value_template: "{{ war_am_spielen }}"
+        then:
+          - service: media_player.media_play
+            target:
+              entity_id: media_player.schlafzimmer_3
+
+
+automation:
+  # ── Erinnerung starten ────────────────────────────────────────────────────
+  - id: medikament_erinnerung_start
+    alias: "Medikamente - Erinnerung starten"
+    description: "Morgens/Mittags/Abends je nach aktiven Zeitslots, mit Wochentag-Prüfung"
+    trigger:
+      - { platform: time, at: input_datetime.medikament_1_zeit,        id: med1_morgen }
+      - { platform: time, at: input_datetime.medikament_1_mittag_zeit, id: med1_mittag }
+      - { platform: time, at: input_datetime.medikament_1_abend_zeit,  id: med1_abend  }
+      - { platform: time, at: input_datetime.medikament_2_zeit,        id: med2_morgen }
+      - { platform: time, at: input_datetime.medikament_2_mittag_zeit, id: med2_mittag }
+      - { platform: time, at: input_datetime.medikament_2_abend_zeit,  id: med2_abend  }
+      - { platform: time, at: input_datetime.medikament_3_zeit,        id: med3_morgen }
+      - { platform: time, at: input_datetime.medikament_3_mittag_zeit, id: med3_mittag }
+      - { platform: time, at: input_datetime.medikament_3_abend_zeit,  id: med3_abend  }
+      - { platform: time, at: input_datetime.medikament_4_zeit,        id: med4_morgen }
+      - { platform: time, at: input_datetime.medikament_4_mittag_zeit, id: med4_mittag }
+      - { platform: time, at: input_datetime.medikament_4_abend_zeit,  id: med4_abend  }
+      - { platform: time, at: input_datetime.medikament_5_zeit,        id: med5_morgen }
+      - { platform: time, at: input_datetime.medikament_5_mittag_zeit, id: med5_mittag }
+      - { platform: time, at: input_datetime.medikament_5_abend_zeit,  id: med5_abend  }
+      - { platform: time, at: input_datetime.medikament_6_zeit,        id: med6_morgen }
+      - { platform: time, at: input_datetime.medikament_6_mittag_zeit, id: med6_mittag }
+      - { platform: time, at: input_datetime.medikament_6_abend_zeit,  id: med6_abend  }
+    action:
+      - variables:
+          med_nr: >-
+            {% set ids = {'med1_morgen':1,'med1_mittag':1,'med1_abend':1,
+                          'med2_morgen':2,'med2_mittag':2,'med2_abend':2,
+                          'med3_morgen':3,'med3_mittag':3,'med3_abend':3,
+                          'med4_morgen':4,'med4_mittag':4,'med4_abend':4,
+                          'med5_morgen':5,'med5_mittag':5,'med5_abend':5,
+                          'med6_morgen':6,'med6_mittag':6,'med6_abend':6} %}
+            {{ ids[trigger.id] }}
+          zeitslot: >-
+            {% if 'morgen' in trigger.id %}Morgens
+            {% elif 'mittag' in trigger.id %}Mittags
+            {% else %}Abends{% endif %}
+          slot_bool: >-
+            {% if 'morgen' in trigger.id %}morgen
+            {% elif 'mittag' in trigger.id %}mittag
+            {% else %}abend{% endif %}
+      - condition: template
+        value_template: >-
+          {{ is_state('input_boolean.medikament_' ~ med_nr ~ '_aktiv', 'on') and
+             is_state('input_boolean.medikament_' ~ med_nr ~ '_' ~ slot_bool ~ '_aktiv', 'on') }}
+      - condition: template
+        value_template: >-
+          {% set t = states('input_select.medikament_' ~ med_nr ~ '_tage') %}
+          {% set w = now().weekday() %}
+          {{ t == 'Täglich' or
+             (t == 'Werktags (Mo–Fr)' and w < 5) or
+             (t == 'Wochenende (Sa+So)' and w >= 5) or
+             (t == 'Mo / Mi / Fr' and w in [0,2,4]) or
+             (t == 'Di / Do / Sa' and w in [1,3,5]) or
+             (t == 'Mo / Do' and w in [0,3]) }}
+      - service: input_boolean.turn_on
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_offen"
+      - variables:
+          med_name: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          dos: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') }}"
+          mahlzeit: "{{ states('input_select.medikament_' ~ med_nr ~ '_mahlzeit') }}"
+          hin: "{{ states('input_text.medikament_' ~ med_nr ~ '_hinweis') }}"
+          vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }}"
+          pkg: "{{ states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(0) }}"
+          warnung: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat_warnung') | int(10) }}"
+          letzte: "{{ states('input_datetime.medikament_' ~ med_nr ~ '_letzte_einnahme') }}"
+          msg: >-
+            {{ zeitslot }}{%- if dos | trim != '' %} · {{ dos }}{% endif %}{%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+            {{ '\n' }}📦 {{ vorrat }} Stück{%- if pkg | int > 0 %} (≈{{ (vorrat | int / pkg | int) | round(1) }} Pkg.){%- endif %}{%- if vorrat | int <= warnung | int %} ⚠️ Nachbestellen!{% endif %}
+            {%- if letzte not in ['unavailable','unknown','2000-01-01 00:00:00'] %}
+            {{ '\n' }}🕐 Zuletzt: {%- if (as_timestamp(letzte)|timestamp_custom('%Y-%m-%d')) == now().strftime('%Y-%m-%d') %} Heute {{ as_timestamp(letzte)|timestamp_custom('%H:%M') }} Uhr{% else %} {{ as_timestamp(letzte)|timestamp_custom('%d.%m.%Y %H:%M') }}{% endif %}
+            {%- endif %}
+            {%- if hin | trim != '' %}
+            {{ '\n' }}💬 {{ hin }}
+            {%- endif %}
+      - if:
+          - condition: state
+            entity_id: input_boolean.medikament_testmodus
+            state: "on"
+        then:
+          - service: telegram_bot.send_message
+            data:
+              target:
+                - 988178587
+              parse_mode: html
+              message: >-
+                🧪 <b>TESTMODUS</b> | 💊 <b>{{ med_name }}</b>
+                {{ zeitslot }}{%- if dos | trim != '' %} · {{ dos }}{% endif %}{%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                📦 {{ vorrat }} Stück{%- if pkg | int > 0 %} (≈{{ (vorrat | int / pkg | int) | round(1) }} Pkg.){%- endif %}{%- if vorrat | int <= warnung | int %} ⚠️ Nachbestellen!{% endif %}
+                {%- if letzte not in ['unavailable','unknown','2000-01-01 00:00:00'] %}
+                🕐 Zuletzt: {%- if (as_timestamp(letzte)|timestamp_custom('%Y-%m-%d')) == now().strftime('%Y-%m-%d') %} Heute {{ as_timestamp(letzte)|timestamp_custom('%H:%M') }} Uhr{% else %} {{ as_timestamp(letzte)|timestamp_custom('%d.%m.%Y %H:%M') }}{% endif %}
+                {%- endif %}
+                {%- if hin | trim != '' %}💬 {{ hin }}{% endif %}
+                <i>(Keine Alarme, kein TTS, kein Licht)</i>
+        else:
+          - service: notify.mobile_app_andreas_iphone_15pro_max
+            data:
+              title: "💊 {{ med_name }}"
+              message: "{{ msg }}"
+              data:
+                actions:
+                  - action: "MEDIKAMENT_{{ med_nr }}_BESTAETIGT"
+                    title: "✅ Genommen"
+                push:
+                  sound:
+                    name: default
+                    critical: 1
+                    volume: 1.0
+                  interruption-level: critical
+          - if:
+              - condition: state
+                entity_id: person.andreas
+                state: "home"
+            then:
+              - service: script.medikament_alarm
+                data:
+                  nachricht: >-
+                    Nimm deine Medikamente. {{ med_name }}.
+                    {{ zeitslot }}.
+                    {%- if mahlzeit != 'Egal' %} {{ mahlzeit }}.{% endif %}
+    mode: parallel
+
+  # ── Wiederholen alle 15 Minuten ────────────────────────────────────────────
+  - id: medikament_erinnerung_wiederholen
+    alias: "Medikamente - Erinnerung wiederholen"
+    trigger:
+      - platform: time_pattern
+        minutes: "/15"
+    condition:
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: input_boolean.medikament_1_offen
+            state: "on"
+          - condition: state
+            entity_id: input_boolean.medikament_2_offen
+            state: "on"
+          - condition: state
+            entity_id: input_boolean.medikament_3_offen
+            state: "on"
+          - condition: state
+            entity_id: input_boolean.medikament_4_offen
+            state: "on"
+          - condition: state
+            entity_id: input_boolean.medikament_5_offen
+            state: "on"
+          - condition: state
+            entity_id: input_boolean.medikament_6_offen
+            state: "on"
+    action:
+      - repeat:
+          for_each: [1, 2, 3, 4, 5, 6]
+          sequence:
+            - if:
+                - condition: template
+                  value_template: "{{ is_state('input_boolean.medikament_' ~ repeat.item ~ '_offen', 'on') }}"
+              then:
+                - variables:
+                    med_name: "{{ states('input_text.medikament_' ~ repeat.item ~ '_name') or ('Medikament ' ~ repeat.item) }}"
+                    dos: "{{ states('input_text.medikament_' ~ repeat.item ~ '_dosierung') }}"
+                    mahlzeit: "{{ states('input_select.medikament_' ~ repeat.item ~ '_mahlzeit') }}"
+                - if:
+                    - condition: state
+                      entity_id: input_boolean.medikament_testmodus
+                      state: "on"
+                  then:
+                    - service: telegram_bot.send_message
+                      data:
+                        target:
+                          - 988178587
+                        parse_mode: html
+                        message: >-
+                          🧪 <b>TESTMODUS</b> | 💊 <b>{{ med_name }}</b> – ⚠️ Noch offen
+                          {%- if dos | trim != '' %} · {{ dos }}{% endif %}{%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                          <i>(Wiederholung – keine Alarme)</i>
+                  else:
+                    - service: notify.mobile_app_andreas_iphone_15pro_max
+                      data:
+                        title: "💊 {{ med_name }} – ⚠️ Noch offen"
+                        message: >-
+                          Noch nicht genommen!
+                          {%- if dos | trim != '' %} {{ dos }}{% endif %}
+                          {%- if mahlzeit != 'Egal' %} · {{ mahlzeit }}{% endif %}
+                        data:
+                          actions:
+                            - action: "MEDIKAMENT_{{ repeat.item }}_BESTAETIGT"
+                              title: "✅ Genommen"
+                          push:
+                            sound:
+                              name: default
+                              critical: 1
+                              volume: 1.0
+                            interruption-level: critical
+                    - if:
+                        - condition: state
+                          entity_id: person.andreas
+                          state: "home"
+                      then:
+                        - service: script.medikament_alarm
+                          data:
+                            nachricht: >-
+                              Medikament noch nicht genommen!
+                              {{ states('input_text.medikament_' ~ repeat.item ~ '_name') or ('Medikament ' ~ repeat.item) }}
+    mode: single
+
+  # ── Bestätigung ────────────────────────────────────────────────────────────
+  - id: medikament_erinnerung_bestaetigt
+    alias: "Medikamente - Bestätigt"
+    description: "Einnahme protokollieren, Vorrat reduzieren, Licht grün"
+    trigger:
+      - { platform: event, event_type: mobile_app_notification_action, event_data: { action: MEDIKAMENT_1_BESTAETIGT }, id: best1 }
+      - { platform: event, event_type: mobile_app_notification_action, event_data: { action: MEDIKAMENT_2_BESTAETIGT }, id: best2 }
+      - { platform: event, event_type: mobile_app_notification_action, event_data: { action: MEDIKAMENT_3_BESTAETIGT }, id: best3 }
+      - { platform: event, event_type: mobile_app_notification_action, event_data: { action: MEDIKAMENT_4_BESTAETIGT }, id: best4 }
+      - { platform: event, event_type: mobile_app_notification_action, event_data: { action: MEDIKAMENT_5_BESTAETIGT }, id: best5 }
+      - { platform: event, event_type: mobile_app_notification_action, event_data: { action: MEDIKAMENT_6_BESTAETIGT }, id: best6 }
+    action:
+      - variables:
+          med_nr: >-
+            {% set ids = {'best1':1,'best2':2,'best3':3,'best4':4,'best5':5,'best6':6} %}
+            {{ ids[trigger.id] }}
+          item_alt: >-
+            {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
+            {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "input_boolean.medikament_{{ med_nr }}_offen"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_letzte_einnahme"
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: input_number.decrement
+        target:
+          entity_id: "input_number.medikament_{{ med_nr }}_vorrat"
+      - service: todo.update_item
+        target:
+          entity_id: todo.arznei
+        data:
+          item: "{{ item_alt }}"
+          rename: >-
+            {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
+            {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+        continue_on_error: true
+      - service: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "✅ {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          message: "Genommen! Vorrat: {{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} Stück"
+          data:
+            push:
+              interruption-level: passive
+      - service: script.turn_off
+        target:
+          entity_id: script.medikament_alarm
+      - if:
+          - condition: state
+            entity_id: input_boolean.medikament_testmodus
+            state: "off"
+        then:
+          - service: light.turn_on
+            target:
+              entity_id: light.schlafzimmer
+            data:
+              rgb_color: [0, 255, 0]
+              brightness: 255
+          - delay:
+              seconds: 5
+          - service: scene.turn_on
+            target:
+              entity_id: scene.medikament_licht_backup
+    mode: parallel
+
+  # ── Vorrat niedrig – täglich 08:00 ────────────────────────────────────────
+  - id: medikament_vorrat_warnung
+    alias: "Medikamente - Vorrat niedrig"
+    trigger:
+      - platform: time
+        at: "08:00:00"
+    condition: []
+    action:
+      - variables:
+          niedrig: >-
+            {% set liste = namespace(meds=[]) %}
+            {% for i in range(1, 7) %}
+              {% set aktiv = is_state('input_boolean.medikament_' ~ i ~ '_aktiv', 'on') %}
+              {% set vorrat = states('input_number.medikament_' ~ i ~ '_vorrat') | int(-1) %}
+              {% set warnung = states('input_number.medikament_' ~ i ~ '_vorrat_warnung') | int(10) %}
+              {% set name = states('input_text.medikament_' ~ i ~ '_name') or ('Medikament ' ~ i) %}
+              {% if aktiv and vorrat >= 0 and vorrat <= warnung %}
+                {% set liste.meds = liste.meds + [name ~ ' (' ~ vorrat ~ ' übrig)'] %}
+              {% endif %}
+            {% endfor %}
+            {{ liste.meds }}
+      - condition: template
+        value_template: "{{ niedrig | length > 0 }}"
+      - service: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "💊 Medikamente nachbestellen!"
+          message: "Niedriger Vorrat: {{ niedrig | join(', ') }}"
+          data:
+            push:
+              interruption-level: time-sensitive
+      - repeat:
+          for_each: [1, 2, 3, 4, 5, 6]
+          sequence:
+            - if:
+                - condition: template
+                  value_template: >-
+                    {% set v = states('input_number.medikament_' ~ repeat.item ~ '_vorrat') | int(-1) %}
+                    {% set w = states('input_number.medikament_' ~ repeat.item ~ '_vorrat_warnung') | int(10) %}
+                    {{ is_state('input_boolean.medikament_' ~ repeat.item ~ '_aktiv', 'on') and v >= 0 and v <= w }}
+              then:
+                - service: todo.add_item
+                  target:
+                    entity_id: todo.arznei
+                  data:
+                    item: >-
+                      {% set name = states('input_text.medikament_' ~ repeat.item ~ '_name') or ('Medikament ' ~ repeat.item) %}
+                      {% set pzn = states('input_text.medikament_' ~ repeat.item ~ '_pzn') %}
+                      {% set v = states('input_number.medikament_' ~ repeat.item ~ '_vorrat') | int(0) %}
+                      {{ name }}{% if pzn | trim != '' %} · PZN {{ pzn }}{% endif %} ({{ v }} übrig)
+    mode: single
