@@ -1,0 +1,22 @@
+type: custom:mushroom-template-card
+entity: binary_sensor.ikea_sensor_08_tur
+primary: >
+  {% if is_state('binary_sensor.ikea_sensor_08_tur', 'on') %}
+    Fenster offen
+  {% else %}
+    Fenster geschlossen
+  {% endif %}
+icon: >
+  {% if is_state('binary_sensor.ikea_sensor_08_tur', 'on') %}
+    mdi:window-open-variant
+  {% else %}
+    mdi:window-closed-variant
+  {% endif %}
+icon_color: >
+  {% if is_state('binary_sensor.ikea_sensor_08_tur', 'on') %}
+    orange
+  {% else %}
+    grey
+  {% endif %}
+tap_action:
+  action: more-info

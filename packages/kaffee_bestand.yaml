@@ -1,0 +1,403 @@
+# ═══════════════════════════════════════════════════════════════
+# KAFFEE-BESTAND — Beutel-Tracker für die Kaffeemaschine
+# ═══════════════════════════════════════════════════════════════
+# Speicherort: /config/packages/kaffee_bestand.yaml
+#
+# Konzept:
+#   • 1000-g-Beutel (anpassbar) wird Gramm-genau heruntergezählt
+#   • Counter "kaffee"           +1  →  -10 g  (anpassbar)
+#   • Counter "milchgetraenke"   +1  →  - 7 g  (anpassbar)
+#   • Beutel leer → "☕ Kaffee nachkaufen" auf todo.einkaufsliste_2
+#                   + (wenn EAN gesetzt) 1 Stk aus OFF-Inventar ausgebucht
+#   • Button "Neuer Beutel" → Reset auf Beutelgröße
+#
+# Voraussetzungen (existieren bereits in deinem Setup):
+#   - counter.kaffeemaschine_kaffee
+#   - counter.kaffeemaschine_milchgetraenke
+#   - todo.einkaufsliste_2
+#   - script.off_ausbuchen, script.off_barcode_lookup
+#   - input_text.off_barcode_eingabe, input_number.off_anzahl
+#   - input_boolean.automationen_ein_aus
+#
+# Einrichtung NACH dem HA-Neustart:
+#   1. Sidebar → Einstellungen → Geräte & Dienste → Helfer →
+#      input_number.kaffee_rest_gramm auf den aktuellen Wert setzen
+#      (z.B. 1000, wenn Beutel ungeöffnet)
+#   2. input_text.kaffee_aktiver_ean → EAN des aktuell offenen Beutels
+#      eintragen (optional, aber empfohlen für Auto-Ausbuchen)
+# ═══════════════════════════════════════════════════════════════
+
+input_number:
+
+  kaffee_heute:
+    name: "Kaffee heute"
+    min: 0
+    max: 99
+    step: 1
+    icon: mdi:coffee
+    mode: box
+
+  milchkaffee_heute:
+    name: "Milchkaffee heute"
+    min: 0
+    max: 99
+    step: 1
+    icon: mdi:coffee-to-go
+    mode: box
+
+  kaffee_rest_gramm:
+    name: "Kaffee Rest (aktueller Beutel)"
+    min: 0
+    max: 5000
+    step: 1
+    icon: mdi:scale
+    unit_of_measurement: g
+    mode: slider
+
+  kaffee_beutel_groesse:
+    name: "Kaffee Beutel-Größe"
+    min: 100
+    max: 5000
+    step: 50
+    icon: mdi:package-variant
+    unit_of_measurement: g
+    mode: box
+
+  kaffee_pro_kaffee:
+    name: "Gramm pro Kaffee-Bezug"
+    min: 5
+    max: 30
+    step: 1
+    icon: mdi:coffee
+    unit_of_measurement: g
+    mode: box
+
+  kaffee_pro_milch:
+    name: "Gramm pro Milchgetränk"
+    min: 0
+    max: 30
+    step: 1
+    icon: mdi:coffee-to-go
+    unit_of_measurement: g
+    mode: box
+
+input_text:
+
+  kaffee_aktiver_ean:
+    name: "Aktueller Beutel — EAN"
+    icon: mdi:barcode
+    max: 14
+    pattern: '^\d{8,14}$|^$'
+
+input_button:
+
+  kaffee_neuer_beutel:
+    name: "Neuer Kaffee-Beutel angefangen"
+    icon: mdi:package-variant-plus
+
+# ─────────────────────────────────────────────────────────────
+# Hilfs-Sensoren für die Anzeige
+# ─────────────────────────────────────────────────────────────
+
+template:
+  - sensor:
+
+      - name: "Kaffee Rest Prozent"
+        unique_id: kaffee_rest_prozent
+        icon: mdi:percent
+        unit_of_measurement: "%"
+        state: >
+          {% set rest = states('input_number.kaffee_rest_gramm') | float(0) %}
+          {% set groesse = states('input_number.kaffee_beutel_groesse') | float(1000) %}
+          {% if groesse > 0 %}
+            {{ (rest / groesse * 100) | round(0) }}
+          {% else %}0{% endif %}
+
+      - name: "Kaffee Bezuege bis leer"
+        unique_id: kaffee_bezuege_bis_leer
+        icon: mdi:counter
+        unit_of_measurement: "Bezüge"
+        state: >
+          {% set rest = states('input_number.kaffee_rest_gramm') | float(0) %}
+          {% set pro = states('input_number.kaffee_pro_kaffee') | float(10) %}
+          {% if pro > 0 %}
+            {{ (rest / pro) | int(0) }}
+          {% else %}0{% endif %}
+
+# ═══════════════════════════════════════════════════════════════
+# AUTOMATIONEN
+# ═══════════════════════════════════════════════════════════════
+
+automation:
+
+  # ─────────────────────────────────────────────────────────
+  # 1) Kaffee-Bezug → -10 g (anpassbar via Helper)
+  # ─────────────────────────────────────────────────────────
+  - alias: "Kaffee-Bestand: Kaffee-Bezug verringert Bestand"
+    id: kaffee_bezug_kaffee_abzug
+    triggers:
+      - trigger: state
+        entity_id: counter.kaffeemaschine_kaffee
+    conditions:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: "on"
+      # Nur bei increment, nicht bei reset oder Restart-restore
+      - condition: template
+        value_template: >
+          {{ trigger.from_state is not none
+             and trigger.to_state.state | int(0) > trigger.from_state.state | int(0) }}
+    actions:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.kaffee_rest_gramm
+        data:
+          value: >
+            {{ [
+              (states('input_number.kaffee_rest_gramm') | int(0))
+              - (states('input_number.kaffee_pro_kaffee') | int(10)),
+              0
+            ] | max }}
+    mode: queued
+    max: 10
+
+  # ─────────────────────────────────────────────────────────
+  # 2) Milchgetränk → -7 g (anpassbar via Helper)
+  # ─────────────────────────────────────────────────────────
+  - alias: "Kaffee-Bestand: Milchgetränk verringert Bestand"
+    id: kaffee_bezug_milch_abzug
+    triggers:
+      - trigger: state
+        entity_id: counter.kaffeemaschine_milchgetraenke
+    conditions:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: "on"
+      - condition: template
+        value_template: >
+          {{ trigger.from_state is not none
+             and trigger.to_state.state | int(0) > trigger.from_state.state | int(0) }}
+    actions:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.kaffee_rest_gramm
+        data:
+          value: >
+            {{ [
+              (states('input_number.kaffee_rest_gramm') | int(0))
+              - (states('input_number.kaffee_pro_milch') | int(7)),
+              0
+            ] | max }}
+    mode: queued
+    max: 10
+
+  # ─────────────────────────────────────────────────────────
+  # 3) Beutel leer → Einkaufsliste + Inventar-Ausbuchen
+  # ─────────────────────────────────────────────────────────
+  - alias: "Kaffee-Bestand: Beutel leer → Einkaufsliste + Inventar"
+    id: kaffee_beutel_leer
+    triggers:
+      - trigger: numeric_state
+        entity_id: input_number.kaffee_rest_gramm
+        below: 1
+    conditions:
+      - condition: state
+        entity_id: input_boolean.automationen_ein_aus
+        state: "on"
+    actions:
+
+      # ─── 1) Wenn EAN bekannt → 1 Stk aus OFF-Inventar ausbuchen ───
+      - if:
+          - condition: template
+            value_template: >
+              {{ states('input_text.kaffee_aktiver_ean')
+                 | string | regex_match('^\d{8,14}$') }}
+        then:
+          # Anzahl = 1
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.off_anzahl
+            data:
+              value: 1
+
+          # EAN ins Eingabefeld → off_auto_lookup triggert
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.off_barcode_eingabe
+            data:
+              value: "{{ states('input_text.kaffee_aktiver_ean') }}"
+
+          # Sicherheits-Lookup falls auto_lookup nicht greift
+          - action: script.off_barcode_lookup
+
+          # Warten bis Produkt-Daten geladen sind
+          - delay:
+              seconds: 3
+
+          # Ausbuchen (das Script findet den richtigen Lagerplatz selbst)
+          - action: script.off_ausbuchen
+            continue_on_error: true
+
+      # ─── 2) Einkaufsliste-Eintrag (mit Dedup) ───
+      - action: todo.get_items
+        target:
+          entity_id: todo.einkaufsliste_2
+        data:
+          status: needs_action
+        response_variable: einkauf
+
+      - variables:
+          schon_drauf: >-
+            {% set items = einkauf['todo.einkaufsliste_2']['items'] | default([]) %}
+            {% set ns = namespace(found=false) %}
+            {% for e in items %}
+              {% if '☕ Kaffee nachkaufen' in (e.summary | string) %}
+                {% set ns.found = true %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.found }}
+
+      - if:
+          - condition: template
+            value_template: "{{ schon_drauf | string | lower != 'true' }}"
+        then:
+          - action: todo.add_item
+            target:
+              entity_id: todo.einkaufsliste_2
+            data:
+              item: "☕ Kaffee nachkaufen | Beutel leer"
+              description: |
+                Beutel mit {{ states('input_number.kaffee_beutel_groesse') }} g aufgebraucht.
+                {% set ean = states('input_text.kaffee_aktiver_ean') | string %}
+                {% if ean | regex_match('^\d{8,14}$') %}
+
+                EAN: {{ ean }}
+
+                <img src="https://barcodeapi.org/api/ean13/{{ ean }}" alt="EAN" height="30">
+                {% endif %}
+
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # 5) NFC-Tag → Kaffee-Bezug tracken
+  # ─────────────────────────────────────────────────────────
+  - alias: "NFC – Kaffee-Bezug"
+    id: nfc_kaffee_bezug
+    trigger:
+      - trigger: tag
+        tag_id: "76043030-414a-4346-ae01-bb07cbbfcd3b"
+    conditions:
+      - condition: template
+        value_template: >
+          {{ (now() - states.counter.kaffeemaschine_kaffee.last_changed).total_seconds() > 10 }}
+    action:
+      - action: counter.increment
+        target:
+          entity_id: counter.kaffeemaschine_kaffee
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.kaffee_heute
+        data:
+          value: "{{ (states('input_number.kaffee_heute') | int(0)) + 1 }}"
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # 6) Mitternachts-Reset für Tageszähler
+  # ─────────────────────────────────────────────────────────
+  - alias: "NFC – Milchkaffee-Bezug"
+    id: nfc_milchkaffee_bezug
+    trigger:
+      - trigger: tag
+        tag_id: "be655be2-6f5c-432d-b39c-08e9778073fd"
+    conditions:
+      - condition: template
+        value_template: >
+          {{ (now() - states.counter.kaffeemaschine_milchgetraenke.last_changed).total_seconds() > 10 }}
+    action:
+      - action: counter.increment
+        target:
+          entity_id: counter.kaffeemaschine_milchgetraenke
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.milchkaffee_heute
+        data:
+          value: "{{ (states('input_number.milchkaffee_heute') | int(0)) + 1 }}"
+    mode: single
+
+  - alias: "Kaffee heute – Mitternachts-Reset"
+    id: kaffee_heute_reset
+    trigger:
+      - trigger: time
+        at: "00:00:00"
+    action:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.kaffee_heute
+        data:
+          value: 0
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.milchkaffee_heute
+        data:
+          value: 0
+    mode: single
+
+  # ─────────────────────────────────────────────────────────
+  # 4) Button "Neuer Beutel angefangen" → Reset auf Beutelgröße
+  # ─────────────────────────────────────────────────────────
+  - alias: "Kaffee-Bestand: Neuer Beutel angefangen"
+    id: kaffee_neuer_beutel
+    triggers:
+      - trigger: state
+        entity_id: input_button.kaffee_neuer_beutel
+    actions:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.kaffee_rest_gramm
+        data:
+          value: "{{ states('input_number.kaffee_beutel_groesse') | int(1000) }}"
+    mode: single
+
+  - alias: "Kaffee-Bestand: Beutel leer → Vorratskammer ausbuchen"
+    id: kaffee_beutel_leer_ausbuchen
+    description: Wenn der Kaffeebeutel leer ist (Restgewicht erreicht 0), wird automatisch 1 Stück aus der Vorratskammer ausgebucht.
+    triggers:
+      - trigger: state
+        entity_id: input_number.kaffee_rest_gramm
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state | float(1) <= 0
+             and trigger.from_state.state | float(1) > 0 }}
+      - condition: template
+        value_template: >
+          {{ states('input_text.kaffee_aktiver_ean') | string | trim | regex_match('^\d{8,14}$') }}
+    actions:
+      - action: script.off_schnellwahl_buchen
+        data:
+          ean: "{{ states('input_text.kaffee_aktiver_ean') | string | trim }}"
+          produkt: Kaffee
+          lagerplatz: Vorratskammer
+          modus: Ausbuchen
+    mode: single
+
+  - alias: "Kaffee-Bestand: EAN → Vorratskammer einbuchen"
+    id: kaffee_ean_inventar
+    description: Wenn eine EAN für den Kaffee-Beutel eingetragen wird, wird das Produkt automatisch in die Vorratskammer eingebucht.
+    triggers:
+      - trigger: state
+        entity_id: input_text.kaffee_aktiver_ean
+    conditions:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state | string | trim | regex_match('^\d{8,14}$') }}
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state != trigger.from_state.state }}
+    actions:
+      - action: script.off_schnellwahl_buchen
+        data:
+          ean: "{{ trigger.to_state.state | string | trim }}"
+          produkt: Kaffee
+          lagerplatz: Vorratskammer
+    mode: single

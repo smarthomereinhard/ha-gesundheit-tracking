@@ -1,6 +1,6 @@
 type: custom:mushroom-entity-card
-entity: binary_sensor.ikea_sensor_05_tur
-name: Tür
+entity: binary_sensor.ikea_sensor_02_tur
+name: Haustüre
 icon: mdi:door
 tap_action:
   action: more-info

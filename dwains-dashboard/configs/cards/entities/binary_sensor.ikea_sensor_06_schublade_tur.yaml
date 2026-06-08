@@ -1,0 +1,6 @@
+type: custom:mushroom-entity-card
+entity: binary_sensor.ikea_sensor_06_schublade_tur
+name: Schublade
+icon: mdi:dresser
+tap_action:
+  action: more-info

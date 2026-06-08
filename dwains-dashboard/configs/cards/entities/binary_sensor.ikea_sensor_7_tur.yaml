@@ -1,0 +1,6 @@
+type: custom:mushroom-entity-card
+entity: binary_sensor.ikea_sensor_7_tur
+name: Fenster
+icon: mdi:window-closed-variant
+tap_action:
+  action: more-info

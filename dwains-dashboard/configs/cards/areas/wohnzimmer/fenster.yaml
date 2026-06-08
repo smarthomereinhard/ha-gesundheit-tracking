@@ -1,0 +1,3 @@
+type: tile
+entity: binary_sensor.ikea_sensor_08_tur
+name: Fenster

@@ -1,5 +1,49 @@
 default_config:
 
+lovelace:
+  mode: storage
+  dashboards:
+    medikamente-verwaltung:
+      mode: yaml
+      title: Medikamente
+      icon: mdi:pill
+      show_in_sidebar: true
+      filename: dashboards/medikamente.yaml
+    wasch-kueche:
+      mode: yaml
+      title: Waschküche
+      icon: mdi:washing-machine
+      show_in_sidebar: true
+      filename: dashboards/waschkueche.yaml
+
+influxdb:
+  host: a0d7b954-influxdb
+  port: 8086
+  database: homeassistant
+  username: homeassistant
+  password: homeassistant123
+  max_retries: 3
+  default_measurement: state
+  exclude:
+    domains:
+      - automation
+      - script
+      - scene
+      - group
+      - update
+      - button
+  include:
+    domains:
+      - sensor
+      - binary_sensor
+      - switch
+      - light
+      - climate
+      - cover
+      - fan
+      - input_boolean
+      - input_number
+
 http:
   use_x_forwarded_for: true
   trusted_proxies:
@@ -73,6 +117,15 @@ input_number:
     max: 99999
     step: 1
     icon: mdi:coffee-maker
+  tts_lautstarke:
+    name: "TTS Lautstärke"
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: "%"
+    icon: mdi:volume-high
+    initial: 40
+    mode: slider
 
 input_boolean:
   hund_gefuettert_morgens:
@@ -89,19 +142,70 @@ input_boolean:
     name: "Hund Erinnerung TTS"
     icon: mdi:volume-high
     initial: true
+  ich_schlafe_noch:
+    name: "Ich schlafe noch"
+    icon: mdi:sleep
+    initial: false
   inventar_tts:
     name: "Inventar Ansage"
     icon: mdi:barcode-scan
     initial: true
-
-input_datetime:
-  ipad_plug_ladestart:
-    name: "iPad Ladestart"
-    has_date: true
-    has_time: true
-    icon: mdi:tablet-cellphone
+  medikament_1_aktiv:
+    name: "Medikament 1 aktiv"
+    icon: mdi:pill
+    initial: false
+  medikament_2_aktiv:
+    name: "Medikament 2 aktiv"
+    icon: mdi:pill
+    initial: false
+  medikament_3_aktiv:
+    name: "Medikament 3 aktiv"
+    icon: mdi:pill
+    initial: false
+  medikament_1_offen:
+    name: "Medikament 1 Erinnerung offen"
+    icon: mdi:bell-ring
+    initial: false
+  medikament_2_offen:
+    name: "Medikament 2 Erinnerung offen"
+    icon: mdi:bell-ring
+    initial: false
+  medikament_3_offen:
+    name: "Medikament 3 Erinnerung offen"
+    icon: mdi:bell-ring
+    initial: false
 
 input_text:
+  medikament_1_name:
+    name: "Medikament 1 Name"
+    icon: mdi:pill
+    max: 50
+    initial: ""
+  medikament_2_name:
+    name: "Medikament 2 Name"
+    icon: mdi:pill
+    max: 50
+    initial: ""
+  medikament_3_name:
+    name: "Medikament 3 Name"
+    icon: mdi:pill
+    max: 50
+    initial: ""
+  medikament_1_hinweis:
+    name: "Medikament 1 Hinweis"
+    icon: mdi:information-outline
+    max: 100
+    initial: ""
+  medikament_2_hinweis:
+    name: "Medikament 2 Hinweis"
+    icon: mdi:information-outline
+    max: 100
+    initial: ""
+  medikament_3_hinweis:
+    name: "Medikament 3 Hinweis"
+    icon: mdi:information-outline
+    max: 100
+    initial: ""
   barcode_scan:
     name: "Barcode Scan"
     max: 255
@@ -110,6 +214,33 @@ input_text:
     name: "Spülmaschine letzte Kosten"
     max: 20
     icon: mdi:dishwasher
+
+input_datetime:
+  medikament_1_zeit:
+    name: "Medikament 1 Uhrzeit"
+    has_date: false
+    has_time: true
+    icon: mdi:clock-outline
+  medikament_2_zeit:
+    name: "Medikament 2 Uhrzeit"
+    has_date: false
+    has_time: true
+    icon: mdi:clock-outline
+  medikament_3_zeit:
+    name: "Medikament 3 Uhrzeit"
+    has_date: false
+    has_time: true
+    icon: mdi:clock-outline
+  ipad_plug_ladestart:
+    name: "iPad Ladestart"
+    has_date: true
+    has_time: true
+    icon: mdi:tablet-cellphone
+  waschmaschine_startzeit:
+    name: "Waschmaschine Startzeit"
+    has_date: true
+    has_time: true
+    icon: mdi:washing-machine
 
 input_select:
   energie_ansicht:

@@ -1,0 +1,6 @@
+type: custom:mushroom-entity-card
+entity: binary_sensor.ikea_sensor_03_balkontur
+name: Balkontür
+icon: mdi:door-sliding
+tap_action:
+  action: more-info

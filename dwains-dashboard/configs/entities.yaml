@@ -409,6 +409,7 @@ switch.plus1pm_switch_0:
   custom_popup: false
 binary_sensor.ikea_sensor_09_tur:
   sort_order: 2
+  custom_card: true
 binary_sensor.shellywalldisplay_000822519e87_external_power:
   sort_order: 3
 binary_sensor.plus1pm_switch_0_overheating:
@@ -511,3 +512,21 @@ select.abstelkammer_wiedereinschaltverhalten:
 sensor.ikea_sensor_05_batterie:
   sort_order: 7
   hidden: true
+binary_sensor.ikea_sensor_02_tur:
+  sort_order: 1
+  custom_card: true
+binary_sensor.wohnungstur:
+  sort_order: 2
+  custom_card: true
+binary_sensor.ikea_sensor_03_balkontur:
+  sort_order: 1
+  custom_card: true
+binary_sensor.ikea_sensor_06_schublade_tur:
+  sort_order: 1
+  custom_card: true
+binary_sensor.ikea_sensor_7_tur:
+  sort_order: 1
+  custom_card: true
+binary_sensor.ikea_sensor_08_tur:
+  sort_order: 1
+  custom_card: true
