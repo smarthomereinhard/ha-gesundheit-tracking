@@ -205,17 +205,17 @@ input_text:
 
 input_datetime:
   medikament_1_letzte_einnahme:
-    name: "Medikament 1 Letzte Einnahme"
+    name: "✅ Medikament 1 – Einnahme"
     icon: mdi:clock-check-outline
     has_date: true
     has_time: true
   medikament_2_letzte_einnahme:
-    name: "Medikament 2 Letzte Einnahme"
+    name: "✅ Medikament 2 – Einnahme"
     icon: mdi:clock-check-outline
     has_date: true
     has_time: true
   medikament_3_letzte_einnahme:
-    name: "Medikament 3 Letzte Einnahme"
+    name: "✅ Medikament 3 – Einnahme"
     icon: mdi:clock-check-outline
     has_date: true
     has_time: true
@@ -235,7 +235,7 @@ input_datetime:
     has_date: false
     has_time: true
   medikament_4_letzte_einnahme:
-    name: "Medikament 4 Letzte Einnahme"
+    name: "✅ Medikament 4 – Einnahme"
     icon: mdi:clock-check-outline
     has_date: true
     has_time: true
@@ -255,7 +255,7 @@ input_datetime:
     has_date: false
     has_time: true
   medikament_5_letzte_einnahme:
-    name: "Medikament 5 Letzte Einnahme"
+    name: "✅ Medikament 5 – Einnahme"
     icon: mdi:clock-check-outline
     has_date: true
     has_time: true
@@ -275,7 +275,7 @@ input_datetime:
     has_date: false
     has_time: true
   medikament_6_letzte_einnahme:
-    name: "Medikament 6 Letzte Einnahme"
+    name: "✅ Medikament 6 – Einnahme"
     icon: mdi:clock-check-outline
     has_date: true
     has_time: true
@@ -310,6 +310,36 @@ input_datetime:
     icon: mdi:weather-night
     has_date: false
     has_time: true
+  medikament_1_letzte_verpasst:
+    name: "❌ Medikament 1 – verpasst"
+    icon: mdi:pill-remove
+    has_date: true
+    has_time: true
+  medikament_2_letzte_verpasst:
+    name: "❌ Medikament 2 – verpasst"
+    icon: mdi:pill-remove
+    has_date: true
+    has_time: true
+  medikament_3_letzte_verpasst:
+    name: "❌ Medikament 3 – verpasst"
+    icon: mdi:pill-remove
+    has_date: true
+    has_time: true
+  medikament_4_letzte_verpasst:
+    name: "❌ Medikament 4 – verpasst"
+    icon: mdi:pill-remove
+    has_date: true
+    has_time: true
+  medikament_5_letzte_verpasst:
+    name: "❌ Medikament 5 – verpasst"
+    icon: mdi:pill-remove
+    has_date: true
+    has_time: true
+  medikament_6_letzte_verpasst:
+    name: "❌ Medikament 6 – verpasst"
+    icon: mdi:pill-remove
+    has_date: true
+    has_time: true
 
 input_number:
   medikament_1_vorrat:
@@ -317,7 +347,7 @@ input_number:
     icon: mdi:pill-multiple
     min: 0
     max: 999
-    step: 1
+    step: 0.5
     mode: box
   medikament_1_vorrat_warnung:
     name: "Medikament 1 Warnung ab"
@@ -631,6 +661,35 @@ script:
           item: "{{ item_alt }}"
           rename: "{{ item_neu }}"
         continue_on_error: true
+      - variables:
+          tg_name: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          tg_vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }}"
+          tg_pkg: "{{ states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(0) }}"
+          tg_warnung: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat_warnung') | int(10) }}"
+          tg_dos: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') }}"
+          tg_mahlzeit: "{{ states('input_select.medikament_' ~ med_nr ~ '_mahlzeit') }}"
+          tg_hin: "{{ states('input_text.medikament_' ~ med_nr ~ '_hinweis') }}"
+      - service: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >-
+            ✅ <b>{{ tg_name }}</b> – genommen
+            {{ '\n' }}🕐 {{ now().strftime('%H:%M') }} Uhr
+            {{ '\n' }}📦 Vorrat: {{ tg_vorrat }} Stück{%- if tg_pkg > 0 %} (≈{{ (tg_vorrat / tg_pkg) | round(1) }} Pkg.){%- endif %}
+            {%- if tg_dos | trim != '' %}
+            {{ '\n' }}💊 {{ tg_dos }}
+            {%- endif %}
+            {%- if tg_mahlzeit != 'Egal' %}
+            {{ '\n' }}🍽️ {{ tg_mahlzeit }}
+            {%- endif %}
+            {%- if tg_vorrat <= tg_warnung %}
+            {{ '\n' }}⚠️ <b>Nachbestellen!</b> Warnung ab {{ tg_warnung }} Stück
+            {%- endif %}
+            {%- if tg_hin | trim != '' %}
+            {{ '\n' }}💬 {{ tg_hin }}
+            {%- endif %}
 
   medikament_alarm:
     alias: "Medikamente - Licht & TTS Alarm"
@@ -965,6 +1024,35 @@ automation:
             {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
             {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
         continue_on_error: true
+      - variables:
+          tg_name: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          tg_vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }}"
+          tg_pkg: "{{ states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(0) }}"
+          tg_warnung: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat_warnung') | int(10) }}"
+          tg_dos: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') }}"
+          tg_mahlzeit: "{{ states('input_select.medikament_' ~ med_nr ~ '_mahlzeit') }}"
+          tg_hin: "{{ states('input_text.medikament_' ~ med_nr ~ '_hinweis') }}"
+      - service: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >-
+            ✅ <b>{{ tg_name }}</b> – genommen
+            {{ '\n' }}🕐 {{ now().strftime('%H:%M') }} Uhr
+            {{ '\n' }}📦 Vorrat: {{ tg_vorrat }} Stück{%- if tg_pkg > 0 %} (≈{{ (tg_vorrat / tg_pkg) | round(1) }} Pkg.){%- endif %}
+            {%- if tg_dos | trim != '' %}
+            {{ '\n' }}💊 {{ tg_dos }}
+            {%- endif %}
+            {%- if tg_mahlzeit != 'Egal' %}
+            {{ '\n' }}🍽️ {{ tg_mahlzeit }}
+            {%- endif %}
+            {%- if tg_vorrat <= tg_warnung %}
+            {{ '\n' }}⚠️ <b>Nachbestellen!</b> Warnung ab {{ tg_warnung }} Stück
+            {%- endif %}
+            {%- if tg_hin | trim != '' %}
+            {{ '\n' }}💬 {{ tg_hin }}
+            {%- endif %}
       - service: notify.mobile_app_andreas_iphone_15pro_max
         data:
           title: "✅ {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
@@ -1042,4 +1130,31 @@ automation:
                       {% set pzn = states('input_text.medikament_' ~ repeat.item ~ '_pzn') %}
                       {% set v = states('input_number.medikament_' ~ repeat.item ~ '_vorrat') | int(0) %}
                       {{ name }}{% if pzn | trim != '' %} · PZN {{ pzn }}{% endif %} ({{ v }} übrig)
+    mode: single
+
+  # ── Verpasste Dosen täglich um 23:55 markieren ──────────────────────────────
+  - id: medikament_verpasst_markieren
+    alias: "Medikamente – Verpasste Dosen markieren"
+    description: "23:55 Uhr: offene Erinnerungen als verpasst protokollieren"
+    trigger:
+      - platform: time
+        at: "23:55:00"
+    action:
+      - repeat:
+          for_each: [1, 2, 3, 4, 5, 6]
+          sequence:
+            - if:
+                - condition: template
+                  value_template: >-
+                    {{ is_state('input_boolean.medikament_' ~ repeat.item ~ '_aktiv', 'on') and
+                       is_state('input_boolean.medikament_' ~ repeat.item ~ '_offen', 'on') }}
+              then:
+                - service: input_datetime.set_datetime
+                  target:
+                    entity_id: "input_datetime.medikament_{{ repeat.item }}_letzte_verpasst"
+                  data:
+                    datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+                - service: input_boolean.turn_off
+                  target:
+                    entity_id: "input_boolean.medikament_{{ repeat.item }}_offen"
     mode: single
