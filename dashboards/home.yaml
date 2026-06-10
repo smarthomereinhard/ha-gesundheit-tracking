@@ -1925,6 +1925,224 @@ views:
         expanded: false
         icon: mdi:coffee-maker-outline
         cards:
+          - type: custom:mushroom-template-card
+            primary: Kaffeebohnen leer
+            secondary: Zur Einkaufsliste hinzufügen
+            icon: mdi:coffee-maker
+            tap_action:
+              action: call-service
+              service: todo.add_item
+              data:
+                entity_id: todo.einkaufsliste
+                item: Kaffeebohnen 1 kg
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >
+                  <span style="color:#6b7280;font-size:14px;letter-spacing:1px;"> ☕ KAFFEE-BEUTEL · BESTANDSANZEIGE </span>
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 8px 12px 4px 12px; }
+              - type: markdown
+                content: >
+                  {% set rest = states('input_number.kaffee_rest_gramm') | int(0) %}
+                  {% set groesse = states('input_number.kaffee_beutel_groesse') | int(1000) %}
+                  {% set proz = states('sensor.kaffee_rest_prozent') | int(0) %}
+                  {% set bezuege = states('sensor.kaffee_bezuge_bis_leer') | int(0) %}
+                  {% if proz > 50 %}{% set farbe1 = '#22c55e' %}{% set farbe2 = '#84cc16' %}{% set glow = 'rgba(34,197,94,0.4)' %}
+                  {% elif proz > 20 %}{% set farbe1 = '#f97316' %}{% set farbe2 = '#fbbf24' %}{% set glow = 'rgba(249,115,22,0.4)' %}
+                  {% elif proz > 0 %}{% set farbe1 = '#ef4444' %}{% set farbe2 = '#f97316' %}{% set glow = 'rgba(239,68,68,0.5)' %}
+                  {% else %}{% set farbe1 = '#64748b' %}{% set farbe2 = '#475569' %}{% set glow = 'rgba(100,116,139,0.3)' %}{% endif %}
+                  <div style="background:#1e293b;border-radius:14px;height:80px;overflow:hidden;position:relative;border:1px solid #334155;box-shadow:0 0 18px {{ glow }};">
+                    <div style="background:linear-gradient(90deg, {{ farbe1 }} 0%, {{ farbe2 }} 100%);width:{{ proz }}%;height:100%;transition:width 0.6s ease;box-shadow:0 0 20px {{ glow }} inset;"></div>
+                    <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;">
+                      <div>
+                        <div style="color:#f1f5f9;font-weight:700;font-size:26px;text-shadow:0 1px 4px rgba(0,0,0,0.6);">{{ rest }} g</div>
+                        <div style="color:#cbd5e1;font-size:11px;letter-spacing:1px;text-transform:uppercase;">von {{ groesse }} g</div>
+                      </div>
+                      <div style="text-align:right;">
+                        <div style="color:#f1f5f9;font-weight:700;font-size:26px;text-shadow:0 1px 4px rgba(0,0,0,0.6);">{{ proz }}%</div>
+                        <div style="color:#cbd5e1;font-size:11px;letter-spacing:1px;text-transform:uppercase;">{{ bezuege }} Bezüge</div>
+                      </div>
+                    </div>
+                  </div>
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; border: none; box-shadow: none; padding: 4px 8px; }
+                    ha-markdown { padding: 0 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:button-card
+                    entity: input_number.kaffee_rest_gramm
+                    name: Rest
+                    label: Gramm
+                    show_state: true
+                    icon: mdi:scale
+                    tap_action:
+                      action: more-info
+                    styles:
+                      card:
+                        - background: "#0f172a"
+                        - border-radius: 14px
+                        - border: 1px solid '#d97706'
+                        - padding: 12px 14px
+                        - height: 72px
+                      grid:
+                        - grid-template-areas: '"i n" "i s"'
+                        - grid-template-columns: 42px 1fr
+                      icon:
+                        - background: rgba(217,119,6,0.18)
+                        - border-radius: 50%
+                        - padding: 8px
+                        - color: "#fbbf24"
+                        - width: 22px
+                        - height: 22px
+                      name:
+                        - color: "#9ca3af"
+                        - font-size: 11px
+                        - justify-self: start
+                        - align-self: end
+                      state:
+                        - color: "#f1f5f9"
+                        - font-size: 16px
+                        - font-weight: 700
+                        - justify-self: start
+                        - align-self: start
+                      label:
+                        - display: none
+                  - type: custom:button-card
+                    entity: sensor.kaffee_bezuge_bis_leer
+                    name: Bezüge
+                    show_state: true
+                    icon: mdi:counter
+                    tap_action:
+                      action: more-info
+                    styles:
+                      card:
+                        - background: "#0f172a"
+                        - border-radius: 14px
+                        - border: 1px solid '#3b82f6'
+                        - padding: 12px 14px
+                        - height: 72px
+                      grid:
+                        - grid-template-areas: '"i n" "i s"'
+                        - grid-template-columns: 42px 1fr
+                      icon:
+                        - background: rgba(59,130,246,0.18)
+                        - border-radius: 50%
+                        - padding: 8px
+                        - color: "#60a5fa"
+                        - width: 22px
+                        - height: 22px
+                      name:
+                        - color: "#9ca3af"
+                        - font-size: 11px
+                        - justify-self: start
+                        - align-self: end
+                      state:
+                        - color: "#f1f5f9"
+                        - font-size: 16px
+                        - font-weight: 700
+                        - justify-self: start
+                        - align-self: start
+                  - type: custom:button-card
+                    entity: input_text.kaffee_aktiver_ean
+                    name: EAN
+                    show_state: true
+                    icon: mdi:barcode
+                    tap_action:
+                      action: more-info
+                    styles:
+                      card:
+                        - background: "#0f172a"
+                        - border-radius: 14px
+                        - border: 1px solid '#64748b'
+                        - padding: 12px 14px
+                        - height: 72px
+                      grid:
+                        - grid-template-areas: '"i n" "i s"'
+                        - grid-template-columns: 42px 1fr
+                      icon:
+                        - background: rgba(100,116,139,0.18)
+                        - border-radius: 50%
+                        - padding: 8px
+                        - color: "#94a3b8"
+                        - width: 22px
+                        - height: 22px
+                      name:
+                        - color: "#9ca3af"
+                        - font-size: 11px
+                        - justify-self: start
+                        - align-self: end
+                      state:
+                        - color: "#f1f5f9"
+                        - font-size: 13px
+                        - font-weight: 600
+                        - justify-self: start
+                        - align-self: start
+              - type: custom:button-card
+                name: Neuer Kaffee-Beutel angefangen
+                label: |
+                  [[[
+                    const g = states['input_number.kaffee_beutel_groesse'].state;
+                    return `Bestand zurücksetzen auf ${parseInt(g)} g`;
+                  ]]]
+                icon: mdi:package-variant-plus
+                show_label: true
+                tap_action:
+                  action: perform-action
+                  perform_action: input_button.press
+                  target:
+                    entity_id: input_button.kaffee_neuer_beutel
+                styles:
+                  card:
+                    - background: "linear-gradient(135deg, #78350f 0%, #92400e 100%)"
+                    - border-radius: 14px
+                    - border: 1px solid '#d97706'
+                    - padding: 16px 18px
+                    - height: 76px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 52px 1fr
+                  icon:
+                    - background: rgba(255,255,255,0.12)
+                    - border-radius: 50%
+                    - padding: 10px
+                    - color: "#fef3c7"
+                    - width: 26px
+                    - height: 26px
+                  name:
+                    - color: "#fef9e7"
+                    - font-weight: 700
+                    - font-size: 15px
+                    - justify-self: start
+                    - align-self: end
+                  label:
+                    - color: "#fbbf24"
+                    - font-size: 12px
+                    - justify-self: start
+                    - align-self: start
+              - type: custom:expander-card
+                title: ⚙️ Konfiguration
+                expanded: false
+                cards:
+                  - type: entities
+                    entities:
+                      - entity: input_number.kaffee_beutel_groesse
+                        name: Beutel-Größe (Standard 1000 g)
+                        icon: mdi:package-variant
+                      - entity: input_number.kaffee_pro_kaffee
+                        name: Gramm pro Kaffee-Bezug
+                        icon: mdi:coffee
+                      - entity: input_number.kaffee_pro_milch
+                        name: Gramm pro Milchgetränk
+                        icon: mdi:coffee-to-go
+                      - entity: input_text.kaffee_aktiver_ean
+                        name: EAN des aktuellen Beutels
+                        icon: mdi:barcode
+
+
+
           - type: vertical-stack
             cards:
               - type: custom:mushroom-title-card
@@ -2302,223 +2520,6 @@ views:
                     card_mod:
                       style: |
                         ha-card { border-radius: 16px !important; border: 1.5px solid rgba(76,175,80,0.4) !important; }
-          - type: custom:mushroom-template-card
-            primary: Kaffeebohnen leer
-            secondary: Zur Einkaufsliste hinzufügen
-            icon: mdi:coffee-maker
-            tap_action:
-              action: call-service
-              service: todo.add_item
-              data:
-                entity_id: todo.einkaufsliste
-                item: Kaffeebohnen 1 kg
-          - type: vertical-stack
-            cards:
-              - type: markdown
-                content: >
-                  <span style="color:#6b7280;font-size:14px;letter-spacing:1px;"> ☕ KAFFEE-BEUTEL · BESTANDSANZEIGE </span>
-                card_mod:
-                  style: |
-                    ha-card { background: transparent; box-shadow: none; border: none; padding: 8px 12px 4px 12px; }
-              - type: markdown
-                content: >
-                  {% set rest = states('input_number.kaffee_rest_gramm') | int(0) %}
-                  {% set groesse = states('input_number.kaffee_beutel_groesse') | int(1000) %}
-                  {% set proz = states('sensor.kaffee_rest_prozent') | int(0) %}
-                  {% set bezuege = states('sensor.kaffee_bezuge_bis_leer') | int(0) %}
-                  {% if proz > 50 %}{% set farbe1 = '#22c55e' %}{% set farbe2 = '#84cc16' %}{% set glow = 'rgba(34,197,94,0.4)' %}
-                  {% elif proz > 20 %}{% set farbe1 = '#f97316' %}{% set farbe2 = '#fbbf24' %}{% set glow = 'rgba(249,115,22,0.4)' %}
-                  {% elif proz > 0 %}{% set farbe1 = '#ef4444' %}{% set farbe2 = '#f97316' %}{% set glow = 'rgba(239,68,68,0.5)' %}
-                  {% else %}{% set farbe1 = '#64748b' %}{% set farbe2 = '#475569' %}{% set glow = 'rgba(100,116,139,0.3)' %}{% endif %}
-                  <div style="background:#1e293b;border-radius:14px;height:80px;overflow:hidden;position:relative;border:1px solid #334155;box-shadow:0 0 18px {{ glow }};">
-                    <div style="background:linear-gradient(90deg, {{ farbe1 }} 0%, {{ farbe2 }} 100%);width:{{ proz }}%;height:100%;transition:width 0.6s ease;box-shadow:0 0 20px {{ glow }} inset;"></div>
-                    <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;">
-                      <div>
-                        <div style="color:#f1f5f9;font-weight:700;font-size:26px;text-shadow:0 1px 4px rgba(0,0,0,0.6);">{{ rest }} g</div>
-                        <div style="color:#cbd5e1;font-size:11px;letter-spacing:1px;text-transform:uppercase;">von {{ groesse }} g</div>
-                      </div>
-                      <div style="text-align:right;">
-                        <div style="color:#f1f5f9;font-weight:700;font-size:26px;text-shadow:0 1px 4px rgba(0,0,0,0.6);">{{ proz }}%</div>
-                        <div style="color:#cbd5e1;font-size:11px;letter-spacing:1px;text-transform:uppercase;">{{ bezuege }} Bezüge</div>
-                      </div>
-                    </div>
-                  </div>
-                card_mod:
-                  style: |
-                    ha-card { background: transparent; border: none; box-shadow: none; padding: 4px 8px; }
-                    ha-markdown { padding: 0 !important; }
-              - type: horizontal-stack
-                cards:
-                  - type: custom:button-card
-                    entity: input_number.kaffee_rest_gramm
-                    name: Rest
-                    label: Gramm
-                    show_state: true
-                    icon: mdi:scale
-                    tap_action:
-                      action: more-info
-                    styles:
-                      card:
-                        - background: "#0f172a"
-                        - border-radius: 14px
-                        - border: 1px solid '#d97706'
-                        - padding: 12px 14px
-                        - height: 72px
-                      grid:
-                        - grid-template-areas: '"i n" "i s"'
-                        - grid-template-columns: 42px 1fr
-                      icon:
-                        - background: rgba(217,119,6,0.18)
-                        - border-radius: 50%
-                        - padding: 8px
-                        - color: "#fbbf24"
-                        - width: 22px
-                        - height: 22px
-                      name:
-                        - color: "#9ca3af"
-                        - font-size: 11px
-                        - justify-self: start
-                        - align-self: end
-                      state:
-                        - color: "#f1f5f9"
-                        - font-size: 16px
-                        - font-weight: 700
-                        - justify-self: start
-                        - align-self: start
-                      label:
-                        - display: none
-                  - type: custom:button-card
-                    entity: sensor.kaffee_bezuge_bis_leer
-                    name: Bezüge
-                    show_state: true
-                    icon: mdi:counter
-                    tap_action:
-                      action: more-info
-                    styles:
-                      card:
-                        - background: "#0f172a"
-                        - border-radius: 14px
-                        - border: 1px solid '#3b82f6'
-                        - padding: 12px 14px
-                        - height: 72px
-                      grid:
-                        - grid-template-areas: '"i n" "i s"'
-                        - grid-template-columns: 42px 1fr
-                      icon:
-                        - background: rgba(59,130,246,0.18)
-                        - border-radius: 50%
-                        - padding: 8px
-                        - color: "#60a5fa"
-                        - width: 22px
-                        - height: 22px
-                      name:
-                        - color: "#9ca3af"
-                        - font-size: 11px
-                        - justify-self: start
-                        - align-self: end
-                      state:
-                        - color: "#f1f5f9"
-                        - font-size: 16px
-                        - font-weight: 700
-                        - justify-self: start
-                        - align-self: start
-                  - type: custom:button-card
-                    entity: input_text.kaffee_aktiver_ean
-                    name: EAN
-                    show_state: true
-                    icon: mdi:barcode
-                    tap_action:
-                      action: more-info
-                    styles:
-                      card:
-                        - background: "#0f172a"
-                        - border-radius: 14px
-                        - border: 1px solid '#64748b'
-                        - padding: 12px 14px
-                        - height: 72px
-                      grid:
-                        - grid-template-areas: '"i n" "i s"'
-                        - grid-template-columns: 42px 1fr
-                      icon:
-                        - background: rgba(100,116,139,0.18)
-                        - border-radius: 50%
-                        - padding: 8px
-                        - color: "#94a3b8"
-                        - width: 22px
-                        - height: 22px
-                      name:
-                        - color: "#9ca3af"
-                        - font-size: 11px
-                        - justify-self: start
-                        - align-self: end
-                      state:
-                        - color: "#f1f5f9"
-                        - font-size: 13px
-                        - font-weight: 600
-                        - justify-self: start
-                        - align-self: start
-              - type: custom:button-card
-                name: Neuer Kaffee-Beutel angefangen
-                label: |
-                  [[[
-                    const g = states['input_number.kaffee_beutel_groesse'].state;
-                    return `Bestand zurücksetzen auf ${parseInt(g)} g`;
-                  ]]]
-                icon: mdi:package-variant-plus
-                show_label: true
-                tap_action:
-                  action: perform-action
-                  perform_action: input_button.press
-                  target:
-                    entity_id: input_button.kaffee_neuer_beutel
-                styles:
-                  card:
-                    - background: "linear-gradient(135deg, #78350f 0%, #92400e 100%)"
-                    - border-radius: 14px
-                    - border: 1px solid '#d97706'
-                    - padding: 16px 18px
-                    - height: 76px
-                  grid:
-                    - grid-template-areas: '"i n" "i l"'
-                    - grid-template-columns: 52px 1fr
-                  icon:
-                    - background: rgba(255,255,255,0.12)
-                    - border-radius: 50%
-                    - padding: 10px
-                    - color: "#fef3c7"
-                    - width: 26px
-                    - height: 26px
-                  name:
-                    - color: "#fef9e7"
-                    - font-weight: 700
-                    - font-size: 15px
-                    - justify-self: start
-                    - align-self: end
-                  label:
-                    - color: "#fbbf24"
-                    - font-size: 12px
-                    - justify-self: start
-                    - align-self: start
-              - type: custom:expander-card
-                title: ⚙️ Konfiguration
-                expanded: false
-                cards:
-                  - type: entities
-                    entities:
-                      - entity: input_number.kaffee_beutel_groesse
-                        name: Beutel-Größe (Standard 1000 g)
-                        icon: mdi:package-variant
-                      - entity: input_number.kaffee_pro_kaffee
-                        name: Gramm pro Kaffee-Bezug
-                        icon: mdi:coffee
-                      - entity: input_number.kaffee_pro_milch
-                        name: Gramm pro Milchgetränk
-                        icon: mdi:coffee-to-go
-                      - entity: input_text.kaffee_aktiver_ean
-                        name: EAN des aktuellen Beutels
-                        icon: mdi:barcode
-
-
 
       - type: custom:expander-card
         title: 📻 Radio
