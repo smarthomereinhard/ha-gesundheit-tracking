@@ -158,6 +158,69 @@ template:
           {% else %}0{% endif %}
 
 # ═══════════════════════════════════════════════════════════════
+# SCRIPTS
+# ═══════════════════════════════════════════════════════════════
+
+script:
+
+  kaffee_licht_bestaetigung:
+    alias: "Kaffee – LED Küche grün aufleuchten & zurücksetzen"
+    mode: single
+    sequence:
+      - variables:
+          schranke_an: "{{ is_state('light.schranke', 'on') }}"
+          schranke_brightness: "{{ state_attr('light.schranke', 'brightness') | default(255) | int }}"
+          schranke_rgb: "{{ state_attr('light.schranke', 'rgb_color') | default([255,255,255]) }}"
+          unterschrank_an: "{{ is_state('light.unterschrank', 'on') }}"
+          unterschrank_brightness: "{{ state_attr('light.unterschrank', 'brightness') | default(255) | int }}"
+          unterschrank_rgb: "{{ state_attr('light.unterschrank', 'rgb_color') | default([255,255,255]) }}"
+      - action: light.turn_on
+        target:
+          entity_id:
+            - light.schranke
+            - light.unterschrank
+        data:
+          rgb_color: [0, 255, 0]
+          brightness: 255
+          transition: 0.3
+      - delay:
+          seconds: 2
+      - if:
+          - condition: template
+            value_template: "{{ schranke_an }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: light.schranke
+            data:
+              brightness: "{{ schranke_brightness }}"
+              rgb_color: "{{ schranke_rgb }}"
+              transition: 0.5
+        else:
+          - action: light.turn_off
+            target:
+              entity_id: light.schranke
+            data:
+              transition: 0.5
+      - if:
+          - condition: template
+            value_template: "{{ unterschrank_an }}"
+        then:
+          - action: light.turn_on
+            target:
+              entity_id: light.unterschrank
+            data:
+              brightness: "{{ unterschrank_brightness }}"
+              rgb_color: "{{ unterschrank_rgb }}"
+              transition: 0.5
+        else:
+          - action: light.turn_off
+            target:
+              entity_id: light.unterschrank
+            data:
+              transition: 0.5
+
+# ═══════════════════════════════════════════════════════════════
 # AUTOMATIONEN
 # ═══════════════════════════════════════════════════════════════
 
@@ -332,26 +395,7 @@ automation:
           entity_id: input_number.kaffee_heute
         data:
           value: "{{ (states('input_number.kaffee_heute') | int(0)) + 1 }}"
-      - action: scene.create
-        data:
-          scene_id: kaffee_nfc_licht_backup
-          snapshot_entities:
-            - light.schranke
-            - light.unterschrank
-      - action: light.turn_on
-        target:
-          entity_id:
-            - light.schranke
-            - light.unterschrank
-        data:
-          rgb_color: [0, 255, 0]
-          brightness: 255
-          transition: 0.3
-      - delay:
-          seconds: 2
-      - action: scene.turn_on
-        target:
-          entity_id: scene.kaffee_nfc_licht_backup
+      - action: script.kaffee_licht_bestaetigung
     mode: single
 
   # ─────────────────────────────────────────────────────────
@@ -404,26 +448,7 @@ automation:
             {{ '\n' }}⚠️ <b>Milch nachbestellen!</b> (≤ {{ warnung }} L)
             {%- endif %}
             {{ '\n' }}☕ Kaffeebohnen: {{ kaffee_neu }} g (−{{ kaffee_abzug }} g){%- if kaffee_groesse > 0 %} · {{ ((kaffee_neu / kaffee_groesse) * 100) | round(0) | int }}%{%- endif %}
-      - action: scene.create
-        data:
-          scene_id: kaffee_nfc_licht_backup
-          snapshot_entities:
-            - light.schranke
-            - light.unterschrank
-      - action: light.turn_on
-        target:
-          entity_id:
-            - light.schranke
-            - light.unterschrank
-        data:
-          rgb_color: [0, 255, 0]
-          brightness: 255
-          transition: 0.3
-      - delay:
-          seconds: 2
-      - action: scene.turn_on
-        target:
-          entity_id: scene.kaffee_nfc_licht_backup
+      - action: script.kaffee_licht_bestaetigung
     mode: single
 
   - alias: "Milch – Packung aufgebraucht → Vorratsverwaltung ausbuchen"
