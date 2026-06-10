@@ -110,6 +110,12 @@ input_number:
 
 input_text:
 
+  milch_ean:
+    name: "Milch EAN"
+    icon: mdi:barcode
+    max: 14
+    pattern: '^\d{8,14}$|^$'
+
   kaffee_aktiver_ean:
     name: "Aktueller Beutel — EAN"
     icon: mdi:barcode
@@ -374,6 +380,38 @@ automation:
             {%- if neuer_vorrat <= warnung %}
             {{ '\n' }}⚠️ <b>Nachbestellen!</b> (≤ {{ warnung }} L)
             {%- endif %}
+    mode: single
+
+  - alias: "Milchvorrat – Warnung & Einkaufsliste"
+    id: milch_vorrat_warnung
+    trigger:
+      - trigger: state
+        entity_id: input_number.milch_vorrat
+    condition:
+      - condition: template
+        value_template: >-
+          {{ states('input_number.milch_vorrat') | float(0) <= states('input_number.milch_vorrat_warnung') | float(1) }}
+    action:
+      - variables:
+          vorrat: "{{ states('input_number.milch_vorrat') | float(0) }}"
+          ean: "{{ states('input_text.milch_ean') }}"
+      - action: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >-
+            🥛 <b>Milch nachbestellen!</b>
+            {{ '\n' }}📦 Noch {{ vorrat }} L übrig
+            {%- if ean | trim != '' %}
+            {{ '\n' }}🔖 EAN: <code>{{ ean }}</code>
+            {%- endif %}
+      - action: todo.add_item
+        target:
+          entity_id: todo.einkaufsliste_2
+        data:
+          item: >-
+            Milch{%- if ean | trim != '' %} · EAN {{ ean }}{%- endif %} (noch {{ vorrat }} L)
     mode: single
 
   - alias: "Kaffee heute – Mitternachts-Reset"
