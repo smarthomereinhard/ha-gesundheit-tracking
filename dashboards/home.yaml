@@ -1934,6 +1934,124 @@ views:
                   style: |
                     ha-card { padding-top: 12px !important; }
                     .title { font-size: 22px !important; font-weight: 600 !important; }
+              - type: custom:mushroom-title-card
+                title: ""
+                subtitle: ── Bezüge ──
+                card_mod:
+                  style: |
+                    .subtitle { text-align: center !important; color: var(--secondary-text-color) !important; letter-spacing: 2px !important; font-size: 11px !important; }
+              - type: custom:mushroom-template-card
+                primary: Bezüge Gesamt
+                secondary: "{{ states('sensor.kaffeemaschine_bezuge_gesamt') }} Tassen"
+                icon: mdi:counter
+                icon_color: amber
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 16px !important; background: linear-gradient(135deg, #2a1f0a, #3d2f15) !important; border: 1.5px solid rgba(255,193,7,0.3) !important; }
+                    .secondary { font-size: 18px !important; font-weight: 600 !important; color: #ffc107 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Milchgetränke
+                    secondary: "{{ states('counter.kaffeemaschine_milchgetraenke') }}"
+                    icon: mdi:coffee
+                    icon_color: brown
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: counter.increment
+                      target:
+                        entity_id: counter.kaffeemaschine_milchgetraenke
+                    hold_action:
+                      action: perform-action
+                      perform_action: counter.decrement
+                      target:
+                        entity_id: counter.kaffeemaschine_milchgetraenke
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 22px !important; font-weight: 600 !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Kaffee
+                    secondary: "{{ states('counter.kaffeemaschine_kaffee') }}"
+                    icon: mdi:cup
+                    icon_color: orange
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: counter.increment
+                      target:
+                        entity_id: counter.kaffeemaschine_kaffee
+                    hold_action:
+                      action: perform-action
+                      perform_action: counter.decrement
+                      target:
+                        entity_id: counter.kaffeemaschine_kaffee
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 22px !important; font-weight: 600 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Milchvorrat
+                    secondary: >-
+                      {% set v = states('input_number.milch_vorrat') | float(0) %}
+                      {% set w = states('input_number.milch_vorrat_warnung') | float(1) %}
+                      {{ v }} L{%- if v <= w %} · ⚠️ Nachkaufen!{% endif %}
+                    icon: mdi:cup-water
+                    icon_color: >-
+                      {% set v = states('input_number.milch_vorrat') | float(0) %}
+                      {% set w = states('input_number.milch_vorrat_warnung') | float(1) %}
+                      {% if v <= w %}red{% elif v <= w * 2 %}orange{% else %}cyan{% endif %}
+                    fill_container: true
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 18px !important; font-weight: 600 !important; }
+                  - type: custom:mushroom-template-card
+                    primary: "➕ Packung einbuchen"
+                    secondary: "EAN: {{ states('input_text.milch_ean') }}"
+                    icon: mdi:package-variant-plus
+                    icon_color: teal
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.off_schnellwahl_buchen
+                      data:
+                        produkt: "Fettarme Milch"
+                        ean: "4335619001039"
+                        lagerplatz: "Vorratskammer"
+                        menge: "1l"
+                        modus: "Einbuchen"
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(0,188,212,0.3) !important; }
+              - type: custom:expander-card
+                title: "⚙️ Milch – Einstellungen"
+                expanded: false
+                icon: mdi:cog
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 16px !important; }
+                cards:
+                  - type: tile
+                    entity: input_number.milch_vorrat
+                    name: Milchvorrat (aktuell)
+                    icon: mdi:cup-water
+                  - type: tile
+                    entity: input_number.milch_pro_getraenk
+                    name: Liter pro Getränk
+                    icon: mdi:cup
+                  - type: tile
+                    entity: input_number.milch_vorrat_warnung
+                    name: Warnung ab (Liter)
+                    icon: mdi:alert-outline
+                  - type: tile
+                    entity: input_text.milch_ean
+                    name: Milch EAN
+                    icon: mdi:barcode
               - type: custom:mushroom-template-card
                 primary: Entkalkung
                 secondary: "{{ states('sensor.kaffeemaschine_entkalkung_status') }}"
@@ -2122,124 +2240,6 @@ views:
                   style: |
                     ha-card { border-radius: 16px !important; background: linear-gradient(135deg, #0d2a35, #0d3d4a) !important; border: 1.5px solid #00bcd4 !important; }
                     .primary { color: #80deea !important; font-weight: 600 !important; }
-              - type: custom:mushroom-title-card
-                title: ""
-                subtitle: ── Bezüge ──
-                card_mod:
-                  style: |
-                    .subtitle { text-align: center !important; color: var(--secondary-text-color) !important; letter-spacing: 2px !important; font-size: 11px !important; }
-              - type: custom:mushroom-template-card
-                primary: Bezüge Gesamt
-                secondary: "{{ states('sensor.kaffeemaschine_bezuge_gesamt') }} Tassen"
-                icon: mdi:counter
-                icon_color: amber
-                fill_container: true
-                card_mod:
-                  style: >
-                    ha-card { border-radius: 16px !important; background: linear-gradient(135deg, #2a1f0a, #3d2f15) !important; border: 1.5px solid rgba(255,193,7,0.3) !important; }
-                    .secondary { font-size: 18px !important; font-weight: 600 !important; color: #ffc107 !important; }
-              - type: horizontal-stack
-                cards:
-                  - type: custom:mushroom-template-card
-                    primary: Milchgetränke
-                    secondary: "{{ states('counter.kaffeemaschine_milchgetraenke') }}"
-                    icon: mdi:coffee
-                    icon_color: brown
-                    fill_container: true
-                    tap_action:
-                      action: perform-action
-                      perform_action: counter.increment
-                      target:
-                        entity_id: counter.kaffeemaschine_milchgetraenke
-                    hold_action:
-                      action: perform-action
-                      perform_action: counter.decrement
-                      target:
-                        entity_id: counter.kaffeemaschine_milchgetraenke
-                    card_mod:
-                      style: >
-                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
-                        .secondary { font-size: 22px !important; font-weight: 600 !important; }
-                  - type: custom:mushroom-template-card
-                    primary: Kaffee
-                    secondary: "{{ states('counter.kaffeemaschine_kaffee') }}"
-                    icon: mdi:cup
-                    icon_color: orange
-                    fill_container: true
-                    tap_action:
-                      action: perform-action
-                      perform_action: counter.increment
-                      target:
-                        entity_id: counter.kaffeemaschine_kaffee
-                    hold_action:
-                      action: perform-action
-                      perform_action: counter.decrement
-                      target:
-                        entity_id: counter.kaffeemaschine_kaffee
-                    card_mod:
-                      style: >
-                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
-                        .secondary { font-size: 22px !important; font-weight: 600 !important; }
-              - type: horizontal-stack
-                cards:
-                  - type: custom:mushroom-template-card
-                    primary: Milchvorrat
-                    secondary: >-
-                      {% set v = states('input_number.milch_vorrat') | float(0) %}
-                      {% set w = states('input_number.milch_vorrat_warnung') | float(1) %}
-                      {{ v }} L{%- if v <= w %} · ⚠️ Nachkaufen!{% endif %}
-                    icon: mdi:cup-water
-                    icon_color: >-
-                      {% set v = states('input_number.milch_vorrat') | float(0) %}
-                      {% set w = states('input_number.milch_vorrat_warnung') | float(1) %}
-                      {% if v <= w %}red{% elif v <= w * 2 %}orange{% else %}cyan{% endif %}
-                    fill_container: true
-                    card_mod:
-                      style: >
-                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
-                        .secondary { font-size: 18px !important; font-weight: 600 !important; }
-                  - type: custom:mushroom-template-card
-                    primary: "➕ Packung einbuchen"
-                    secondary: "EAN: {{ states('input_text.milch_ean') }}"
-                    icon: mdi:package-variant-plus
-                    icon_color: teal
-                    fill_container: true
-                    tap_action:
-                      action: perform-action
-                      perform_action: script.off_schnellwahl_buchen
-                      data:
-                        produkt: "Fettarme Milch"
-                        ean: "4335619001039"
-                        lagerplatz: "Vorratskammer"
-                        menge: "1l"
-                        modus: "Einbuchen"
-                    card_mod:
-                      style: >
-                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(0,188,212,0.3) !important; }
-              - type: custom:expander-card
-                title: "⚙️ Milch – Einstellungen"
-                expanded: false
-                icon: mdi:cog
-                card_mod:
-                  style: |
-                    ha-card { border-radius: 16px !important; }
-                cards:
-                  - type: tile
-                    entity: input_number.milch_vorrat
-                    name: Milchvorrat (aktuell)
-                    icon: mdi:cup-water
-                  - type: tile
-                    entity: input_number.milch_pro_getraenk
-                    name: Liter pro Getränk
-                    icon: mdi:cup
-                  - type: tile
-                    entity: input_number.milch_vorrat_warnung
-                    name: Warnung ab (Liter)
-                    icon: mdi:alert-outline
-                  - type: tile
-                    entity: input_text.milch_ean
-                    name: Milch EAN
-                    icon: mdi:barcode
               - type: custom:mushroom-title-card
                 title: ""
                 subtitle: ── Tabletten ──
