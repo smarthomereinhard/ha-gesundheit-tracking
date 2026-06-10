@@ -357,7 +357,7 @@ automation:
           value: "{{ (states('input_number.milchkaffee_heute') | int(0)) + 1 }}"
       - variables:
           neuer_vorrat: >-
-            {{ [states('input_number.milch_vorrat') | float(0) - states('input_number.milch_pro_getraenk') | float(0.2), 0] | max }}
+            {{ ([states('input_number.milch_vorrat') | float(0) - states('input_number.milch_pro_getraenk') | float(0.15), 0] | max) | round(2) }}
       - action: input_number.set_value
         target:
           entity_id: input_number.milch_vorrat
