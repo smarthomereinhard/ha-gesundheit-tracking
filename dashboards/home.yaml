@@ -2216,6 +2216,30 @@ views:
                     card_mod:
                       style: >
                         ha-card { border-radius: 16px !important; border: 1.5px solid rgba(0,188,212,0.3) !important; }
+              - type: custom:expander-card
+                title: "⚙️ Milch – Einstellungen"
+                expanded: false
+                icon: mdi:cog
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 16px !important; }
+                cards:
+                  - type: tile
+                    entity: input_number.milch_vorrat
+                    name: Milchvorrat (aktuell)
+                    icon: mdi:cup-water
+                  - type: tile
+                    entity: input_number.milch_pro_getraenk
+                    name: Liter pro Getränk
+                    icon: mdi:cup
+                  - type: tile
+                    entity: input_number.milch_vorrat_warnung
+                    name: Warnung ab (Liter)
+                    icon: mdi:alert-outline
+                  - type: tile
+                    entity: input_text.milch_ean
+                    name: Milch EAN
+                    icon: mdi:barcode
               - type: custom:mushroom-title-card
                 title: ""
                 subtitle: ── Tabletten ──
