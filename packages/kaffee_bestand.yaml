@@ -367,6 +367,9 @@ automation:
           gesamt: "{{ states('counter.kaffeemaschine_milchgetraenke') | int(0) }}"
           heute: "{{ states('input_number.milchkaffee_heute') | int(0) }}"
           warnung: "{{ states('input_number.milch_vorrat_warnung') | float(1.0) }}"
+          kaffee_abzug: "{{ states('input_number.kaffee_pro_milch') | int(7) }}"
+          kaffee_neu: "{{ [states('input_number.kaffee_rest_gramm') | int(0) - states('input_number.kaffee_pro_milch') | int(7), 0] | max }}"
+          kaffee_groesse: "{{ states('input_number.kaffee_beutel_groesse') | int(1000) }}"
       - action: telegram_bot.send_message
         data:
           target:
@@ -378,8 +381,9 @@ automation:
             {{ '\n' }}☕ Heute: {{ heute }} · Gesamt: {{ gesamt }}
             {{ '\n' }}📦 Milchvorrat: {{ neuer_vorrat }} L
             {%- if neuer_vorrat <= warnung %}
-            {{ '\n' }}⚠️ <b>Nachbestellen!</b> (≤ {{ warnung }} L)
+            {{ '\n' }}⚠️ <b>Milch nachbestellen!</b> (≤ {{ warnung }} L)
             {%- endif %}
+            {{ '\n' }}☕ Kaffeebohnen: {{ kaffee_neu }} g (−{{ kaffee_abzug }} g){%- if kaffee_groesse > 0 %} · {{ ((kaffee_neu / kaffee_groesse) * 100) | round(0) | int }}%{%- endif %}
     mode: single
 
   - alias: "Milch – Packung aufgebraucht → Vorratsverwaltung ausbuchen"
