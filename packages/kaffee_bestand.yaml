@@ -382,6 +382,38 @@ automation:
             {%- endif %}
     mode: single
 
+  - alias: "Milch – Packung aufgebraucht → Vorratsverwaltung ausbuchen"
+    id: milch_packung_ausgebucht
+    trigger:
+      - trigger: numeric_state
+        entity_id: input_number.milch_vorrat
+        below: 1.0
+        id: erste_packung
+      - trigger: numeric_state
+        entity_id: input_number.milch_vorrat
+        below: 0.05
+        id: zweite_packung
+    action:
+      - action: script.off_schnellwahl_buchen
+        data:
+          produkt: "Fettarme Milch"
+          ean: "{{ states('input_text.milch_ean') }}"
+          lagerplatz: "Vorratskammer"
+          menge: "1l"
+          modus: "Ausbuchen"
+      - action: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >-
+            🥛 <b>Milchpackung leer!</b>
+            {{ '\n' }}📦 1 Packung aus Vorratskammer ausgebucht
+            {%- if trigger.id == 'zweite_packung' %}
+            {{ '\n' }}⚠️ Letzte Packung aufgebraucht – bitte nachkaufen!
+            {%- endif %}
+    mode: single
+
   - alias: "Milchvorrat – Warnung & Einkaufsliste"
     id: milch_vorrat_warnung
     trigger:
