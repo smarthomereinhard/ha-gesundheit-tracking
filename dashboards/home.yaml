@@ -1,0 +1,3670 @@
+title: Home
+views:
+  ##############################################
+  # HAUPTÜBERSICHT
+  ##############################################
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    sections:
+      - title: Räume
+        cards:
+          - type: grid
+            columns: 2
+            square: true
+            cards:
+              - type: button
+                name: Wohnzimmer
+                icon: mdi:sofa
+                entity: light.wohnzimmer
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/wohnzimmer
+              - type: button
+                name: Schlafzimmer
+                icon: mdi:bed
+                entity: light.schlafzimmer
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/schlafzimmer
+              - type: button
+                name: Küche
+                icon: mdi:chef-hat
+                entity: light.kuche
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/kuche
+              - type: button
+                name: Eingang
+                icon: mdi:door
+                entity: light.deckenlampe_eingang
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/eingang
+              - type: button
+                name: Büro
+                icon: mdi:desk
+                entity: light.buro
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/buro
+              - type: button
+                name: Balkon
+                icon: mdi:flower
+                entity: light.balkon
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/balkon
+              - type: button
+                name: Abstellkammer
+                icon: mdi:archive-outline
+                entity: binary_sensor.ikea_sensor_05_tur
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/abstellkammer
+              - type: button
+                name: Badezimmer
+                icon: mdi:shower
+                entity: light.licht_deckenlampe_bad
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/bad
+              - type: button
+                name: Radio
+                icon: mdi:radio
+                entity: input_select.radio_lautsprecher
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/radio
+              - type: button
+                name: Hund
+                icon: mdi:dog
+                entity: input_boolean.hund_gefuettert_morgens
+                show_state: false
+                tap_action:
+                  action: navigate
+                  navigation_path: /home-overview/hund
+
+      - title: Magic Mirror
+        cards:
+          - type: tile
+            entity: input_boolean.magic_mirror_monitor
+            name: Monitor AN/AUS
+            icon: mdi:mirror
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: button
+                name: Shutdown
+                icon: mdi:power
+                entity: script.magic_mirror_shutdown
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.magic_mirror_shutdown
+              - type: button
+                name: Neustart
+                icon: mdi:restart
+                entity: script.magic_mirror_neustart
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.magic_mirror_neustart
+
+  ##############################################
+  # WOHNZIMMER (Subview)
+  ##############################################
+  - title: Wohnzimmer
+    path: wohnzimmer
+    icon: mdi:sofa
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Beleuchtung
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.wohnzimmer
+            name: Alle Lichter
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.deckenlampe
+            name: Deckenlampe
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.ambilight
+            name: Ambilight
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.stehlampe_links
+            name: Stehlampe Links
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.stehlampe_rechts
+            name: Stehlampe Rechts
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.hue_go_1
+            name: Hue Go 1
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.hue_go_2
+            name: Hue Go 2
+            features:
+              - type: light-brightness
+
+      - type: custom:expander-card
+        title: 🪟 Rollladen
+        expanded: false
+        icon: mdi:roller-shade
+        cards:
+          - type: tile
+            entity: cover.rolladen
+            name: Rollladen
+            features:
+              - type: cover-position
+
+      - type: custom:expander-card
+        title: 🌡️ Klima & Fenster
+        expanded: false
+        icon: mdi:thermometer
+        cards:
+          - type: tile
+            entity: sensor.timmerflotte_temp_hmd_sensor_temperatur
+            name: Temperatur
+          - type: tile
+            entity: sensor.timmerflotte_temp_hmd_sensor_luftfeuchtigkeit
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: binary_sensor.fenster_07_entprellt
+            name: Fenster 1
+          - type: tile
+            entity: binary_sensor.fenster_08_entprellt
+            name: Fenster 2
+
+      - type: custom:expander-card
+        title: 🖼️ The Frame 55 – Art Mode
+        expanded: false
+        icon: mdi:image-frame
+        cards:
+          - type: custom:mushroom-title-card
+            title: 🖼️ The Frame (55)
+            subtitle: Art Mode, Status und Schnellaktionen
+          - type: custom:mushroom-chips-card
+            alignment: justify
+            chips:
+              - type: template
+                entity: media_player.samsung_the_frame_55_thf
+                icon: mdi:television
+                icon_color: >-
+                  {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}green
+                  {% elif is_state('media_player.samsung_the_frame_55_thf', 'off') %}grey
+                  {% else %}amber{% endif %}
+                content: >-
+                  {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}TV an
+                  {% elif is_state('media_player.samsung_the_frame_55_thf', 'off') %}TV aus
+                  {% else %}{{ states('media_player.samsung_the_frame_55_thf') }}{% endif %}
+              - type: template
+                entity: media_player.samsung_the_frame_55_thf
+                icon: mdi:video-input-hdmi
+                icon_color: blue
+                content: >-
+                  {% set s = state_attr('media_player.samsung_the_frame_55_thf', 'source') %}
+                  {{ s if s not in [none, '', 'unknown', 'unavailable'] else 'Keine Quelle' }}
+              - type: template
+                entity: media_player.samsung_the_frame_55_thf
+                icon: mdi:volume-high
+                icon_color: deep-orange
+                content: >-
+                  {% set v = state_attr('media_player.samsung_the_frame_55_thf', 'volume_level') %}
+                  {% if v is not none %}{{ (v * 100) | round(0) }} %{% else %}—{% endif %}
+          - type: custom:mushroom-template-card
+            entity: media_player.samsung_the_frame_55_thf
+            primary: The Frame (55) – Art Mode
+            secondary: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}Antippen zum Starten des Art Mode
+              {% elif is_state('media_player.samsung_the_frame_55_thf', 'off') %}TV ist aus
+              {% else %}Status: {{ states('media_player.samsung_the_frame_55_thf') }}{% endif %}
+            icon: mdi:image-frame
+            icon_color: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}amber
+              {% elif is_state('media_player.samsung_the_frame_55_thf', 'off') %}grey
+              {% else %}blue{% endif %}
+            multiline_secondary: true
+            fill_container: true
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.the_frame_55_art_mode
+            hold_action:
+              action: more-info
+            double_tap_action:
+              action: perform-action
+              perform_action: media_player.turn_off
+              target:
+                entity_id: media_player.samsung_the_frame_55_thf
+            badge_icon: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}mdi:gesture-tap-button
+              {% else %}mdi:power{% endif %}
+            badge_color: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}green
+              {% else %}red{% endif %}
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Art Mode
+                secondary: Starten
+                icon: mdi:image-frame
+                icon_color: amber
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: input_boolean.turn_on
+                  target:
+                    entity_id: input_boolean.the_frame_55_art_mode
+                hold_action:
+                  action: more-info
+              - type: custom:mushroom-template-card
+                primary: TV aus
+                secondary: Komplett ausschalten
+                icon: mdi:power
+                icon_color: red
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.turn_off
+                  target:
+                    entity_id: media_player.samsung_the_frame_55_thf
+                hold_action:
+                  action: more-info
+          - type: custom:mushroom-media-player-card
+            entity: media_player.samsung_the_frame_55_thf
+            name: The Frame (55)
+            icon_type: icon
+            use_media_info: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+            media_controls:
+              - on_off
+              - play_pause_stop
+            fill_container: true
+
+      - type: custom:expander-card
+        title: 🖼️ The Frame 55 – Steuerung
+        expanded: false
+        icon: mdi:television-play
+        cards:
+          - type: custom:mushroom-title-card
+            title: 🖼️ The Frame 55
+            subtitle: Einschalten, Art Mode und Status
+          - type: custom:mushroom-chips-card
+            alignment: justify
+            chips:
+              - type: template
+                entity: media_player.samsung_the_frame_55_thf
+                icon: mdi:television
+                icon_color: >-
+                  {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}green
+                  {% elif is_state('media_player.samsung_the_frame_55_thf', 'off') %}grey
+                  {% else %}amber{% endif %}
+                content: >-
+                  {% if is_state('media_player.samsung_the_frame_55_thf', 'on') %}TV an
+                  {% elif is_state('media_player.samsung_the_frame_55_thf', 'off') %}TV aus
+                  {% else %}{{ states('media_player.samsung_the_frame_55_thf') }}{% endif %}
+              - type: template
+                entity: media_player.samsung_the_frame_55_thf
+                icon: mdi:image-frame
+                icon_color: amber
+                content: >-
+                  {% set s = state_attr('media_player.samsung_the_frame_55_thf', 'source') %}
+                  {{ s if s not in [none, '', 'unknown', 'unavailable'] else 'Art / Quelle' }}
+              - type: template
+                entity: person.andreas
+                icon: mdi:home-account
+                icon_color: "{% if is_state('person.andreas', 'home') %}green{% else %}red{% endif %}"
+                content: "{% if is_state('person.andreas', 'home') %}Andreas zuhause{% else %}Andreas weg{% endif %}"
+          - type: custom:mushroom-template-card
+            entity: media_player.samsung_the_frame_55_thf
+            primary: The Frame 55
+            secondary: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'off') %}Antippen zum Einschalten + Art Mode
+              {% elif is_state('media_player.samsung_the_frame_55_thf', 'on') %}Antippen für Art Mode
+              {% else %}Status: {{ states('media_player.samsung_the_frame_55_thf') }}{% endif %}
+            icon: mdi:image-frame
+            icon_color: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'off') %}grey
+              {% elif is_state('media_player.samsung_the_frame_55_thf', 'on') %}amber
+              {% else %}blue{% endif %}
+            multiline_secondary: true
+            fill_container: true
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: script.the_frame_55_ein_und_art_mode
+            hold_action:
+              action: more-info
+            double_tap_action:
+              action: perform-action
+              perform_action: media_player.turn_off
+              target:
+                entity_id: media_player.samsung_the_frame_55_thf
+            badge_icon: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'off') %}mdi:power
+              {% else %}mdi:gesture-tap-button{% endif %}
+            badge_color: |-
+              {% if is_state('media_player.samsung_the_frame_55_thf', 'off') %}red
+              {% else %}green{% endif %}
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: TV ein + Art Mode
+                secondary: Starten
+                icon: mdi:image-frame
+                icon_color: amber
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: script.the_frame_55_ein_und_art_mode
+                hold_action:
+                  action: more-info
+              - type: custom:mushroom-template-card
+                primary: TV aus
+                secondary: Komplett ausschalten
+                icon: mdi:power
+                icon_color: red
+                fill_container: true
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.turn_off
+                  target:
+                    entity_id: media_player.samsung_the_frame_55_thf
+                hold_action:
+                  action: more-info
+          - type: custom:mushroom-media-player-card
+            entity: media_player.samsung_the_frame_55_thf
+            name: Samsung The Frame 55
+            icon_type: icon
+            use_media_info: true
+            show_volume_level: true
+            volume_controls:
+              - volume_mute
+              - volume_set
+            media_controls:
+              - on_off
+              - play_pause_stop
+            fill_container: true
+      - type: custom:expander-card
+        title: 📺 Weitere Medien
+        expanded: false
+        icon: mdi:multimedia
+        cards:
+          - type: media-control
+            entity: media_player.wohnzimmer_andreas_s_samsung_tv_2020_u
+          - type: media-control
+            entity: media_player.wohnzimmer_3
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # SCHLAFZIMMER (Subview)
+  ##############################################
+  - title: Schlafzimmer
+    path: schlafzimmer
+    icon: mdi:bed
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Beleuchtung & Klima
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.schlafzimmer
+            name: Alle Lichter
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.bettgestell
+            name: Bettgestell
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.deckenlampe_schlafzimmer
+            name: Deckenlampe
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.sonos_lampe_2
+            name: Sonos Lampe
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: sensor.hub_2_58_temperatur
+            name: Temperatur
+          - type: tile
+            entity: sensor.hub_2_58_luftfeuchtigkeit
+            name: Luftfeuchtigkeit
+          - type: tile
+            entity: fan.ventilator
+            name: Ventilator
+            features:
+              - type: fan-speed
+          - type: tile
+            entity: climate.klimaanlage
+            name: Klimaanlage
+            features:
+              - type: target-temperature
+
+      - type: custom:expander-card
+        title: 🔌 Steckdosen
+        expanded: false
+        icon: mdi:power-socket-de
+        cards:
+          - type: custom:button-card
+            entity: switch.tv_schlafzimmer
+            name: TV Schlafzimmer
+            icon: mdi:television
+            triggers_update:
+              - switch.tv_schlafzimmer
+              - sensor.tv_schlafzimmer
+              - sensor.tv_schlafzimmer_tag
+              - sensor.tv_schlafzimmer_monat
+              - sensor.tv_schlafzimmer_jahr
+              - sensor.strompreis_aktiv_eur_kwh
+            show_icon: true
+            show_name: true
+            show_state: false
+            show_label: true
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+            label: |
+              [[[
+                const p = Number(hass.states['sensor.tv_schlafzimmer']?.state) || 0;
+                const on = entity.state === 'on';
+                const stateTxt = on ? (p > 15 ? 'Läuft' : 'Standby') : 'Aus';
+                return `${stateTxt} · ${p.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+              ]]]
+            custom_fields:
+              badge: |
+                [[[
+                  const p = Number(hass.states['sensor.tv_schlafzimmer']?.state) || 0;
+                  const on = entity.state === 'on';
+                  const text = !on ? 'AUS' : p > 15 ? 'EIN · AKTIV' : 'EIN · STANDBY';
+                  return `<div class="status-badge">${text}</div>`;
+                ]]]
+              hero: |
+                [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const power = n('sensor.tv_schlafzimmer');
+                  const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                  const kostenH = (power / 1000) * preis;
+                  return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${kostenH.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}<span> €/h</span></div></div></div>`;
+                ]]]
+              verbrauch: |
+                [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.tv_schlafzimmer_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.tv_schlafzimmer_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.tv_schlafzimmer_jahr'))} kWh</strong></div></div>`;
+                ]]]
+              kosten: |
+                [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                  const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.tv_schlafzimmer_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.tv_schlafzimmer_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.tv_schlafzimmer_jahr') * preis)} €</strong></div></div>`;
+                ]]]
+              footer: |
+                [[[
+                  const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                  return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                ]]]
+            styles:
+              grid:
+                - grid-template-areas: >-
+                    "i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch
+                    kosten kosten" "footer footer footer footer"
+                - grid-template-columns: 78px 1fr 1fr auto
+                - column-gap: 14px
+                - row-gap: 14px
+              card:
+                - padding: 18px
+                - border-radius: 28px
+                - overflow: hidden
+                - border: 1px solid rgba(255,255,255,0.08)
+                - background: |
+                    [[[
+                      const p = Number(hass.states['sensor.tv_schlafzimmer']?.state) || 0;
+                      const on = entity.state === 'on';
+                      if (on && p > 15) return 'linear-gradient(180deg, rgba(33,150,243,0.18) 0%, rgba(33,150,243,0.05) 100%)';
+                      if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                      return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                    ]]]
+              img_cell:
+                - width: 78px
+                - height: 78px
+                - border-radius: 24px
+                - background: rgba(33,150,243,0.14)
+              icon:
+                - width: 40px
+                - color: "#2196F3"
+              name:
+                - justify-self: start
+                - align-self: end
+                - font-size: 20px
+                - font-weight: 700
+              label:
+                - justify-self: start
+                - align-self: start
+                - color: var(--secondary-text-color)
+                - font-size: 13px
+              custom_fields:
+                badge:
+                  - justify-self: end
+                  - align-self: start
+                hero:
+                  - justify-self: stretch
+                verbrauch:
+                  - justify-self: stretch
+                kosten:
+                  - justify-self: stretch
+                footer:
+                  - justify-self: center
+            extra_styles: >
+              .status-badge { padding: 7px 12px; border-radius: 999px; background:
+              rgba(33,150,243,0.16); color: var(--primary-text-color); font-size: 11px;
+              font-weight: 700; }
+
+              .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+              .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid
+              rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing:
+              border-box; }
+
+              .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase;
+              letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom:
+              8px; font-weight: 600; }
+
+              .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space:
+              nowrap; }
+
+              .hero-number span { font-size: 15px; font-weight: 600; color:
+              var(--secondary-text-color); margin-left: 4px; }
+
+              .metric-row { display: flex; justify-content: space-between; gap: 12px;
+              padding: 7px 0; font-size: 14px; }
+
+              .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+          - type: custom:button-card
+            entity: switch.shellyplugsg3_8cbfea9129b0_switch_0
+            name: Nachttisch rechts
+            icon: mdi:bed
+            triggers_update:
+              - switch.shellyplugsg3_8cbfea9129b0_switch_0
+              - sensor.shellyplugsg3_8cbfea9129b0_switch_0_power
+              - sensor.nachttisch_rechts_steckdose_tag
+              - sensor.nachttisch_rechts_steckdose_monat
+              - sensor.nachttisch_rechts_steckdose_jahr
+              - sensor.strompreis_aktiv_eur_kwh
+            show_icon: true
+            show_name: true
+            show_state: false
+            show_label: true
+            tap_action:
+              action: toggle
+            hold_action:
+              action: more-info
+            label: |
+              [[[
+                const p = Number(hass.states['sensor.shellyplugsg3_8cbfea9129b0_switch_0_power']?.state) || 0;
+                const on = entity.state === 'on';
+                return `${on ? 'Ein' : 'Aus'} · ${p.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+              ]]]
+            custom_fields:
+              badge: |
+                [[[
+                  return `<div class="status-badge">${entity.state === 'on' ? 'EIN' : 'AUS'}</div>`;
+                ]]]
+              hero: |
+                [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                  const power = n('sensor.shellyplugsg3_8cbfea9129b0_switch_0_power');
+                  const aktuell = (power / 1000) * preis;
+                  return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${aktuell.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> €/h</span></div></div></div>`;
+                ]]]
+              verbrauch: |
+                [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.nachttisch_rechts_steckdose_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.nachttisch_rechts_steckdose_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.nachttisch_rechts_steckdose_jahr'))} kWh</strong></div></div>`;
+                ]]]
+              kosten: |
+                [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                  const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.nachttisch_rechts_steckdose_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.nachttisch_rechts_steckdose_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.nachttisch_rechts_steckdose_jahr') * preis)} €</strong></div></div>`;
+                ]]]
+              footer: |
+                [[[
+                  const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                  return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                ]]]
+            styles:
+              grid:
+                - grid-template-areas: >-
+                    "i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch
+                    kosten kosten" "footer footer footer footer"
+                - grid-template-columns: 78px 1fr 1fr auto
+                - column-gap: 14px
+                - row-gap: 14px
+              card:
+                - padding: 18px
+                - border-radius: 28px
+                - overflow: hidden
+                - border: 1px solid rgba(255,255,255,0.08)
+                - background: |
+                    [[[
+                      const p = Number(hass.states['sensor.shellyplugsg3_8cbfea9129b0_switch_0_power']?.state) || 0;
+                      const on = entity.state === 'on';
+                      if (on && p > 5) return 'linear-gradient(180deg, rgba(156,39,176,0.18) 0%, rgba(156,39,176,0.05) 100%)';
+                      if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                      return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                    ]]]
+              img_cell:
+                - width: 78px
+                - height: 78px
+                - border-radius: 24px
+                - background: rgba(156,39,176,0.14)
+              icon:
+                - width: 40px
+                - color: "#9C27B0"
+              name:
+                - justify-self: start
+                - align-self: end
+                - font-size: 20px
+                - font-weight: 700
+              label:
+                - justify-self: start
+                - align-self: start
+                - color: var(--secondary-text-color)
+                - font-size: 13px
+              custom_fields:
+                badge:
+                  - justify-self: end
+                  - align-self: start
+                hero:
+                  - justify-self: stretch
+                verbrauch:
+                  - justify-self: stretch
+                kosten:
+                  - justify-self: stretch
+                footer:
+                  - justify-self: center
+            extra_styles: >
+              .status-badge { padding: 7px 12px; border-radius: 999px; background:
+              rgba(156,39,176,0.16); color: var(--primary-text-color); font-size: 11px;
+              font-weight: 700; }
+
+              .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+              .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid
+              rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing:
+              border-box; }
+
+              .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase;
+              letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom:
+              8px; font-weight: 600; }
+
+              .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space:
+              nowrap; }
+
+              .hero-number span { font-size: 15px; font-weight: 600; color:
+              var(--secondary-text-color); margin-left: 4px; }
+
+              .metric-row { display: flex; justify-content: space-between; gap: 12px;
+              padding: 7px 0; font-size: 14px; }
+
+              .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+
+      - type: custom:expander-card
+        title: 📺 Medien & Radio
+        expanded: false
+        icon: mdi:multimedia
+        cards:
+          - type: tile
+            entity: media_player.bett
+          - type: tile
+            entity: media_player.sonos_tisch
+          - type: tile
+            entity: media_player.schlafzimmer_tv
+          - type: media-control
+            entity: media_player.schlafzimmer_4
+          - type: media-control
+            entity: media_player.schlafzimmer_karolinas_echo_show
+          - type: entities
+            title: 📻 Radio
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # KÜCHE (Subview)
+  ##############################################
+  - title: Küche
+    path: kuche
+    icon: mdi:chef-hat
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    max_columns: 3
+    badges:
+      - entity: sensor.wall_display_fusbodenheizung_temperature
+        type: entity
+        color: red
+      - entity: sensor.wall_display_fusbodenheizung_humidity
+        type: entity
+        color: indigo
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Beleuchtung
+            icon: mdi:lamps
+          - type: custom:expander-card
+            title: 💡 Beleuchtung
+            expanded: false
+            icon: mdi:lightbulb-group
+            cards:
+              - type: tile
+                entity: light.deckenlampe_kuche
+                features:
+                  - type: light-brightness
+              - type: tile
+                entity: light.unterschrank
+                features:
+                  - type: light-brightness
+              - type: tile
+                entity: light.schranke
+                features:
+                  - type: light-brightness
+              - type: entities
+                title: 💡 Küche Lichtsteuerung
+                entities:
+                  - entity: input_number.kuche_helligkeit_schwelle
+                    name: Helligkeitsschwelle
+                    icon: mdi:brightness-6
+                  - entity: sensor.presence_sensor_fp2_c965_light_sensor_light_level
+                    name: Aktuelle Helligkeit
+                    icon: mdi:brightness-5
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Klimatisierung
+            icon: mdi:home-thermometer
+          - type: custom:expander-card
+            title: 🌡️ Klima & Heizung
+            expanded: false
+            icon: mdi:home-thermometer-outline
+            cards:
+              - type: tile
+                entity: climate.wall_display_fusbodenheizung_thermostat_0
+                features:
+                  - type: target-temperature
+              - type: horizontal-stack
+                cards:
+                  - type: custom:andy-temperature-card
+                    name: Temperatur
+                    entity: sensor.sbht_003c_ef81_temperature
+                    min: -20
+                    max: 40
+                    unit: ""
+                    decimals: 1
+                    value_position: top_right
+                    glass: true
+                    orientation: vertical
+                    show_scale: true
+                    scale_markers: true
+                    scale_color_mode: per_interval
+                    show_stats: true
+                    stats_hours: 24
+                    card_scale: 1.2
+                    show_graph: true
+                    graph_hours: 24
+                    graph_height: 80
+                    graph_show_time: true
+                    graph_max_points: 160
+                    graph_line_width: 1.2
+                    resize_card_on_neon: false
+                    intervals:
+                    - id: it0
+                      to: 0
+                      color: "#2b6cff"
+                      gradient:
+                        enabled: true
+                        from: "#2b6cff"
+                        to: "#39c0ff"
+                    - id: it1
+                      to: 10
+                      color: "#39c0ff"
+                      gradient:
+                        enabled: true
+                        from: "#39c0ff"
+                        to: "#22c55e"
+                    - id: it2
+                      to: 20
+                      color: "#22c55e"
+                      gradient:
+                        enabled: true
+                        from: "#22c55e"
+                        to: "#f59e0b"
+                    - id: it3
+                      to: 30
+                      color: "#f59e0b"
+                      gradient:
+                        enabled: true
+                        from: "#f59e0b"
+                        to: "#ef4444"
+                    - id: it4
+                      to: 100
+                      color: "#ef4444"
+                      gradient:
+                        enabled: true
+                        from: "#ef4444"
+                        to: "#ef4444"
+                  - type: custom:andy-temperature-card
+                    name: Luftfeuchtigkeit
+                    entity: sensor.sbht_003c_ef81_humidity
+                    min: 0
+                    max: 100
+                    unit: ""
+                    decimals: 1
+                    value_position: top_right
+                    glass: true
+                    orientation: vertical
+                    show_scale: true
+                    scale_markers: true
+                    scale_color_mode: per_interval
+                    show_stats: true
+                    stats_hours: 24
+                    card_scale: 1.2
+                    show_graph: true
+                    graph_hours: 24
+                    graph_height: 80
+                    graph_show_time: true
+                    graph_max_points: 160
+                    graph_line_width: 1.2
+                    intervals:
+                    - id: it0
+                      to: 30
+                      color: "#ef4444"
+                      gradient:
+                        enabled: true
+                        from: "#ef4444"
+                        to: "#f59e0b"
+                    - id: it1
+                      to: 40
+                      color: "#f59e0b"
+                      gradient:
+                        enabled: true
+                        from: "#f59e0b"
+                        to: "#22c55e"
+                    - id: it2
+                      to: 60
+                      color: "#22c55e"
+                      gradient:
+                        enabled: true
+                        from: "#22c55e"
+                        to: "#f59e0b"
+                    - id: it3
+                      to: 70
+                      color: "#f59e0b"
+                      gradient:
+                        enabled: true
+                        from: "#f59e0b"
+                        to: "#ef4444"
+                    - id: it4
+                      to: 100
+                      color: "#ef4444"
+                      gradient:
+                        enabled: true
+                        from: "#ef4444"
+                        to: "#ef4444"
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sicherheit & Medien
+            icon: mdi:security
+          - type: custom:expander-card
+            title: 🔒 Sicherheit & Medien
+            expanded: false
+            icon: mdi:shield-home-outline
+            cards:
+              - type: tile
+                entity: binary_sensor.wasser_senor_1_wasserleck
+              - type: tile
+                entity: binary_sensor.ikea_sensor_06_schublade_tur
+              - type: custom:button-card
+                entity: binary_sensor.wasser_senor_1_wasserleck
+                name: Wassersensor
+                icon: mdi:water-alert
+                state:
+                  - value: "on"
+                    color: red
+                    label: ⚠️ Leck erkannt!
+                  - value: "off"
+                    color: green
+                    label: Alles trocken
+                show_label: true
+                show_last_changed: true
+              - type: tile
+                entity: media_player.kuche
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Geräte
+            icon: mdi:chevron-down
+          - type: custom:expander-card
+            title: 🔌 Geräte & Verbrauch
+            expanded: false
+            icon: mdi:home-lightning-bolt-outline
+            cards:
+              - type: custom:button-card
+                entity: switch.shellyplugsg3_8cbfea9829f4_switch_0
+                name: Spülmaschine
+                icon: mdi:dishwasher
+                triggers_update:
+                  - switch.shellyplugsg3_8cbfea9829f4_switch_0
+                  - sensor.shellyplugsg3_8cbfea9829f4_switch_0_power
+                  - sensor.spuelmaschine_tag
+                  - sensor.spuelmaschine_monat
+                  - sensor.spuelmaschine_jahr
+                  - sensor.strompreis_aktiv_eur_kwh
+                  - input_number.spulmaschine_tabs
+                  - input_number.spulmaschine_tabs_pro_packung
+                  - input_number.spulmaschine_tabs_preis_packung
+                  - sensor.spulmaschine_tabs_prozent
+                  - input_datetime.spulmaschine_letztes_ende
+                  - input_datetime.spulmaschine_startzeit
+                show_icon: true
+                show_name: true
+                show_state: false
+                show_label: true
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                label: |
+                  [[[
+                  const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                  const on = entity.state === 'on';
+                  const power = n('sensor.shellyplugsg3_8cbfea9829f4_switch_0_power');
+                  const stateTxt = on ? (power > 5 ? 'Läuft' : 'Bereit') : 'Aus';
+                  const letzteEnde = hass.states['input_datetime.spulmaschine_letztes_ende']?.state;
+                  let zeitTxt = '';
+                  if (letzteEnde && letzteEnde !== 'unknown') {
+                    const dt = new Date(letzteEnde.replace(' ', 'T'));
+                    const diffMin = Math.floor((Date.now() - dt) / 60000);
+                    const diffH = Math.floor(diffMin / 60);
+                    const diffD = Math.floor(diffH / 24);
+                    if (diffMin < 1) zeitTxt = ' · Gerade fertig';
+                    else if (diffMin < 60) zeitTxt = ` · vor ${diffMin} Min`;
+                    else if (diffH < 24) zeitTxt = ` · vor ${diffH} Std`;
+                    else zeitTxt = ` · vor ${diffD} Tagen`;
+                    }
+                    return `${stateTxt} · ${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W${on && power > 5 ? '' : zeitTxt}`;
+                  ]]]
+                custom_fields:
+                  badge: |
+                    [[[
+                    const on = entity.state === 'on';
+                    const power = Number(hass.states['sensor.shellyplugsg3_8cbfea9829f4_switch_0_power']?.state) || 0;
+                    const text = !on ? 'AUS' : power > 5 ? 'EIN · AKTIV' : 'EIN · BEREIT';
+                    return `<div class="status-badge">${text}</div>`;
+                    ]]]
+                  hero: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const power = n('sensor.shellyplugsg3_8cbfea9829f4_switch_0_power');
+                    const aktuell = (power / 1000) * preis;
+                    return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${aktuell.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> €/h</span></div></div></div>`;
+                    ]]]
+                  verbrauch: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    const tabs = n('input_number.spulmaschine_tabs');
+                    const pp = Math.max(n('input_number.spulmaschine_tabs_pro_packung'), 1);
+                    const preisPck = n('input_number.spulmaschine_tabs_preis_packung');
+                    const preisTab = preisPck / pp;
+                    const prozent = n('sensor.spulmaschine_tabs_prozent');
+                    const tabColor = prozent <= 12 ? '#F44336' : prozent <= 25 ? '#FF9800' : '#4CAF50';
+                    return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.spuelmaschine_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.spuelmaschine_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.spuelmaschine_jahr'))} kWh</strong></div><div class="metric-row"><span>Tabs</span><strong style="color:${tabColor}">${tabs} Stück</strong></div></div>`;
+                    ]]]
+                  kosten: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.spuelmaschine_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.spuelmaschine_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.spuelmaschine_jahr') * preis)} €</strong></div></div>`;
+                    ]]]
+                  footer: |
+                    [[[
+                    const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                    return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                    ]]]
+                styles:
+                  grid:
+                    - grid-template-areas: '"i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch kosten kosten" "footer footer footer footer"'
+                    - grid-template-columns: 78px 1fr 1fr auto
+                    - column-gap: 14px
+                    - row-gap: 14px
+                  card:
+                    - padding: 18px
+                    - border-radius: 28px
+                    - overflow: hidden
+                    - border: 1px solid rgba(255,255,255,0.08)
+                    - background: |
+                        [[[
+                          const p = Number(hass.states['sensor.shellyplugsg3_8cbfea9829f4_switch_0_power']?.state) || 0;
+                          const on = entity.state === 'on';
+                          if (on && p > 5) return 'linear-gradient(180deg, rgba(255,193,7,0.18) 0%, rgba(255,193,7,0.05) 100%)';
+                          if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                          return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                        ]]]
+                  img_cell:
+                    - width: 78px
+                    - height: 78px
+                    - border-radius: 24px
+                    - background: rgba(255,193,7,0.14)
+                  icon:
+                    - width: 40px
+                    - color: "#FFC107"
+                  name:
+                    - justify-self: start
+                    - align-self: end
+                    - font-size: 20px
+                    - font-weight: 700
+                  label:
+                    - justify-self: start
+                    - align-self: start
+                    - color: var(--secondary-text-color)
+                    - font-size: 13px
+                  custom_fields:
+                    badge:
+                      - justify-self: end
+                      - align-self: start
+                    hero:
+                      - justify-self: stretch
+                    verbrauch:
+                      - justify-self: stretch
+                    kosten:
+                      - justify-self: stretch
+                    footer:
+                      - justify-self: center
+                extra_styles: >
+                  .status-badge { padding: 7px 12px; border-radius: 999px; background: rgba(255,193,7,0.16); color: var(--primary-text-color); font-size: 11px; font-weight: 700; }
+                  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                  .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing: border-box; }
+                  .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom: 8px; font-weight: 600; }
+                  .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+                  .hero-number span { font-size: 15px; font-weight: 600; color: var(--secondary-text-color); margin-left: 4px; }
+                  .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+                  .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+              - type: custom:button-card
+                entity: switch.kaffeemaschine
+                name: Kaffeemaschine
+                icon: mdi:coffee-maker
+                triggers_update:
+                  - switch.kaffeemaschine
+                  - sensor.kaffeemaschine_power
+                  - sensor.kaffeemaschine_tag
+                  - sensor.kaffeemaschine_monat
+                  - sensor.kaffeemaschine_jahr
+                  - sensor.strompreis_aktiv_eur_kwh
+                show_icon: true
+                show_name: true
+                show_state: false
+                show_label: true
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                label: |
+                  [[[
+                  const p = Number(hass.states['sensor.kaffeemaschine_power']?.state) || 0;
+                  const on = entity.state === 'on';
+                  return `${on ? (p > 5 ? 'Läuft' : 'Bereit') : 'Aus'} · ${p.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+                  ]]]
+                custom_fields:
+                  badge: |
+                    [[[
+                    const p = Number(hass.states['sensor.kaffeemaschine_power']?.state) || 0;
+                    const on = entity.state === 'on';
+                    return `<div class="status-badge">${!on ? 'AUS' : p > 5 ? 'EIN · AKTIV' : 'EIN · BEREIT'}</div>`;
+                    ]]]
+                  hero: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const power = n('sensor.kaffeemaschine_power');
+                    const aktuell = (power / 1000) * preis;
+                    return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${aktuell.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> €/h</span></div></div></div>`;
+                    ]]]
+                  verbrauch: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.kaffeemaschine_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.kaffeemaschine_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.kaffeemaschine_jahr'))} kWh</strong></div></div>`;
+                    ]]]
+                  kosten: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.kaffeemaschine_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.kaffeemaschine_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.kaffeemaschine_jahr') * preis)} €</strong></div></div>`;
+                    ]]]
+                  footer: |
+                    [[[
+                    const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                    return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                    ]]]
+                styles:
+                  grid:
+                    - grid-template-areas: '"i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch kosten kosten" "footer footer footer footer"'
+                    - grid-template-columns: 78px 1fr 1fr auto
+                    - column-gap: 14px
+                    - row-gap: 14px
+                  card:
+                    - padding: 18px
+                    - border-radius: 28px
+                    - overflow: hidden
+                    - border: 1px solid rgba(255,255,255,0.08)
+                    - background: |
+                        [[[
+                          const p = Number(hass.states['sensor.kaffeemaschine_power']?.state) || 0;
+                          const on = entity.state === 'on';
+                          if (on && p > 5) return 'linear-gradient(180deg, rgba(121,85,72,0.18) 0%, rgba(121,85,72,0.05) 100%)';
+                          if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                          return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                        ]]]
+                  img_cell:
+                    - width: 78px
+                    - height: 78px
+                    - border-radius: 24px
+                    - background: rgba(121,85,72,0.14)
+                  icon:
+                    - width: 40px
+                    - color: "#795548"
+                  name:
+                    - justify-self: start
+                    - align-self: end
+                    - font-size: 20px
+                    - font-weight: 700
+                  label:
+                    - justify-self: start
+                    - align-self: start
+                    - color: var(--secondary-text-color)
+                    - font-size: 13px
+                  custom_fields:
+                    badge:
+                      - justify-self: end
+                      - align-self: start
+                    hero:
+                      - justify-self: stretch
+                    verbrauch:
+                      - justify-self: stretch
+                    kosten:
+                      - justify-self: stretch
+                    footer:
+                      - justify-self: center
+                extra_styles: >
+                  .status-badge { padding: 7px 12px; border-radius: 999px; background: rgba(121,85,72,0.16); color: var(--primary-text-color); font-size: 11px; font-weight: 700; }
+                  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                  .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing: border-box; }
+                  .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom: 8px; font-weight: 600; }
+                  .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+                  .hero-number span { font-size: 15px; font-weight: 600; color: var(--secondary-text-color); margin-left: 4px; }
+                  .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+                  .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+              - type: custom:button-card
+                entity: switch.shelly1pmminig3_34b7da92a604
+                name: Kühlschrank
+                icon: mdi:fridge
+                triggers_update:
+                  - switch.shelly1pmminig3_34b7da92a604
+                  - sensor.shelly1pmminig3_34b7da92a604_power
+                  - sensor.kuehlschrank_tag
+                  - sensor.kuehlschrank_monat
+                  - sensor.kuehlschrank_jahr
+                  - sensor.strompreis_aktiv_eur_kwh
+                show_icon: true
+                show_name: true
+                show_state: false
+                show_label: true
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                label: |
+                  [[[
+                  const p = Number(hass.states['sensor.shelly1pmminig3_34b7da92a604_power']?.state) || 0;
+                  const on = entity.state === 'on';
+                  return `${on ? (p > 5 ? 'Läuft' : 'Ein') : 'Aus'} · ${p.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+                  ]]]
+                custom_fields:
+                  badge: |
+                    [[[
+                    return `<div class="status-badge">${entity.state === 'on' ? 'EIN' : 'AUS'}</div>`;
+                    ]]]
+                  hero: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const power = n('sensor.shelly1pmminig3_34b7da92a604_power');
+                    const liveKosten = (power / 1000) * preis;
+                    return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Kosten/h</div><div class="hero-number">${liveKosten.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}<span> €/h</span></div></div></div>`;
+                    ]]]
+                  verbrauch: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.kuehlschrank_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.kuehlschrank_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.kuehlschrank_jahr'))} kWh</strong></div></div>`;
+                    ]]]
+                  kosten: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.kuehlschrank_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.kuehlschrank_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.kuehlschrank_jahr') * preis)} €</strong></div></div>`;
+                    ]]]
+                  footer: |
+                    [[[
+                    const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                    return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                    ]]]
+                styles:
+                  grid:
+                    - grid-template-areas: '"i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch kosten kosten" "footer footer footer footer"'
+                    - grid-template-columns: 78px 1fr 1fr auto
+                    - column-gap: 14px
+                    - row-gap: 14px
+                  card:
+                    - padding: 18px
+                    - border-radius: 28px
+                    - overflow: hidden
+                    - border: 1px solid rgba(255,255,255,0.08)
+                    - background: |
+                        [[[
+                          const p = Number(hass.states['sensor.shelly1pmminig3_34b7da92a604_power']?.state) || 0;
+                          const on = entity.state === 'on';
+                          if (on && p > 5) return 'linear-gradient(180deg, rgba(0,188,212,0.18) 0%, rgba(0,188,212,0.05) 100%)';
+                          if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                          return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                        ]]]
+                  img_cell:
+                    - width: 78px
+                    - height: 78px
+                    - border-radius: 24px
+                    - background: rgba(0,188,212,0.14)
+                  icon:
+                    - width: 40px
+                    - color: "#00BCD4"
+                  name:
+                    - justify-self: start
+                    - align-self: end
+                    - font-size: 20px
+                    - font-weight: 700
+                  label:
+                    - justify-self: start
+                    - align-self: start
+                    - color: var(--secondary-text-color)
+                    - font-size: 13px
+                  custom_fields:
+                    badge:
+                      - justify-self: end
+                      - align-self: start
+                    hero:
+                      - justify-self: stretch
+                    verbrauch:
+                      - justify-self: stretch
+                    kosten:
+                      - justify-self: stretch
+                    footer:
+                      - justify-self: center
+                extra_styles: >
+                  .status-badge { padding: 7px 12px; border-radius: 999px; background: rgba(0,188,212,0.16); color: var(--primary-text-color); font-size: 11px; font-weight: 700; }
+                  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                  .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing: border-box; }
+                  .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom: 8px; font-weight: 600; }
+                  .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+                  .hero-number span { font-size: 15px; font-weight: 600; color: var(--secondary-text-color); margin-left: 4px; }
+                  .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+                  .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+              - type: custom:button-card
+                entity: switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+                name: Dunstabzug
+                icon: mdi:air-filter
+                triggers_update:
+                  - switch.shellyplus1pm_b0b21c1b4a6c_switch_0
+                  - sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_power
+                  - sensor.dunstabzugshaube_tag
+                  - sensor.dunstabzugshaube_monat
+                  - sensor.dunstabzugshaube_jahr
+                  - sensor.strompreis_aktiv_eur_kwh
+                show_icon: true
+                show_name: true
+                show_state: false
+                show_label: true
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                label: |
+                  [[[
+                  const power = Number(hass.states['sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_power']?.state) || 0;
+                  const on = entity.state === 'on';
+                  return `${on ? (power > 5 ? 'Läuft' : 'Bereit') : 'Aus'} · ${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+                  ]]]
+                custom_fields:
+                  badge: |
+                    [[[
+                    const on = entity.state === 'on';
+                    const power = Number(hass.states['sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_power']?.state) || 0;
+                    return `<div class="status-badge">${!on ? 'AUS' : power > 5 ? 'EIN · AKTIV' : 'EIN · BEREIT'}</div>`;
+                    ]]]
+                  hero: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const power = n('sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_power');
+                    const aktuell = (power / 1000) * preis;
+                    return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${aktuell.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> €/h</span></div></div></div>`;
+                    ]]]
+                  verbrauch: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.dunstabzugshaube_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.dunstabzugshaube_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.dunstabzugshaube_jahr'))} kWh</strong></div></div>`;
+                    ]]]
+                  kosten: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.dunstabzugshaube_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.dunstabzugshaube_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.dunstabzugshaube_jahr') * preis)} €</strong></div></div>`;
+                    ]]]
+                  footer: |
+                    [[[
+                    const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                    return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                    ]]]
+                styles:
+                  grid:
+                    - grid-template-areas: '"i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch kosten kosten" "footer footer footer footer"'
+                    - grid-template-columns: 78px 1fr 1fr auto
+                    - column-gap: 14px
+                    - row-gap: 14px
+                  card:
+                    - padding: 18px
+                    - border-radius: 28px
+                    - overflow: hidden
+                    - border: 1px solid rgba(255,255,255,0.08)
+                    - background: |
+                        [[[
+                          const p = Number(hass.states['sensor.shellyplus1pm_b0b21c1b4a6c_switch_0_power']?.state) || 0;
+                          const on = entity.state === 'on';
+                          if (on && p > 5) return 'linear-gradient(180deg, rgba(255,152,0,0.18) 0%, rgba(255,152,0,0.05) 100%)';
+                          if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                          return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                        ]]]
+                  img_cell:
+                    - width: 78px
+                    - height: 78px
+                    - border-radius: 24px
+                    - background: rgba(255,152,0,0.14)
+                  icon:
+                    - width: 40px
+                    - color: "#FF9800"
+                  name:
+                    - justify-self: start
+                    - align-self: end
+                    - font-size: 20px
+                    - font-weight: 700
+                  label:
+                    - justify-self: start
+                    - align-self: start
+                    - color: var(--secondary-text-color)
+                    - font-size: 13px
+                  custom_fields:
+                    badge:
+                      - justify-self: end
+                      - align-self: start
+                    hero:
+                      - justify-self: stretch
+                    verbrauch:
+                      - justify-self: stretch
+                    kosten:
+                      - justify-self: stretch
+                    footer:
+                      - justify-self: center
+                extra_styles: >
+                  .status-badge { padding: 7px 12px; border-radius: 999px; background: rgba(255,152,0,0.16); color: var(--primary-text-color); font-size: 11px; font-weight: 700; }
+                  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                  .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing: border-box; }
+                  .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom: 8px; font-weight: 600; }
+                  .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+                  .hero-number span { font-size: 15px; font-weight: 600; color: var(--secondary-text-color); margin-left: 4px; }
+                  .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+                  .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+              - type: custom:button-card
+                entity: switch.waschmaschine
+                name: Waschmaschine
+                icon: mdi:washing-machine
+                triggers_update:
+                  - switch.waschmaschine
+                  - sensor.waschmaschine
+                  - sensor.waschmaschine_tag
+                  - sensor.waschmaschine_monat
+                  - sensor.waschmaschine_jahr
+                  - sensor.strompreis_aktiv_eur_kwh
+                show_icon: true
+                show_name: true
+                show_state: false
+                show_label: true
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                label: |
+                  [[[
+                  const p = Number(hass.states['sensor.waschmaschine']?.state) || 0;
+                  const on = entity.state === 'on';
+                  const stateTxt = on ? (p >= 1000 ? 'Heizt' : p >= 50 ? 'Läuft' : p >= 3 ? 'Standby' : 'Bereit') : 'Aus';
+                  return `${stateTxt} · ${p.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+                  ]]]
+                custom_fields:
+                  badge: |
+                    [[[
+                    const p = Number(hass.states['sensor.waschmaschine']?.state) || 0;
+                    const on = entity.state === 'on';
+                    return `<div class="status-badge">${!on ? 'AUS' : p >= 1000 ? 'AKTIV' : p >= 50 ? 'LÄUFT' : 'BEREIT'}</div>`;
+                    ]]]
+                  hero: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const power = n('sensor.waschmaschine');
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const kostenH = (power / 1000) * preis * 100;
+                    return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${kostenH.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> ct/h</span></div></div></div>`;
+                    ]]]
+                  verbrauch: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.waschmaschine_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.waschmaschine_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.waschmaschine_jahr'))} kWh</strong></div></div>`;
+                    ]]]
+                  kosten: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.waschmaschine_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.waschmaschine_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.waschmaschine_jahr') * preis)} €</strong></div></div>`;
+                    ]]]
+                  footer: |
+                    [[[
+                    const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                    return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                    ]]]
+                styles:
+                  grid:
+                    - grid-template-areas: '"i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch kosten kosten" "footer footer footer footer"'
+                    - grid-template-columns: 78px 1fr 1fr auto
+                    - column-gap: 14px
+                    - row-gap: 14px
+                  card:
+                    - padding: 18px
+                    - border-radius: 28px
+                    - overflow: hidden
+                    - border: 1px solid rgba(255,255,255,0.08)
+                    - background: |
+                        [[[
+                          const p = Number(hass.states['sensor.waschmaschine']?.state) || 0;
+                          const on = entity.state === 'on';
+                          if (on && p >= 1000) return 'linear-gradient(180deg, rgba(239,83,80,0.18) 0%, rgba(239,83,80,0.05) 100%)';
+                          if (on && p >= 50) return 'linear-gradient(180deg, rgba(251,140,0,0.18) 0%, rgba(251,140,0,0.05) 100%)';
+                          if (on) return 'linear-gradient(180deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.04) 100%)';
+                          return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                        ]]]
+                  img_cell:
+                    - width: 78px
+                    - height: 78px
+                    - border-radius: 24px
+                    - background: rgba(33,150,243,0.14)
+                  icon:
+                    - width: 40px
+                    - color: "#2196F3"
+                  name:
+                    - justify-self: start
+                    - align-self: end
+                    - font-size: 20px
+                    - font-weight: 700
+                  label:
+                    - justify-self: start
+                    - align-self: start
+                    - color: var(--secondary-text-color)
+                    - font-size: 13px
+                  custom_fields:
+                    badge:
+                      - justify-self: end
+                      - align-self: start
+                    hero:
+                      - justify-self: stretch
+                    verbrauch:
+                      - justify-self: stretch
+                    kosten:
+                      - justify-self: stretch
+                    footer:
+                      - justify-self: center
+                extra_styles: >
+                  .status-badge { padding: 7px 12px; border-radius: 999px; background: rgba(33,150,243,0.16); color: var(--primary-text-color); font-size: 11px; font-weight: 700; }
+                  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                  .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing: border-box; }
+                  .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom: 8px; font-weight: 600; }
+                  .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+                  .hero-number span { font-size: 15px; font-weight: 600; color: var(--secondary-text-color); margin-left: 4px; }
+                  .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+                  .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+              - type: custom:button-card
+                entity: switch.futternapf
+                name: Futternapf Steckdose
+                icon: mdi:power-socket-de
+                triggers_update:
+                  - switch.futternapf
+                  - sensor.shelly1pmminig3_dcda0ceac6e4_power
+                  - sensor.futternapf_steckdose_tag
+                  - sensor.futternapf_steckdose_monat
+                  - sensor.futternapf_steckdose_jahr
+                  - sensor.strompreis_aktiv_eur_kwh
+                show_icon: true
+                show_name: true
+                show_state: false
+                show_label: true
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                label: |
+                  [[[
+                  const p = Number(hass.states['sensor.shelly1pmminig3_dcda0ceac6e4_power']?.state) || 0;
+                  const on = entity.state === 'on';
+                  return `${on ? 'Ein' : 'Aus'} · ${p.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} W`;
+                  ]]]
+                custom_fields:
+                  badge: |
+                    [[[
+                    return `<div class="status-badge">${entity.state === 'on' ? 'EIN' : 'AUS'}</div>`;
+                    ]]]
+                  hero: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const power = n('sensor.shelly1pmminig3_dcda0ceac6e4_power');
+                    const livePreis = (power / 1000) * preis;
+                    return `<div class="hero-grid"><div class="hero-card"><div class="hero-kicker">Jetzt</div><div class="hero-number">${power.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span> W</span></div></div><div class="hero-card"><div class="hero-kicker">Aktuell</div><div class="hero-number">${livePreis.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span> €/h</span></div></div></div>`;
+                    ]]]
+                  verbrauch: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Verbrauch</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.futternapf_steckdose_tag'))} kWh</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.futternapf_steckdose_monat'))} kWh</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.futternapf_steckdose_jahr'))} kWh</strong></div></div>`;
+                    ]]]
+                  kosten: |
+                    [[[
+                    const n = (id) => { const v = Number(hass.states[id]?.state); return Number.isFinite(v) ? v : 0; };
+                    const preis = n('sensor.strompreis_aktiv_eur_kwh');
+                    const f2 = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div class="section"><div class="section-title">Kosten</div><div class="metric-row"><span>Heute</span><strong>${f2(n('sensor.futternapf_steckdose_tag') * preis)} €</strong></div><div class="metric-row"><span>Monat</span><strong>${f2(n('sensor.futternapf_steckdose_monat') * preis)} €</strong></div><div class="metric-row"><span>Jahr</span><strong>${f2(n('sensor.futternapf_steckdose_jahr') * preis)} €</strong></div></div>`;
+                    ]]]
+                  footer: |
+                    [[[
+                    const preis = Number(hass.states['sensor.strompreis_aktiv_eur_kwh']?.state) || 0;
+                    return `<div class="footer-note">Preisbasis: ${preis.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} €/kWh</div>`;
+                    ]]]
+                styles:
+                  grid:
+                    - grid-template-areas: '"i n n badge" "i l l badge" "hero hero hero hero" "verbrauch verbrauch kosten kosten" "footer footer footer footer"'
+                    - grid-template-columns: 78px 1fr 1fr auto
+                    - column-gap: 14px
+                    - row-gap: 14px
+                  card:
+                    - padding: 18px
+                    - border-radius: 28px
+                    - overflow: hidden
+                    - border: 1px solid rgba(255,255,255,0.08)
+                    - background: |
+                        [[[
+                          const on = entity.state === 'on';
+                          if (on) return 'linear-gradient(180deg, rgba(255,167,38,0.18) 0%, rgba(255,167,38,0.05) 100%)';
+                          return 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)';
+                        ]]]
+                  img_cell:
+                    - width: 78px
+                    - height: 78px
+                    - border-radius: 24px
+                    - background: rgba(255,167,38,0.14)
+                  icon:
+                    - width: 40px
+                    - color: "#FFA726"
+                  name:
+                    - justify-self: start
+                    - align-self: end
+                    - font-size: 20px
+                    - font-weight: 700
+                  label:
+                    - justify-self: start
+                    - align-self: start
+                    - color: var(--secondary-text-color)
+                    - font-size: 13px
+                  custom_fields:
+                    badge:
+                      - justify-self: end
+                      - align-self: start
+                    hero:
+                      - justify-self: stretch
+                    verbrauch:
+                      - justify-self: stretch
+                    kosten:
+                      - justify-self: stretch
+                    footer:
+                      - justify-self: center
+                extra_styles: >
+                  .status-badge { padding: 7px 12px; border-radius: 999px; background: rgba(255,167,38,0.16); color: var(--primary-text-color); font-size: 11px; font-weight: 700; }
+                  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+                  .hero-card, .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 22px; padding: 14px 16px; box-sizing: border-box; }
+                  .hero-kicker, .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); margin-bottom: 8px; font-weight: 600; }
+                  .hero-number { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+                  .hero-number span { font-size: 15px; font-weight: 600; color: var(--secondary-text-color); margin-left: 4px; }
+                  .metric-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+                  .footer-note { font-size: 12px; color: var(--secondary-text-color); }
+
+      - type: custom:expander-card
+        title: ☕ Kaffeemaschine Wartung
+        expanded: false
+        icon: mdi:coffee-maker-outline
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: ☕ Kaffeemaschine
+                subtitle: Wartung & Bezüge
+                card_mod:
+                  style: |
+                    ha-card { padding-top: 12px !important; }
+                    .title { font-size: 22px !important; font-weight: 600 !important; }
+              - type: custom:mushroom-template-card
+                primary: Entkalkung
+                secondary: "{{ states('sensor.kaffeemaschine_entkalkung_status') }}"
+                icon: mdi:water-off
+                icon_color: >-
+                  {% set t = states('sensor.kaffeemaschine_tage_bis_entkalkung') | int(0) %}
+                  {% set b = states('sensor.kaffeemaschine_bezuge_bis_entkalkung') | int(0) %}
+                  {% if t == 0 or b == 0 %}red{% elif t <= 5 or b <= 50 %}orange{% else %}green{% endif %}
+                badge_icon: >-
+                  {% set t = states('sensor.kaffeemaschine_tage_bis_entkalkung') | int(0) %}
+                  {% set b = states('sensor.kaffeemaschine_bezuge_bis_entkalkung') | int(0) %}
+                  {% if t == 0 or b == 0 %}mdi:alert-circle{% elif t <= 5 or b <= 50 %}mdi:alert{% else %}mdi:check-circle{% endif %}
+                badge_color: >-
+                  {% set t = states('sensor.kaffeemaschine_tage_bis_entkalkung') | int(0) %}
+                  {% set b = states('sensor.kaffeemaschine_bezuge_bis_entkalkung') | int(0) %}
+                  {% if t == 0 or b == 0 %}red{% elif t <= 5 or b <= 50 %}orange{% else %}green{% endif %}
+                fill_container: true
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Seit letzter
+                    secondary: "{{ states('sensor.kaffeemaschine_tage_seit_entkalkung') }} Tage"
+                    icon: mdi:history
+                    icon_color: blue
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Nächste in
+                    secondary: "{{ states('sensor.kaffeemaschine_tage_bis_entkalkung') }} Tage"
+                    icon: mdi:calendar-clock
+                    icon_color: deep-purple
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Bezüge seit
+                    secondary: "{{ states('sensor.kaffeemaschine_bezuge_seit_entkalkung') }}"
+                    icon: mdi:counter
+                    icon_color: teal
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Bezüge noch
+                    secondary: "{{ states('sensor.kaffeemaschine_bezuge_bis_entkalkung') }}"
+                    icon: mdi:flag-checkered
+                    icon_color: indigo
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: input_datetime.kaffeemaschine_letzte_entkalkung
+                    name: Zuletzt
+                    icon: mdi:calendar-check
+                    icon_color: teal
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+                  - type: custom:mushroom-number-card
+                    entity: input_number.kaffeemaschine_entkalkungs_intervall
+                    name: Intervall Tage
+                    icon: mdi:calendar-sync
+                    icon_color: indigo
+                    display_mode: buttons
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+              - type: custom:mushroom-entity-card
+                entity: input_button.kaffeemaschine_entkalkt
+                name: Jetzt entkalkt – bestätigen
+                icon: mdi:check-decagram
+                icon_color: green
+                fill_container: true
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 16px !important; background: linear-gradient(135deg, #1b3a1b, #2d5c2d) !important; border: 1.5px solid #4caf50 !important; }
+                    .primary { color: #a5d6a7 !important; font-weight: 600 !important; }
+              - type: custom:mushroom-title-card
+                title: ""
+                subtitle: ── Reinigung ──
+                card_mod:
+                  style: |
+                    .subtitle { text-align: center !important; color: var(--secondary-text-color) !important; letter-spacing: 2px !important; font-size: 11px !important; }
+              - type: custom:mushroom-template-card
+                primary: Reinigung
+                secondary: "{{ states('sensor.kaffeemaschine_reinigung_status') }}"
+                icon: mdi:coffee-maker-clean
+                icon_color: >-
+                  {% set t = states('sensor.kaffeemaschine_tage_bis_reinigung') | int(0) %}
+                  {% set b = states('sensor.kaffeemaschine_bezuge_bis_reinigung') | int(0) %}
+                  {% if t == 0 or b == 0 %}red{% elif t <= 2 or b <= 10 %}orange{% else %}cyan{% endif %}
+                badge_icon: >-
+                  {% set t = states('sensor.kaffeemaschine_tage_bis_reinigung') | int(0) %}
+                  {% set b = states('sensor.kaffeemaschine_bezuge_bis_reinigung') | int(0) %}
+                  {% if t == 0 or b == 0 %}mdi:alert-circle{% elif t <= 2 or b <= 10 %}mdi:alert{% else %}mdi:check-circle{% endif %}
+                badge_color: >-
+                  {% set t = states('sensor.kaffeemaschine_tage_bis_reinigung') | int(0) %}
+                  {% set b = states('sensor.kaffeemaschine_bezuge_bis_reinigung') | int(0) %}
+                  {% if t == 0 or b == 0 %}red{% elif t <= 2 or b <= 10 %}orange{% else %}cyan{% endif %}
+                fill_container: true
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Seit letzter
+                    secondary: "{{ states('sensor.kaffeemaschine_tage_seit_reinigung') }} Tage"
+                    icon: mdi:history
+                    icon_color: blue
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Nächste in
+                    secondary: "{{ states('sensor.kaffeemaschine_tage_bis_reinigung') }} Tage"
+                    icon: mdi:calendar-clock
+                    icon_color: deep-purple
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Bezüge seit
+                    secondary: "{{ states('sensor.kaffeemaschine_bezuge_seit_reinigung') }}"
+                    icon: mdi:counter
+                    icon_color: teal
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Bezüge noch
+                    secondary: "{{ states('sensor.kaffeemaschine_bezuge_bis_reinigung') }}"
+                    icon: mdi:flag-checkered
+                    icon_color: indigo
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: input_datetime.kaffeemaschine_letzte_reinigung
+                    name: Zuletzt
+                    icon: mdi:calendar-check
+                    icon_color: teal
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+                  - type: custom:mushroom-number-card
+                    entity: input_number.kaffeemaschine_reinigungs_intervall
+                    name: Intervall Tage
+                    icon: mdi:calendar-sync
+                    icon_color: indigo
+                    display_mode: buttons
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; }
+              - type: custom:mushroom-entity-card
+                entity: input_button.kaffeemaschine_gereinigt
+                name: Jetzt gereinigt – bestätigen
+                icon: mdi:check-decagram
+                icon_color: cyan
+                fill_container: true
+                card_mod:
+                  style: |
+                    ha-card { border-radius: 16px !important; background: linear-gradient(135deg, #0d2a35, #0d3d4a) !important; border: 1.5px solid #00bcd4 !important; }
+                    .primary { color: #80deea !important; font-weight: 600 !important; }
+              - type: custom:mushroom-title-card
+                title: ""
+                subtitle: ── Bezüge ──
+                card_mod:
+                  style: |
+                    .subtitle { text-align: center !important; color: var(--secondary-text-color) !important; letter-spacing: 2px !important; font-size: 11px !important; }
+              - type: custom:mushroom-template-card
+                primary: Bezüge Gesamt
+                secondary: "{{ states('sensor.kaffeemaschine_bezuge_gesamt') }} Tassen"
+                icon: mdi:counter
+                icon_color: amber
+                fill_container: true
+                card_mod:
+                  style: >
+                    ha-card { border-radius: 16px !important; background: linear-gradient(135deg, #2a1f0a, #3d2f15) !important; border: 1.5px solid rgba(255,193,7,0.3) !important; }
+                    .secondary { font-size: 18px !important; font-weight: 600 !important; color: #ffc107 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Milchgetränke
+                    secondary: "{{ states('counter.kaffeemaschine_milchgetraenke') }}"
+                    icon: mdi:coffee
+                    icon_color: brown
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: counter.increment
+                      target:
+                        entity_id: counter.kaffeemaschine_milchgetraenke
+                    hold_action:
+                      action: perform-action
+                      perform_action: counter.decrement
+                      target:
+                        entity_id: counter.kaffeemaschine_milchgetraenke
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 22px !important; font-weight: 600 !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Kaffee
+                    secondary: "{{ states('counter.kaffeemaschine_kaffee') }}"
+                    icon: mdi:cup
+                    icon_color: orange
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: counter.increment
+                      target:
+                        entity_id: counter.kaffeemaschine_kaffee
+                    hold_action:
+                      action: perform-action
+                      perform_action: counter.decrement
+                      target:
+                        entity_id: counter.kaffeemaschine_kaffee
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 22px !important; font-weight: 600 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Milchvorrat
+                    secondary: >-
+                      {% set v = states('input_number.milch_vorrat') | float(0) %}
+                      {% set w = states('input_number.milch_vorrat_warnung') | float(1) %}
+                      {{ v }} L{%- if v <= w %} · ⚠️ Nachkaufen!{% endif %}
+                    icon: mdi:cup-water
+                    icon_color: >-
+                      {% set v = states('input_number.milch_vorrat') | float(0) %}
+                      {% set w = states('input_number.milch_vorrat_warnung') | float(1) %}
+                      {% if v <= w %}red{% elif v <= w * 2 %}orange{% else %}cyan{% endif %}
+                    fill_container: true
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 18px !important; font-weight: 600 !important; }
+                  - type: custom:mushroom-template-card
+                    primary: "➕ Packung einbuchen"
+                    secondary: "EAN: {{ states('input_text.milch_ean') }}"
+                    icon: mdi:package-variant-plus
+                    icon_color: teal
+                    fill_container: true
+                    tap_action:
+                      action: perform-action
+                      perform_action: script.off_schnellwahl_buchen
+                      data:
+                        produkt: "Fettarme Milch"
+                        ean: "4335619001039"
+                        lagerplatz: "Vorratskammer"
+                        menge: "1l"
+                        modus: "Einbuchen"
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(0,188,212,0.3) !important; }
+              - type: custom:mushroom-title-card
+                title: ""
+                subtitle: ── Tabletten ──
+                card_mod:
+                  style: |
+                    .subtitle { text-align: center !important; color: var(--secondary-text-color) !important; letter-spacing: 2px !important; font-size: 11px !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: Reinigung
+                    secondary: "{{ states('counter.kaffeemaschine_reinigungstabletten') }} Stück"
+                    icon: mdi:tablet
+                    icon_color: >-
+                      {% set n = states('counter.kaffeemaschine_reinigungstabletten') | int(0) %}
+                      {% if n <= 5 %}red{% elif n <= 15 %}orange{% else %}cyan{% endif %}
+                    badge_icon: >-
+                      {% set n = states('counter.kaffeemaschine_reinigungstabletten') | int(0) %}
+                      {% if n <= 5 %}mdi:cart-alert{% else %}{% endif %}
+                    badge_color: red
+                    fill_container: true
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 18px !important; font-weight: 600 !important; }
+                  - type: custom:mushroom-template-card
+                    primary: Entkalkung
+                    secondary: >-
+                      {{ states('counter.kaffeemaschine_entkalkungstabletten') }} /
+                      {{ state_attr('counter.kaffeemaschine_entkalkungstabletten', 'maximum') | default(9) }}
+                    icon: mdi:tablet
+                    icon_color: >-
+                      {% set n = states('counter.kaffeemaschine_entkalkungstabletten') | int(0) %}
+                      {% if n <= 1 %}red{% elif n <= 3 %}orange{% else %}green{% endif %}
+                    badge_icon: >-
+                      {% set n = states('counter.kaffeemaschine_entkalkungstabletten') | int(0) %}
+                      {% if n <= 1 %}mdi:cart-alert{% else %}{% endif %}
+                    badge_color: red
+                    fill_container: true
+                    card_mod:
+                      style: >
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(128,128,128,0.15) !important; }
+                        .secondary { font-size: 18px !important; font-weight: 600 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: input_button.kaffeemaschine_reinigungstabletten_auffuellen
+                    name: +10 Reinigung
+                    icon: mdi:package-variant
+                    icon_color: cyan
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(0,188,212,0.4) !important; }
+                  - type: custom:mushroom-entity-card
+                    entity: input_button.kaffeemaschine_entkalkungstabletten_neu
+                    name: Neue Packung Entkalkung
+                    icon: mdi:package-variant
+                    icon_color: green
+                    fill_container: true
+                    card_mod:
+                      style: |
+                        ha-card { border-radius: 16px !important; border: 1.5px solid rgba(76,175,80,0.4) !important; }
+          - type: custom:mushroom-template-card
+            primary: Kaffeebohnen leer
+            secondary: Zur Einkaufsliste hinzufügen
+            icon: mdi:coffee-maker
+            tap_action:
+              action: call-service
+              service: todo.add_item
+              data:
+                entity_id: todo.einkaufsliste
+                item: Kaffeebohnen 1 kg
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >
+                  <span style="color:#6b7280;font-size:14px;letter-spacing:1px;"> ☕ KAFFEE-BEUTEL · BESTANDSANZEIGE </span>
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 8px 12px 4px 12px; }
+              - type: markdown
+                content: >
+                  {% set rest = states('input_number.kaffee_rest_gramm') | int(0) %}
+                  {% set groesse = states('input_number.kaffee_beutel_groesse') | int(1000) %}
+                  {% set proz = states('sensor.kaffee_rest_prozent') | int(0) %}
+                  {% set bezuege = states('sensor.kaffee_bezuge_bis_leer') | int(0) %}
+                  {% if proz > 50 %}{% set farbe1 = '#22c55e' %}{% set farbe2 = '#84cc16' %}{% set glow = 'rgba(34,197,94,0.4)' %}
+                  {% elif proz > 20 %}{% set farbe1 = '#f97316' %}{% set farbe2 = '#fbbf24' %}{% set glow = 'rgba(249,115,22,0.4)' %}
+                  {% elif proz > 0 %}{% set farbe1 = '#ef4444' %}{% set farbe2 = '#f97316' %}{% set glow = 'rgba(239,68,68,0.5)' %}
+                  {% else %}{% set farbe1 = '#64748b' %}{% set farbe2 = '#475569' %}{% set glow = 'rgba(100,116,139,0.3)' %}{% endif %}
+                  <div style="background:#1e293b;border-radius:14px;height:80px;overflow:hidden;position:relative;border:1px solid #334155;box-shadow:0 0 18px {{ glow }};">
+                    <div style="background:linear-gradient(90deg, {{ farbe1 }} 0%, {{ farbe2 }} 100%);width:{{ proz }}%;height:100%;transition:width 0.6s ease;box-shadow:0 0 20px {{ glow }} inset;"></div>
+                    <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;">
+                      <div>
+                        <div style="color:#f1f5f9;font-weight:700;font-size:26px;text-shadow:0 1px 4px rgba(0,0,0,0.6);">{{ rest }} g</div>
+                        <div style="color:#cbd5e1;font-size:11px;letter-spacing:1px;text-transform:uppercase;">von {{ groesse }} g</div>
+                      </div>
+                      <div style="text-align:right;">
+                        <div style="color:#f1f5f9;font-weight:700;font-size:26px;text-shadow:0 1px 4px rgba(0,0,0,0.6);">{{ proz }}%</div>
+                        <div style="color:#cbd5e1;font-size:11px;letter-spacing:1px;text-transform:uppercase;">{{ bezuege }} Bezüge</div>
+                      </div>
+                    </div>
+                  </div>
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; border: none; box-shadow: none; padding: 4px 8px; }
+                    ha-markdown { padding: 0 !important; }
+              - type: horizontal-stack
+                cards:
+                  - type: custom:button-card
+                    entity: input_number.kaffee_rest_gramm
+                    name: Rest
+                    label: Gramm
+                    show_state: true
+                    icon: mdi:scale
+                    tap_action:
+                      action: more-info
+                    styles:
+                      card:
+                        - background: "#0f172a"
+                        - border-radius: 14px
+                        - border: 1px solid '#d97706'
+                        - padding: 12px 14px
+                        - height: 72px
+                      grid:
+                        - grid-template-areas: '"i n" "i s"'
+                        - grid-template-columns: 42px 1fr
+                      icon:
+                        - background: rgba(217,119,6,0.18)
+                        - border-radius: 50%
+                        - padding: 8px
+                        - color: "#fbbf24"
+                        - width: 22px
+                        - height: 22px
+                      name:
+                        - color: "#9ca3af"
+                        - font-size: 11px
+                        - justify-self: start
+                        - align-self: end
+                      state:
+                        - color: "#f1f5f9"
+                        - font-size: 16px
+                        - font-weight: 700
+                        - justify-self: start
+                        - align-self: start
+                      label:
+                        - display: none
+                  - type: custom:button-card
+                    entity: sensor.kaffee_bezuge_bis_leer
+                    name: Bezüge
+                    show_state: true
+                    icon: mdi:counter
+                    tap_action:
+                      action: more-info
+                    styles:
+                      card:
+                        - background: "#0f172a"
+                        - border-radius: 14px
+                        - border: 1px solid '#3b82f6'
+                        - padding: 12px 14px
+                        - height: 72px
+                      grid:
+                        - grid-template-areas: '"i n" "i s"'
+                        - grid-template-columns: 42px 1fr
+                      icon:
+                        - background: rgba(59,130,246,0.18)
+                        - border-radius: 50%
+                        - padding: 8px
+                        - color: "#60a5fa"
+                        - width: 22px
+                        - height: 22px
+                      name:
+                        - color: "#9ca3af"
+                        - font-size: 11px
+                        - justify-self: start
+                        - align-self: end
+                      state:
+                        - color: "#f1f5f9"
+                        - font-size: 16px
+                        - font-weight: 700
+                        - justify-self: start
+                        - align-self: start
+                  - type: custom:button-card
+                    entity: input_text.kaffee_aktiver_ean
+                    name: EAN
+                    show_state: true
+                    icon: mdi:barcode
+                    tap_action:
+                      action: more-info
+                    styles:
+                      card:
+                        - background: "#0f172a"
+                        - border-radius: 14px
+                        - border: 1px solid '#64748b'
+                        - padding: 12px 14px
+                        - height: 72px
+                      grid:
+                        - grid-template-areas: '"i n" "i s"'
+                        - grid-template-columns: 42px 1fr
+                      icon:
+                        - background: rgba(100,116,139,0.18)
+                        - border-radius: 50%
+                        - padding: 8px
+                        - color: "#94a3b8"
+                        - width: 22px
+                        - height: 22px
+                      name:
+                        - color: "#9ca3af"
+                        - font-size: 11px
+                        - justify-self: start
+                        - align-self: end
+                      state:
+                        - color: "#f1f5f9"
+                        - font-size: 13px
+                        - font-weight: 600
+                        - justify-self: start
+                        - align-self: start
+              - type: custom:button-card
+                name: Neuer Kaffee-Beutel angefangen
+                label: |
+                  [[[
+                    const g = states['input_number.kaffee_beutel_groesse'].state;
+                    return `Bestand zurücksetzen auf ${parseInt(g)} g`;
+                  ]]]
+                icon: mdi:package-variant-plus
+                show_label: true
+                tap_action:
+                  action: perform-action
+                  perform_action: input_button.press
+                  target:
+                    entity_id: input_button.kaffee_neuer_beutel
+                styles:
+                  card:
+                    - background: "linear-gradient(135deg, #78350f 0%, #92400e 100%)"
+                    - border-radius: 14px
+                    - border: 1px solid '#d97706'
+                    - padding: 16px 18px
+                    - height: 76px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 52px 1fr
+                  icon:
+                    - background: rgba(255,255,255,0.12)
+                    - border-radius: 50%
+                    - padding: 10px
+                    - color: "#fef3c7"
+                    - width: 26px
+                    - height: 26px
+                  name:
+                    - color: "#fef9e7"
+                    - font-weight: 700
+                    - font-size: 15px
+                    - justify-self: start
+                    - align-self: end
+                  label:
+                    - color: "#fbbf24"
+                    - font-size: 12px
+                    - justify-self: start
+                    - align-self: start
+              - type: custom:expander-card
+                title: ⚙️ Konfiguration
+                expanded: false
+                cards:
+                  - type: entities
+                    entities:
+                      - entity: input_number.kaffee_beutel_groesse
+                        name: Beutel-Größe (Standard 1000 g)
+                        icon: mdi:package-variant
+                      - entity: input_number.kaffee_pro_kaffee
+                        name: Gramm pro Kaffee-Bezug
+                        icon: mdi:coffee
+                      - entity: input_number.kaffee_pro_milch
+                        name: Gramm pro Milchgetränk
+                        icon: mdi:coffee-to-go
+                      - entity: input_text.kaffee_aktiver_ean
+                        name: EAN des aktuellen Beutels
+                        icon: mdi:barcode
+
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+
+
+  ##############################################
+  # HUND (Subview)
+  ##############################################
+  - title: Hund
+    path: hund
+    icon: mdi:dog
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: grid
+        columns: 1
+        cards:
+          - type: heading
+            heading: 🐶 Hund
+            icon: mdi:dog
+          - type: custom:expander-card
+            title: 🐶 Hund & Fütterung
+            expanded: false
+            icon: mdi:dog
+            cards:
+              - type: tile
+                entity: input_boolean.hund_gefuettert_morgens
+                name: Morgens gefüttert
+                icon: mdi:dog
+                color: green
+                tap_action:
+                  action: toggle
+              - type: tile
+                entity: input_boolean.hund_gefuettert_abends
+                name: Abends gefüttert
+                icon: mdi:dog
+                color: green
+                tap_action:
+                  action: toggle
+              - type: tile
+                entity: input_boolean.hund_erinnerung_tts
+                name: Ansage auf Sonos
+                icon: mdi:volume-high
+                color: blue
+                tap_action:
+                  action: toggle
+              - type: tile
+                entity: input_boolean.ich_schlafe_noch
+                name: Ich schlafe noch
+                icon: mdi:sleep
+                color: indigo
+                tap_action:
+                  action: toggle
+
+          - type: custom:expander-card
+            title: ⚙️ Einstellungen & Zeiten
+            expanded: false
+            icon: mdi:cog
+            cards:
+              - type: entities
+                title: 🌅 Morgens – Erinnerung
+                entities:
+                  - entity: input_datetime.hund_erinnerung_morgens_wt
+                    name: Wochentag (1. Erinnerung)
+                    icon: mdi:clock-outline
+                  - entity: input_datetime.hund_kritisch_morgens_wt
+                    name: Wochentag (Kritisch)
+                    icon: mdi:alert
+                  - entity: input_datetime.hund_erinnerung_morgens_we
+                    name: Wochenende (1. Erinnerung)
+                    icon: mdi:clock-outline
+                  - entity: input_datetime.hund_kritisch_morgens_we
+                    name: Wochenende (Kritisch)
+                    icon: mdi:alert
+              - type: entities
+                title: 🌆 Abends – Erinnerung
+                entities:
+                  - entity: input_datetime.hund_erinnerung_abends
+                    name: Abends (1. Erinnerung)
+                    icon: mdi:clock-outline
+                  - entity: input_datetime.hund_kritisch_abends
+                    name: Abends (Kritisch)
+                    icon: mdi:alert
+              - type: entities
+                title: 🔄 Reset
+                entities:
+                  - entity: input_datetime.hund_reset_zeit
+                    name: Täglicher Reset
+                    icon: mdi:refresh
+
+  ##############################################
+  # EINGANG (Subview)
+  ##############################################
+  - title: Eingang
+    path: eingang
+    icon: mdi:door
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Beleuchtung
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.deckenlampe_eingang
+            name: Deckenlampe Eingang
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.deckenlampe_flur
+            name: Deckenlampe Flur
+            features:
+              - type: light-brightness
+
+      - type: custom:expander-card
+        title: 🔔 Türsummer
+        expanded: false
+        icon: mdi:door
+        cards:
+          - type: custom:button-card
+            entity: lock.tur_summer
+            name: Türsummer
+            icon: |
+              [[[
+                return states['input_boolean.tuer_summer_gesperrt']?.state === 'on'
+                  ? 'mdi:door-closed-lock'
+                  : 'mdi:home-lock-open';
+              ]]]
+            triggers_update:
+              - lock.tur_summer
+              - input_boolean.tuer_summer_gesperrt
+            show_icon: true
+            show_name: true
+            show_state: false
+            show_label: true
+            tap_action:
+              action: call-service
+              service: button.press
+              service_data:
+                entity_id: button.tur_summer
+            hold_action:
+              action: more-info
+            label: |
+              [[[
+                const gesperrt = states['input_boolean.tuer_summer_gesperrt']?.state === 'on';
+                const schloss = entity.state === 'unlocked' ? 'Offen' : 'Geschlossen';
+                return `${gesperrt ? 'Gesperrt' : 'Entsperrt'} · ${schloss}`;
+              ]]]
+            custom_fields:
+              badge: |
+                [[[
+                  const gesperrt = states['input_boolean.tuer_summer_gesperrt']?.state === 'on';
+                  return `<div class="status-badge">${gesperrt ? 'GESPERRT' : 'OFFEN'}</div>`;
+                ]]]
+              action_hint: |
+                [[[
+                  return `<div class="action-hint">Tippen zum Öffnen · Halten für Details</div>`;
+                ]]]
+            styles:
+              grid:
+                - grid-template-areas: '"i n n badge" "i l l badge" "action_hint action_hint action_hint action_hint"'
+                - grid-template-columns: 78px 1fr 1fr auto
+                - column-gap: 14px
+                - row-gap: 10px
+              card:
+                - padding: 20px
+                - border-radius: 28px
+                - border: 1px solid rgba(255,255,255,0.08)
+                - background: |
+                    [[[
+                      const gesperrt = states['input_boolean.tuer_summer_gesperrt']?.state === 'on';
+                      return gesperrt
+                        ? 'linear-gradient(180deg, rgba(244,67,54,0.18) 0%, rgba(244,67,54,0.05) 100%)'
+                        : 'linear-gradient(180deg, rgba(76,175,80,0.18) 0%, rgba(76,175,80,0.05) 100%)';
+                    ]]]
+              img_cell:
+                - width: 78px
+                - height: 78px
+                - border-radius: 24px
+                - background: |
+                    [[[
+                      const gesperrt = states['input_boolean.tuer_summer_gesperrt']?.state === 'on';
+                      return gesperrt ? 'rgba(244,67,54,0.15)' : 'rgba(76,175,80,0.15)';
+                    ]]]
+              icon:
+                - width: 42px
+                - color: |
+                    [[[
+                      const gesperrt = states['input_boolean.tuer_summer_gesperrt']?.state === 'on';
+                      return gesperrt ? '#F44336' : '#4CAF50';
+                    ]]]
+              name:
+                - justify-self: start
+                - align-self: end
+                - font-size: 20px
+                - font-weight: 700
+              label:
+                - justify-self: start
+                - align-self: start
+                - color: var(--secondary-text-color)
+                - font-size: 13px
+              custom_fields:
+                badge:
+                  - justify-self: end
+                  - align-self: start
+                action_hint:
+                  - justify-self: center
+            extra_styles: >
+              .status-badge { padding: 7px 12px; border-radius: 999px;
+              background: rgba(255,255,255,0.1); color: var(--primary-text-color);
+              font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+
+              .action-hint { font-size: 12px; color: var(--secondary-text-color);
+              text-align: center; padding-top: 4px; }
+
+      - type: custom:expander-card
+        title: 🚪 Haustür
+        expanded: false
+        icon: mdi:chevron-down
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Haustür
+            secondary: "{% if is_state('binary_sensor.hausture_entprellt', 'on') %}Offen{% else %}Geschlossen{% endif %}"
+            icon: "{% if is_state('binary_sensor.hausture_entprellt', 'on') %}mdi:door-open{% else %}mdi:door-closed{% endif %}"
+            icon_color: "{% if is_state('binary_sensor.hausture_entprellt', 'on') %}orange{% else %}green{% endif %}"
+            entity: binary_sensor.hausture_entprellt
+            tap_action:
+              action: more-info
+
+      - type: custom:expander-card
+        title: 🚪 Wohnungstür
+        expanded: false
+        icon: mdi:chevron-down
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Wohnungstür
+            secondary: "{% if is_state('binary_sensor.wohnungstur', 'on') %}Offen{% else %}Geschlossen{% endif %}"
+            icon: "{% if is_state('binary_sensor.wohnungstur', 'on') %}mdi:door-open{% else %}mdi:door-closed{% endif %}"
+            icon_color: "{% if is_state('binary_sensor.wohnungstur', 'on') %}orange{% else %}green{% endif %}"
+            entity: binary_sensor.wohnungstur
+            tap_action:
+              action: more-info
+          - type: tile
+            entity: lock.wohnungstur
+            name: Schloss
+            features:
+              - type: lock-commands
+          - type: tile
+            entity: sensor.wohnungstur_batterie
+            name: Batterie Schloss
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # BÜRO (Subview)
+  ##############################################
+  - title: Büro
+    path: buro
+    icon: mdi:desk
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Beleuchtung
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.buro
+            name: Alle Lichter
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.deckenlampe_buro
+            name: Deckenlampe
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.schreibtisch_links
+            name: Schreibtisch Links
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.schreibtisch_rechts
+            name: Schreibtisch Rechts
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.hue_lightstrip_1
+            name: Schreibtisch Andi LED
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.hue_lightstrip_1_2
+            name: Schreibtisch Karo LED
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.nachttisch_links
+            name: Schreibtisch Karo Links
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.nachttisch_rechts
+            name: Schreibtisch Karo Rechts
+            features:
+              - type: light-brightness
+
+      - type: custom:expander-card
+        title: 🌡️ Heizung
+        expanded: false
+        icon: mdi:radiator
+        cards:
+          - type: tile
+            entity: climate.fussbodenheizung_buro
+            name: Fußbodenheizung
+            features:
+              - type: target-temperature
+
+      - type: custom:expander-card
+        title: 🔌 Steckdosen
+        expanded: false
+        icon: mdi:power-socket-de
+        cards:
+          - type: tile
+            entity: switch.schreibtisch
+            name: Schreibtisch Andi
+          - type: tile
+            entity: switch.tv_bord_192_168_2_191
+            name: Schreibtisch Karo
+          - type: tile
+            entity: switch.steckdose_ipad
+            name: Steckdose iPad
+
+      - type: custom:expander-card
+        title: 📡 Sensoren
+        expanded: false
+        icon: mdi:motion-sensor
+        cards:
+          - type: tile
+            entity: binary_sensor.window_and_door_sensor_916f_2
+            name: Stuhl Andi
+          - type: tile
+            entity: binary_sensor.window_and_door_sensor_e714
+            name: Stuhl Karo
+          - type: tile
+            entity: binary_sensor.ikea_sensor_03_balkontur
+            name: Balkontür
+
+      - type: custom:expander-card
+        title: ⚙️ Automatisierung
+        expanded: false
+        icon: mdi:robot
+        cards:
+          - type: tile
+            entity: input_boolean.buro_licht_automatik
+            name: Licht Automatik
+          - type: tile
+            entity: input_boolean.buro_licht_manuell
+            name: Licht Manuell
+          - type: tile
+            entity: script.buro_einschalten
+            name: Büro einschalten
+
+      - type: custom:expander-card
+        title: 📺 Medien
+        expanded: false
+        icon: mdi:multimedia
+        cards:
+          - type: media-control
+            entity: media_player.buro_2
+          - type: media-control
+            entity: media_player.kuche
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # BALKON (Subview)
+  ##############################################
+  - title: Balkon
+    path: balkon
+    icon: mdi:flower
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Licht & Steckdose
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.balkon
+            name: Wandlampe Außen
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.wandlampe
+            name: Wandlampe
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: switch.steckdose_balkon_balkon_steckdose
+            name: Steckdose
+
+      - type: custom:expander-card
+        title: 🚪 Tür
+        expanded: false
+        icon: mdi:door
+        cards:
+          - type: tile
+            entity: binary_sensor.balkontur_entprellt
+            name: Balkontür
+          - type: tile
+            entity: binary_sensor.ikea_sensor_03_balkontur
+            name: Balkontür (IKEA)
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # ABSTELLKAMMER (Subview)
+  ##############################################
+  - title: Abstellkammer
+    path: abstellkammer
+    icon: mdi:archive-outline
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Beleuchtung
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.abstelkammer_2
+            name: Licht
+            features:
+              - type: light-brightness
+
+      - type: custom:expander-card
+        title: 🚪 Tür & Sensor
+        expanded: false
+        icon: mdi:door
+        cards:
+          - type: tile
+            entity: binary_sensor.ikea_sensor_05_tur
+            name: Tür
+          - type: tile
+            entity: sensor.ikea_sensor_05_batterie
+            name: Batterie
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # BADEZIMMER (Subview)
+  ##############################################
+  - title: Badezimmer
+    path: bad
+    icon: mdi:shower
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 💡 Licht & Tür
+        expanded: false
+        icon: mdi:lightbulb
+        cards:
+          - type: tile
+            entity: light.licht_deckenlampe_bad
+            name: Deckenlampe
+            features:
+              - type: light-brightness
+          - type: custom:mushroom-template-card
+            primary: Badtür
+            secondary: "{% if is_state('binary_sensor.ikea_sensor_09_tur', 'on') %}Offen{% else %}Geschlossen{% endif %}"
+            icon: "{% if is_state('binary_sensor.ikea_sensor_09_tur', 'on') %}mdi:door-open{% else %}mdi:door-closed{% endif %}"
+            icon_color: "{% if is_state('binary_sensor.ikea_sensor_09_tur', 'on') %}orange{% else %}green{% endif %}"
+            entity: binary_sensor.ikea_sensor_09_tur
+            tap_action:
+              action: more-info
+
+      - type: custom:expander-card
+        title: 🌡️ Klima
+        expanded: false
+        icon: mdi:thermometer
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: custom:andy-temperature-card
+                name: Temperatur
+                entity: sensor.sbht_003c_ac5e_temperature
+                min: -20
+                max: 40
+                unit: ""
+                decimals: 1
+                value_position: top_right
+                glass: true
+                orientation: vertical
+                show_scale: true
+                scale_markers: true
+                scale_color_mode: per_interval
+                show_stats: true
+                stats_hours: 24
+                card_scale: 1.2
+                show_graph: true
+                graph_hours: 24
+                graph_height: 80
+                graph_show_time: true
+                graph_max_points: 160
+                graph_line_width: 1.2
+                intervals:
+                  - id: it0
+                    to: 0
+                    color: "#2b6cff"
+                    gradient:
+                      enabled: true
+                      from: "#2b6cff"
+                      to: "#39c0ff"
+                  - id: it1
+                    to: 10
+                    color: "#39c0ff"
+                    gradient:
+                      enabled: true
+                      from: "#39c0ff"
+                      to: "#22c55e"
+                  - id: it2
+                    to: 20
+                    color: "#22c55e"
+                    gradient:
+                      enabled: true
+                      from: "#22c55e"
+                      to: "#f59e0b"
+                  - id: it3
+                    to: 30
+                    color: "#f59e0b"
+                    gradient:
+                      enabled: true
+                      from: "#f59e0b"
+                      to: "#ef4444"
+                  - id: it4
+                    to: 100
+                    color: "#ef4444"
+                    gradient:
+                      enabled: true
+                      from: "#ef4444"
+                      to: "#ef4444"
+              - type: custom:andy-temperature-card
+                name: Luftfeuchtigkeit
+                entity: sensor.sbht_003c_ac5e_humidity
+                min: 0
+                max: 100
+                unit: ""
+                decimals: 1
+                value_position: top_right
+                glass: true
+                orientation: vertical
+                show_scale: true
+                scale_markers: true
+                scale_color_mode: per_interval
+                show_stats: true
+                stats_hours: 24
+                card_scale: 1.2
+                show_graph: true
+                graph_hours: 24
+                graph_height: 80
+                graph_show_time: true
+                graph_max_points: 160
+                graph_line_width: 1.2
+                intervals:
+                  - id: it0
+                    to: 30
+                    color: "#ef4444"
+                    gradient:
+                      enabled: true
+                      from: "#ef4444"
+                      to: "#f59e0b"
+                  - id: it1
+                    to: 40
+                    color: "#f59e0b"
+                    gradient:
+                      enabled: true
+                      from: "#f59e0b"
+                      to: "#22c55e"
+                  - id: it2
+                    to: 60
+                    color: "#22c55e"
+                    gradient:
+                      enabled: true
+                      from: "#22c55e"
+                      to: "#f59e0b"
+                  - id: it3
+                    to: 70
+                    color: "#f59e0b"
+                    gradient:
+                      enabled: true
+                      from: "#f59e0b"
+                      to: "#ef4444"
+                  - id: it4
+                    to: 100
+                    color: "#ef4444"
+                    gradient:
+                      enabled: true
+                      from: "#ef4444"
+                      to: "#ef4444"
+
+      - type: custom:expander-card
+        title: 🌡️ Heizung & Medien
+        expanded: false
+        icon: mdi:radiator
+        cards:
+          - type: tile
+            entity: climate.shellywalldisplay_000822519e87_thermostat_0
+            name: Fußbodenheizung
+            features:
+              - type: target-temperature
+          - type: media-control
+            entity: media_player.hp_bad
+
+
+      - type: custom:expander-card
+        title: 📻 Radio
+        expanded: false
+        icon: mdi:radio
+        cards:
+          - type: entities
+            entities:
+              - entity: input_select.radio_lautsprecher
+                name: 🔊 Lautsprecher
+              - type: button
+                name: SWR3
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_swr3
+              - type: button
+                name: Radio Regenbogen
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_regenbogen
+              - type: button
+                name: bigFM
+                icon: mdi:radio
+                tap_action:
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.radio_bigfm
+              - type: section
+                label: Sonos
+              - entity: media_player.wohnzimmer
+                name: Sonos Beam
+              - entity: media_player.sonos_tisch
+                name: Sonos Tisch
+              - entity: media_player.sonos_all
+              - type: section
+                label: HomePods
+              - entity: media_player.wohnzimmer_2
+                name: HomePod WZ
+              - entity: media_player.buro_2
+                name: HomePod Büro 2
+              - entity: media_player.badezimmer
+                name: HomePod Bad
+              - entity: media_player.badezimmer_2
+                name: HomePod WC
+              - entity: media_player.schlafzimmer_2
+                name: HomePod Schlafzimmer
+              - entity: media_player.schlafzimmer_4
+                name: HomePod SZ
+          - type: custom:mini-media-player
+            entity: media_player.wohnzimmer
+            name: 📻 Radio
+            artwork: cover
+            source: icon
+            hide:
+              power_state: false
+            shortcuts:
+              columns: 3
+              buttons:
+                - name: SWR3
+                  image: /local/radio/swr3.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_swr3
+                - name: Regenbogen
+                  image: /local/radio/regenbogen.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_regenbogen
+                - name: bigFM
+                  image: /local/radio/bigfm.svg
+                  type: service
+                  id: automation.trigger
+                  data:
+                    entity_id: automation.radio_bigfm
+
+  ##############################################
+  # RADIO (Subview)
+  ##############################################
+  - title: Radio
+    path: radio
+    icon: mdi:radio
+    type: sections
+    subview: true
+    back_path: /home-overview/home
+    sections:
+      - type: custom:expander-card
+        title: 🔊 Lautsprecher
+        expanded: false
+        icon: mdi:chevron-down
+        cards:
+          - type: tile
+            entity: input_select.radio_lautsprecher
+            name: Lautsprecher wählen
+
+      - type: custom:expander-card
+        title: 📻 Sender
+        expanded: false
+        icon: mdi:chevron-down
+        cards:
+          - type: button
+            name: SWR3
+            icon: mdi:radio
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.radio_swr3
+          - type: button
+            name: Regenbogen
+            icon: mdi:radio
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.radio_regenbogen
+          - type: button
+            name: bigFM
+            icon: mdi:radio
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.radio_bigfm
+
+      - type: custom:expander-card
+        title: 🎛️ Steuerung
+        expanded: false
+        icon: mdi:chevron-down
+        cards:
+          - type: media-control
+            entity: media_player.wohnzimmer
