@@ -81,6 +81,33 @@ input_number:
     unit_of_measurement: g
     mode: box
 
+  milch_vorrat:
+    name: "Milchvorrat"
+    min: 0
+    max: 20
+    step: 0.5
+    icon: mdi:cup-water
+    unit_of_measurement: L
+    mode: box
+
+  milch_pro_getraenk:
+    name: "Liter pro Milchgetränk"
+    min: 0.05
+    max: 1.0
+    step: 0.05
+    icon: mdi:cup
+    unit_of_measurement: L
+    mode: box
+
+  milch_vorrat_warnung:
+    name: "Milchvorrat – Warnung ab"
+    min: 0
+    max: 5
+    step: 0.5
+    icon: mdi:alert-outline
+    unit_of_measurement: L
+    mode: box
+
 input_text:
 
   kaffee_aktiver_ean:
@@ -322,6 +349,31 @@ automation:
           entity_id: input_number.milchkaffee_heute
         data:
           value: "{{ (states('input_number.milchkaffee_heute') | int(0)) + 1 }}"
+      - variables:
+          neuer_vorrat: >-
+            {{ [states('input_number.milch_vorrat') | float(0) - states('input_number.milch_pro_getraenk') | float(0.2), 0] | max }}
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.milch_vorrat
+        data:
+          value: "{{ neuer_vorrat }}"
+      - variables:
+          gesamt: "{{ states('counter.kaffeemaschine_milchgetraenke') | int(0) }}"
+          heute: "{{ states('input_number.milchkaffee_heute') | int(0) }}"
+          warnung: "{{ states('input_number.milch_vorrat_warnung') | float(1.0) }}"
+      - action: telegram_bot.send_message
+        data:
+          target:
+            - 988178587
+          parse_mode: html
+          message: >-
+            🥛 <b>Milchgetränk</b>
+            {{ '\n' }}🕐 {{ now().strftime('%H:%M') }} Uhr
+            {{ '\n' }}☕ Heute: {{ heute }} · Gesamt: {{ gesamt }}
+            {{ '\n' }}📦 Milchvorrat: {{ neuer_vorrat }} L
+            {%- if neuer_vorrat <= warnung %}
+            {{ '\n' }}⚠️ <b>Nachbestellen!</b> (≤ {{ warnung }} L)
+            {%- endif %}
     mode: single
 
   - alias: "Kaffee heute – Mitternachts-Reset"
