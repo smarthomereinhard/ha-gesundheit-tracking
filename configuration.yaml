@@ -87,13 +87,13 @@ shell_command:
 
 rest_command:
   medikament_sheets_log:
-    url: "https://script.google.com/macros/s/AKfycbz7XcIcQbdor1BuuIC5i6omM_NsXGYgq27NiLfGVXvaVR2Qn5oRdD83uwdSM9l5EEwq/exec"
+    url: "https://script.google.com/macros/s/AKfycbxhuyU7wUhUCcSecIJXYUsFWpoTBXt59HB12UGvVNdGItK77MPEX2_IhRYpH5JO6Ul4/exec"
     method: POST
     headers:
       Content-Type: application/json
     payload: '{"datum":"{{ datum }}","wochentag":"{{ wochentag }}","uhrzeit":"{{ uhrzeit }}","medikament":"{{ medikament }}","slot":"{{ slot }}","dosierung":"{{ dosierung }}","menge":"{{ menge }}"}'
   medikament_sheets_bestand:
-    url: "https://script.google.com/macros/s/AKfycbz7XcIcQbdor1BuuIC5i6omM_NsXGYgq27NiLfGVXvaVR2Qn5oRdD83uwdSM9l5EEwq/exec"
+    url: "https://script.google.com/macros/s/AKfycbxhuyU7wUhUCcSecIJXYUsFWpoTBXt59HB12UGvVNdGItK77MPEX2_IhRYpH5JO6Ul4/exec"
     method: POST
     headers:
       Content-Type: application/json

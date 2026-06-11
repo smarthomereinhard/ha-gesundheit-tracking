@@ -1,0 +1,201 @@
+# ==============================================
+# Blutdruck-Tracking: Visomat CSV → Google Sheets → HA
+# Ablauf: Apps Script liest Gmail-Anhang täglich 09:15,
+#         schreibt in Sheets, HA pollt Web App stündlich.
+# ==============================================
+
+input_button:
+  visomat_jetzt_abrufen:
+    name: "Visomat jetzt abrufen"
+    icon: mdi:cloud-download
+
+input_number:
+  visomat_systolisch:
+    name: "Visomat Systolisch"
+    min: 0
+    max: 300
+    step: 1
+    unit_of_measurement: "mmHg"
+    icon: mdi:gauge
+    mode: box
+  visomat_diastolisch:
+    name: "Visomat Diastolisch"
+    min: 0
+    max: 200
+    step: 1
+    unit_of_measurement: "mmHg"
+    icon: mdi:gauge-low
+    mode: box
+  visomat_puls:
+    name: "Visomat Puls"
+    min: 0
+    max: 250
+    step: 1
+    unit_of_measurement: "bpm"
+    icon: mdi:heart
+    mode: box
+
+input_text:
+  visomat_who_ampel:
+    name: "Visomat WHO-Ampel"
+    icon: mdi:traffic-light
+    max: 50
+  visomat_datum:
+    name: "Visomat Messdatum"
+    icon: mdi:calendar
+    max: 20
+  visomat_uhrzeit:
+    name: "Visomat Messzeit"
+    icon: mdi:clock-outline
+    max: 10
+
+input_boolean:
+  visomat_arrhythmie:
+    name: "Visomat Arrhythmie"
+    icon: mdi:heart-broken
+
+sensor:
+  - platform: rest
+    unique_id: visomat_aktuell
+    name: "visomat_aktuell"
+    resource: "https://script.google.com/macros/s/AKfycbxhuyU7wUhUCcSecIJXYUsFWpoTBXt59HB12UGvVNdGItK77MPEX2_IhRYpH5JO6Ul4/exec"
+    method: GET
+    scan_interval: 86400
+    timeout: 30
+    value_template: "{{ value_json.systolisch }}/{{ value_json.diastolisch }}"
+    json_attributes:
+      - systolisch
+      - diastolisch
+      - puls
+      - who_ampel
+      - arrhythmie
+      - datum
+      - uhrzeit
+
+template:
+  - sensor:
+      - name: "Visomat Blutdruck Status"
+        unique_id: visomat_blutdruck_status
+        icon: mdi:gauge
+        state: "{{ state_attr('sensor.visomat_aktuell', 'who_ampel') | default('Unbekannt') }}"
+        attributes:
+          farbe: >
+            {% set s = state_attr('sensor.visomat_aktuell', 'who_ampel') | default('') %}
+            {% if 'Grad 3' in s %}red
+            {% elif 'Grad 2' in s %}orange
+            {% elif 'Grad 1' in s %}yellow
+            {% elif 'Hochnormal' in s %}lime
+            {% else %}green{% endif %}
+
+automation:
+  - id: visomat_manuell_abrufen
+    alias: "Visomat – manuell abrufen"
+    trigger:
+      - platform: state
+        entity_id: input_button.visomat_jetzt_abrufen
+    action:
+      - service: homeassistant.update_entity
+        target:
+          entity_id: sensor.visomat_aktuell
+      - delay: "00:00:15"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.visomat_systolisch
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'systolisch') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.visomat_diastolisch
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'diastolisch') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.visomat_puls
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'puls') | int(0) }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.visomat_who_ampel
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'who_ampel') | default('') }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.visomat_datum
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'datum') | default('') }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.visomat_uhrzeit
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'uhrzeit') | default('') }}"
+    mode: single
+
+  - id: visomat_taeglich_aktualisieren
+    alias: "Visomat – täglich aktualisieren"
+    description: "09:30: Daten aus Google Sheets laden, Helfer aktualisieren, ggf. Alarm"
+    trigger:
+      - platform: time
+        at: "10:15:00"
+    action:
+      - service: homeassistant.update_entity
+        target:
+          entity_id: sensor.visomat_aktuell
+      - delay: "00:00:15"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.visomat_systolisch
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'systolisch') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.visomat_diastolisch
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'diastolisch') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.visomat_puls
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'puls') | int(0) }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.visomat_who_ampel
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'who_ampel') | default('') }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.visomat_datum
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'datum') | default('') }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.visomat_uhrzeit
+        data:
+          value: "{{ state_attr('sensor.visomat_aktuell', 'uhrzeit') | default('') }}"
+      - if:
+          - condition: template
+            value_template: "{{ state_attr('sensor.visomat_aktuell', 'arrhythmie') == 'Ja' }}"
+        then:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.visomat_arrhythmie
+        else:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.visomat_arrhythmie
+      - condition: template
+        value_template: >
+          {{ 'Grad 3' in (state_attr('sensor.visomat_aktuell', 'who_ampel') | default(''))
+             or state_attr('sensor.visomat_aktuell', 'arrhythmie') == 'Ja' }}
+      - service: telegram_bot.send_message
+        data:
+          chat_id: 988178587
+          parse_mode: html
+          message: >
+            🚨 <b>Blutdruck Warnung!</b>
+
+            📅 <b>{{ state_attr('sensor.visomat_aktuell', 'datum') }} {{ state_attr('sensor.visomat_aktuell', 'uhrzeit') }} Uhr</b>
+            💉 Blutdruck: <b>{{ state_attr('sensor.visomat_aktuell', 'systolisch') }}/{{ state_attr('sensor.visomat_aktuell', 'diastolisch') }} mmHg</b>
+            ❤️ Puls: <b>{{ state_attr('sensor.visomat_aktuell', 'puls') }} bpm</b>
+            📊 WHO-Ampel: <b>{{ state_attr('sensor.visomat_aktuell', 'who_ampel') }}</b>
+            ⚠️ Arrhythmie: <b>{{ state_attr('sensor.visomat_aktuell', 'arrhythmie') }}</b>
+    mode: single
