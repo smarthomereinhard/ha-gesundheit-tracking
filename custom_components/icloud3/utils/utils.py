@@ -42,9 +42,10 @@ def list_to_str(list_value, separator=None):
     separator - Strig valut that separates each item (default = ', ')
     '''
     if list_value == [] or list_value is None: return ''
+
     separator_str = separator if separator else ', '
-    if None in list_value or '' in list_value:
-        list_value = [lv for lv in list_value if lv is not None and lv != '']
+    list_value = [lv.strip() for lv in list_value if lv is not None and lv != '']
+
     list_str = separator_str.join(list_value) if list_value else 'None'
 
     if separator_str.startswith(CRLF):
@@ -91,6 +92,13 @@ def str_to_list(str_value):
     return str_value.split(',')
 
 #--------------------------------------------------------------------
+def set_to_list(set_value):
+    if set_value is None:
+        return []
+
+    return list(set_value)
+
+#--------------------------------------------------------------------
 def delete_from_list(list_value, item):
     if item in list_value:
         list_value.remove(item)
@@ -124,7 +132,22 @@ def dict_value_to_list(key_value_dict):
 
     return value_list
 
+#-------------------------------------------------------------------------------------------
+def dict_del(dict_item, main_key, sub_key=None):
+    '''
+    Remove an item from a dict_item. The dict_item can be:
+        Gb.dict[main_key]
+        Gb.dict[main_key][sub_key]
+    '''
 
+    if main_key not in dict_item:
+        return
+
+    if sub_key is not None:
+        dict_item = dict_item[main_key]
+        main_key = sub_key
+
+    dict_item.pop(main_key, None)
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
@@ -162,7 +185,7 @@ def isnot_statzone(zone):
     return (instr(zone, STATIONARY) is False)
 
 #--------------------------------------------------------------------
-def isnumber(string):
+def is_number(string):
 
     try:
         test_number = float(string)
@@ -171,6 +194,13 @@ def isnumber(string):
 
     except:
         return False
+
+#--------------------------------------------------------------------
+def yes_no(true_false):
+    if true_false:
+        return 'Yes'
+    else:
+        return 'No'
 
 #--------------------------------------------------------------------
 def isbetween(number, min_value, max_value):
@@ -190,6 +220,8 @@ def inlist(string, list_items):
 
 #--------------------------------------------------------------------
 def is_empty(list_dict_str):
+    if list_dict_str is None:
+        return True
     return not list_dict_str
 
 def isnot_empty(list_dict_str):
@@ -197,7 +229,7 @@ def isnot_empty(list_dict_str):
 
 #--------------------------------------------------------------------
 def round_to_zero(number):
-    if isnumber(number) is False:
+    if is_number(number) is False:
         return number
 
     int_number = int(number*100000000)
@@ -205,8 +237,6 @@ def round_to_zero(number):
         return 0.0
 
     return int_number/100000000
-    # if abs(value) < .00001: value = 0.0
-    # return round(value, 8)
 
 #--------------------------------------------------------------------
 def is_zone(zone):
@@ -236,6 +266,30 @@ def ordereddict_to_dict(odict_item):
         pass
 
     return dict_item
+
+#--------------------------------------------------------------------
+import hashlib
+
+def get_string_hash(input_string):
+    """
+    Generates a consistent SHA256 hash for a given input string.
+
+    Args:
+        input_string (str): The string to hash.
+
+    Returns:
+        str: The hexadecimal representation of the hash.
+    """
+    # Encode the string to bytes, which is required by hashlib
+    encoded_string = input_string.encode('utf-8')
+
+    # Create a new sha256 hash object
+    hash_object = hashlib.sha256(encoded_string)
+
+    # Get the hexadecimal representation of the hash
+    hex_dig = hash_object.hexdigest()
+
+    return hex_dig
 
 #--------------------------------------------------------------------
 def circle_letter(field):
@@ -298,7 +352,7 @@ def format_gps(latitude, longitude, accuracy, latitude_to=None, longitude_to=Non
     if longitude is None or latitude is None:
         gps_text = UNKNOWN
 
-    # elif Gb.display_gps_lat_long_flag is False:
+    # elif Gb.is_gps_lat_long_displayed is False:
     #     gps_text     = f"/±{accuracy:.0f}m"
 
     else:
@@ -329,12 +383,21 @@ def strip_lead_comma(text):
 
 #--------------------------------------------------------------------
 def username_id(username):
-    username_base = f"{username}@".split('@')[0]
+    if username == '':
+        return ''
 
-    if username_base in Gb.upw_filter_items:
-        return Gb.upw_filter_items[username_base]
+    _username_base = f"{username}@".split('@')[0]
+    _username_base = username_base(username)
+
+    if _username_base in Gb.upw_filter_items:
+        return Gb.upw_filter_items[_username_base]
     else:
-        return f"{username_base}@"
+        return f"{_username_base}@"
+
+#--------------------------------------------------------------------
+def username_base(username):
+    _username_base = f"{username}@".split('@')[0]
+    return f"{_username_base}@"
 
 #--------------------------------------------------------------------
 def format_cnt(desc, n):
@@ -354,7 +417,7 @@ def encode_password(password):
         Decoded password
     '''
     try:
-        if (password == '' or Gb.encode_password_flag is False):
+        if (password == '' or Gb.is_password_encoded is False):
             return password
 
         return f"««{base64_encode(password)}»»"
@@ -393,7 +456,7 @@ def decode_password(password):
     try:
         # If the password in the configuration file is not encoded (no '««' or '»»')
         # and it should be encoded, save the configuration file which will encode it
-        if (Gb.encode_password_flag
+        if (Gb.is_config_flow_open
                 and password != ''
                 and (password.startswith('««') is False
                     or password.endswith('»»') is False)):
@@ -416,14 +479,24 @@ def base64_decode(string):
     """
     Decode the string via base64 decoder
     """
-    # padding = 4 - (len(string) % 4)
-    # string = string + ("=" * padding)
-    # return base64.urlsafe_b64decode(string)
 
     base64_bytes = string.encode('ascii')
     string_bytes = base64.b64decode(base64_bytes)
     return string_bytes.decode('ascii')
 
+#--------------------------------------------------------------------
+def is_running_in_event_loop():
+    """
+    Checks if the current function is being executed within an asyncio event loop.
+    """
+    import asyncio
+    try:
+        asyncio.get_running_loop()
+        return True
+    except: # RuntimeError:
+        return False
+
+    return False
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #

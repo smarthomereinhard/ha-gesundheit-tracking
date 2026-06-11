@@ -15,11 +15,11 @@ from ..utils.time_util    import (datetime_now, time_now_secs, utcnow, s2t, date
 
 import json
 import logging
-
-from homeassistant.core             import (callback, )
-from homeassistant.helpers.event    import (async_track_point_in_time, )
-import homeassistant.util.dt    as dt_util
 from datetime                   import datetime, timedelta, timezone
+import homeassistant.util.dt    as dt_util
+from homeassistant.core             import (callback, )
+
+from homeassistant.helpers.event    import (track_point_in_time, )
 
 # _LOGGER = logging.getLogger(__name__)
 _LOGGER = logging.getLogger(f"icloud3")
@@ -29,6 +29,10 @@ _LOGGER = logging.getLogger(f"icloud3")
 #   .STORAGE/ICLOUD3.RESTORE_STATE FILE ROUTINES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+async def async_load_icloud3_restore_state_file():
+    return await Gb.hass.async_add_executor_job(load_icloud3_restore_state_file)
+
+
 def load_icloud3_restore_state_file():
 
     try:
@@ -55,7 +59,7 @@ def load_icloud3_restore_state_file():
 #--------------------------------------------------------------------
 def build_initial_restore_state_file_structure():
     '''
-    Create the initial data structure of the ic3 config file
+    Create the initial data structure of the ic3 restore state file
 
     |---profile
     |---devices
@@ -66,6 +70,10 @@ def build_initial_restore_state_file_structure():
                 |---actual sensor names & values
             |---warehouse
                 |---actual sensor names & values
+    |---sensor_entities
+        |----devices
+            |---base
+            |---from_zone
         .
         .
         .
@@ -85,7 +93,7 @@ def read_icloud3_restore_state_file():
     '''
     Read the config/.storage/.icloud3.restore_state file.
         - Extract the data into the Global Variables.
-        - Restoreeach device's sensors values
+        - Restore each device's sensors values
         - Reinitialize sensors that should not be restored
     '''
 
@@ -143,7 +151,7 @@ def write_icloud3_restore_state_file():
         Gb.restore_state_commit_time = time_now_secs() + 10
         Gb.restore_state_commit_cnt  = 0
 
-        async_track_point_in_time(Gb.hass,
+        track_point_in_time(Gb.hass,
                             _async_commit_icloud3_restore_state_file_changes,
                             datetime_plus(utcnow(), secs=10))
 

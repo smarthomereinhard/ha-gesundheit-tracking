@@ -17,12 +17,15 @@ set reject_attr = [ 'integration', 'icon', 'sensor_updated', 'friendly_name' ] %
 
 from ..global_variables import GlobalVariables as Gb
 from ..const            import (VERSION, VERSION_BETA, ICLOUD3, ICLOUD3_VERSION, DOMAIN, ICLOUD3_VERSION_MSG,
-                                DOT, ICLOUD3_ERROR_MSG, EVLOG_DEBUG, EVLOG_ERROR, EVLOG_INIT_HDR, EVLOG_MONITOR,
+                                ICLOUD3_ERROR_MSG, EVLOG_DEBUG, EVLOG_ERROR, EVLOG_ATTENTION, EVLOG_MONITOR,
                                 EVLOG_TIME_RECD, EVLOG_UPDATE_HDR, EVLOG_UPDATE_START, EVLOG_UPDATE_END,
-                                EVLOG_ALERT, EVLOG_WARNING, EVLOG_HIGHLIGHT, EVLOG_IC3_STARTING,EVLOG_IC3_STAGE_HDR,
+                                EVLOG_ALERT, EVLOG_WARNING, EVLOG_HIGHLIGHT, EVLOG_IC3_STAGE_HDR,
                                 ALERT_CRITICAL, ALERT_OTHER,
                                 IC3LOG_FILENAME, EVLOG_TIME_RECD, EVLOG_TRACE,
-                                CRLF, CRLF_DOT, NBSP, NBSP2, NBSP3, NBSP4, NBSP5, NBSP6, CRLF_INDENT, LINK,
+                                CRLF, CRLF_DOT, CRLF_HDOT,
+                                NL, NL3, NL4, NLSP4, NL3U, NL3D, NL3_DATA, NL4_DATA,
+                                NBSP, NBSP2, NBSP3, NBSP4, NBSP5, NBSP6,
+                                DOT, HDOT, CRLF_INDENT, LINK,
                                 DASH_50, DASH_DOTTED_50, TAB_11, RED_ALERT, RED_STOP, RED_CIRCLE, YELLOW_ALERT,
                                 DATETIME_FORMAT, DATETIME_ZERO,
                                 NEXT_UPDATE_TIME, INTERVAL,
@@ -30,7 +33,7 @@ from ..const            import (VERSION, VERSION_BETA, ICLOUD3, ICLOUD3_VERSION,
                                 CONF_APPLE_ACCOUNT,
                                 CONF_IC3_DEVICENAME, CONF_FNAME, CONF_LOG_LEVEL, CONF_PASSWORD, CONF_USERNAME,
                                 CONF_DEVICES, CONF_APPLE_ACCOUNTS,
-                                LATITUDE,  LONGITUDE, LOCATION_SOURCE, TRACKING_METHOD,
+                                LATITUDE,  LONGITUDE, LOCATION_SOURCE,
                                 ZONE, ZONE_DATETIME, INTO_ZONE_DATETIME, LAST_ZONE,
                                 TIMESTAMP, TIMESTAMP_SECS, TIMESTAMP_TIME, LOCATION_TIME, DATETIME, AGE,
                                 TRIGGER, BATTERY, BATTERY_LEVEL, BATTERY_STATUS,
@@ -45,22 +48,25 @@ from ..const            import (VERSION, VERSION_BETA, ICLOUD3, ICLOUD3_VERSION,
 from ..const_more_info      import more_info_text
 from .utils                 import (obscure_field, instr, is_empty, isnot_empty, list_add, list_del, )
 
+
 import homeassistant.util.dt   as dt_util
 from homeassistant.components  import persistent_notification
 
 import os
 import time
-from inspect                import getframeinfo, stack
+import inspect
 import traceback
 import logging
 
 DO_NOT_SHRINK     = ['url', 'accountName', ]
 FILTER_DATA_DICTS = ['items', 'userInfo', 'dsid', 'dsInfo', 'webservices', 'locations','location',
-                    'params', 'headers', 'kwargs', 'clientContext', 'identifiers', 'labels', ]
-FILTER_DATA_LISTS = ['devices', 'content', 'followers', 'following', 'contactDetails', 'protocols', 'trustTokens', ]
+                    'params', 'headers', 'kwargs', 'clientContext', 'identifiers', 'labels',
+                    'securityCode', 'trustedPhoneNumber', 'devices']
+FILTER_DATA_LISTS = ['devices', 'content', 'followers', 'following', 'contactDetails', 'protocols', 'trustTokens',
+                    'keyNames', 'trustedPhoneNumbers', ]
 FILTER_FIELDS = [
         ICLOUD3_VERSION, AUTHENTICATED,
-        LATITUDE,  LONGITUDE, LOCATION_SOURCE, TRACKING_METHOD,
+        LATITUDE,  LONGITUDE, LOCATION_SOURCE,
         ZONE, ZONE_DATETIME, INTO_ZONE_DATETIME, LAST_ZONE,
         TIMESTAMP, TIMESTAMP_SECS, TIMESTAMP_TIME, LOCATION_TIME, DATETIME, AGE,
         TRIGGER, BATTERY, BATTERY_LEVEL, BATTERY_STATUS,
@@ -77,20 +83,26 @@ FILTER_FIELDS = [
         'deviceStatus', 'batteryStatus', 'batteryLevel', 'membersInfo',
         'deviceModel', 'rawDeviceModel', 'deviceDisplayName', 'modelDisplayName', 'deviceClass',
         'isOld', 'isInaccurate', 'timeStamp', 'altitude', 'location', 'latitude', 'longitude',
-        'horizontalAccuracy', 'verticalAccuracy',
+        'horizontalAccuracy', 'verticalAccuracy', 'positionType',
         'hsaVersion', 'hsaEnabled', 'hsaTrustedBrowser', 'hsaChallengeRequired',
         'locale', 'appleIdEntries', 'statusCode',
         'familyEligible', 'findme', 'requestInfo',
+        'XXX-termsUpdateNeeded', 'iCloudTerms', 'version',
         'invitationSentToEmail', 'invitationAcceptedByEmail', 'invitationFromHandles',
         'invitationFromEmail', 'invitationAcceptedHandles',
         'items', 'userInfo', 'prsId', 'dsid', 'dsInfo', 'webservices', 'locations', 'dslang',
         'devices', 'content', 'followers', 'following', 'contactDetails', 'countryCode',
         'dsWebAuthToken', 'accountCountryCode', 'extended_login', 'trustToken', 'trustTokens',
         'data', 'json', 'headers', 'params', 'url', 'retry_cnt', 'retried', 'retry', '#',
-        'code', 'ok', 'method', 'securityCode', 'fmly', 'shouldLocate', 'selectedDevice',
-        'accountName', 'salt', 'a', 'b', 'c', 'm1', 'm2', 'protocols', 'iteration', 'Authorization',
-        'X-Apple-OAuth-State', 'X-Apple-ID-Session-Id', 'Accept',
-         'identifiers', 'labels', 'model', 'name_by_user', 'area_id', 'manufacturer', 'sw_version', ]
+        'code', 'ok', 'method', 'fmly', 'shouldLocate', 'selectedDevice', 'membersInfo',
+        'X-Apple-OAuth-State', 'X-Apple-ID-Session-Id', 'Accept', 'Authorization',
+        'identifiers', 'labels', 'model', 'name_by_user', 'area_id', 'manufacturer', 'sw_version',
+        'keyNames', 'securityCode', 'trustedPhoneNumbers', 'trustedPhoneNumber',
+        'deviceType', 'areaCode', 'phoneNumber', 'deviceId',
+        'authenticationType', 'pushSupported',
+        'username', 'password', 'accountName', 'salt', 'protocols', 'protocol', 'iteration',
+        'a', 'A', 'b', 'B', 'c', 'm1', 'M1', 'm2', 'M2', 'g', 'K', 'N', 'u', 'v',
+        ]
 FILTER_OUT = [
     'features', 'BTR', 'LLC', 'CLK', 'TEU', 'SND', 'ALS', 'CLT', 'PRM', 'SVP', 'SPN', 'XRM', 'NWF', 'CWP',
     'MSG', 'LOC', 'LME', 'LMG', 'LYU', 'LKL', 'LST', 'LKM', 'WMG', 'SCA', 'PSS', 'EAL', 'LAE', 'PIN',
@@ -98,7 +110,6 @@ FILTER_OUT = [
     'rm2State', 'pendingRemoveUntilTS', 'repairReadyExpireTS', 'repairReady', 'lostModeCapable', 'wipedTimestamp',
     'encodedDeviceId', 'scdPh', 'locationCapable', 'trackingInfo', 'nwd', 'remoteWipe', 'canWipeAfterLock', 'baUUID',
     'snd', 'continueButtonTitle', 'alertText', 'cancelButtonTitle', 'createTimestamp',  'alertTitle', ]
-
 
 SP_str = ' '*50
 SP_dict = {
@@ -125,6 +136,8 @@ def SP(space_cnt):
     if space_cnt < len(SP_str): return SP_str[1:space_cnt]
     return ' '*space_cnt
 
+log_field = ''
+
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
 #   MISCELLANEOUS MESSAGING ROUTINES
@@ -134,6 +147,9 @@ def broadcast_info_msg(info_msg):
     '''
     Display a message in the info sensor for all devices
     '''
+    return
+
+
     if INFO not in Gb.conf_sensors['device']:
         return
 
@@ -180,9 +196,11 @@ def post_event(devicename_or_Device, event_msg='+'):
     if len(event_msg) <= 3:
         return
 
-    elif event_msg[0:2] in [EVLOG_ALERT, EVLOG_ERROR, EVLOG_WARNING]:
+    event_msg = filter_special_chars(event_msg)
+    if devicename: devicename += ' > '
+    if event_msg[0:2] in [EVLOG_ALERT, EVLOG_ERROR, EVLOG_WARNING]:
         alert_type = event_msg[0:2]
-        event_msg = (f"{devicename} > {str(event_msg)}")
+        event_msg = (f"{devicename}{str(event_msg)}")
         if alert_type == EVLOG_ALERT:
             log_warning_msg(event_msg)
         elif alert_type == EVLOG_ERROR:
@@ -194,12 +212,22 @@ def post_event(devicename_or_Device, event_msg='+'):
         pass
 
     elif event_msg.startswith('^') is False:
-        event_msg = (f"{devicename} > {str(event_msg)}")
+        event_msg = (f"{devicename}{str(event_msg)}")
         log_info_msg(event_msg)
 
     elif event_msg.startswith(EVLOG_TIME_RECD) is False:
-        event_msg = (f"{devicename} > {str(event_msg)}")
+        event_msg = (f"{devicename}{str(event_msg)}")
         log_debug_msg(event_msg)
+
+#--------------------------------------------------------------------
+def post_alert(devicename_or_Device, event_msg="+"):
+    '''
+    Display Alert message (red on yellow background) in the Event Log
+    '''
+    devicename, event_msg = _resolve_devicename_log_msg(devicename_or_Device, event_msg)
+    evlog_alert = '' if instr(event_msg, EVLOG_ALERT) else EVLOG_ALERT
+
+    return post_event(devicename, f"{evlog_alert}{event_msg}")
 
 #--------------------------------------------------------------------
 def post_error_msg(devicename_or_Device, event_msg="+"):
@@ -235,7 +263,7 @@ def refresh_event_log(devicename='', show_one_screen=False):
     Gb.EvLog.update_event_log_display(devicename='', show_one_screen=False)
 
 #-------------------------------------------------------------------------------------------
-def post_evlog_greenbar_msg(Device, evlog_greenbar_msg='+'):
+def post_greenbar_msg(Device_or_greenbar_msg, greenbar_msg='+'):
     '''
     Post an Alert Message on the first line of the event log items
 
@@ -243,70 +271,75 @@ def post_evlog_greenbar_msg(Device, evlog_greenbar_msg='+'):
         Device:
             If specified, display msg on this Device's EvLog screen only
             If not specified, display on all screens
-        evlog_greenbar_msg:
+        greenbar_msg:
             Message to display -
     '''
-    if evlog_greenbar_msg == '':
-        return Gb.EvLog.clear_evlog_greenbar_msg()
-
     # See if the message is really in the Device parameter
-    if evlog_greenbar_msg == '+':
-        evlog_greenbar_msg = Device
+    if greenbar_msg == '+':
+        greenbar_msg = Device_or_greenbar_msg
+        Device = None
+        devicename_msg = ''
+    else:
+        Device = Device_or_greenbar_msg
+        devicename_msg = f"{Device.fname}, "
+
+    if greenbar_msg == '':
+        return Gb.EvLog.clear_greenbar_msg()
 
     # Device was specified, check to see if this is the screen displayed
-    else:
+    if Device:
         fname = Device.fname if Device.is_tracked else f"{Device.fname} 🅜"
         if Gb.EvLog.evlog_attrs["fname"] != fname:
             return
 
-    if Gb.EvLog.greenbar_alert_msg == evlog_greenbar_msg:
+    # if greenbar_msg.startswith('Internet Error') is False:
+    #     log_debug_msg(f"GreenbarMsg > {devicename_msg}{greenbar_msg}")
+
+    if Gb.EvLog.greenbar_alert_msg == greenbar_msg:
         return
 
     else:
-        Gb.EvLog.greenbar_alert_msg = evlog_greenbar_msg
+        Gb.EvLog.greenbar_alert_msg = greenbar_msg
         Gb.EvLog.display_user_message(Gb.EvLog.user_message)
 
 #-------------------------------------------------------------------------------------------
-def clear_evlog_greenbar_msg():
-    Gb.EvLog.clear_evlog_greenbar_msg()
+def clear_greenbar_msg():
+    Gb.EvLog.clear_greenbar_msg()
     Gb.EvLog.display_user_message(Gb.EvLog.user_message)
 
 #-------------------------------------------------------------------------------------------
-def post_alert(type=None, alert_msg=None, update_sensor=False, replace_alert_msg=False):
+def update_alert_sensor(type_or_key=None, alert_msg=None, update_sensor=False, replace_alert_msg=False):
     '''
     Update the Gb.alerts_sensor_attrs dictionary
     Critical alerts (ALERT_CRITICAL) will replace any previous critical alerts instead of appending it
 
     Type: Attribute to add or update
     '''
-
-    if type is None and alert_msg is None:
+    if type_or_key is None and alert_msg is None:
         Gb.AlertsSensor.async_update_sensor()
         return
 
-    if type is None:
-        type = ALERT_OTHER
+    if type_or_key is None:
+        type_or_key = ALERT_OTHER
 
     update_sensor = False
 
     # Clear this message
     if alert_msg == '':
-        Gb.alerts_sensor_attrs.pop(type, None)
+        Gb.alerts_sensor_attrs.pop(type_or_key, None)
         update_sensor = True
 
     # Not critical alert - Only keep first alert for acct or device
-    elif (type != ALERT_CRITICAL
-            and type in Gb.alerts_sensor_attrs):
+    elif (type_or_key != ALERT_CRITICAL
+            and type_or_key in Gb.alerts_sensor_attrs
+            and replace_alert_msg is False):
         return
 
     # Add the alert
     else:
-        if type in Gb.alerts_sensor_attrs:
-            alert_msg = f"{Gb.alerts_sensor_attrs[type]}; {alert_msg}"
-        else:
-            Gb.alerts_sensor_attrs[type] = alert_msg
+        Gb.alerts_sensor_attrs[type_or_key] = alert_msg
 
-        if Gb.start_icloud3_inprocess_flag is False or update_sensor:
+        if Gb.is_icloud3_startup_inprocess is False or update_sensor:
             update_sensor = True
 
     # Rebuild list so importing alerts are at the top
@@ -316,7 +349,6 @@ def post_alert(type=None, alert_msg=None, update_sensor=False, replace_alert_msg
         new_alerts_sensor_attrs.update(
             {_source: _msg  for _source, _msg in Gb.alerts_sensor_attrs.items()
                             if _source == ALERT_CRITICAL})
-
 
         # Apple Acct alerts (-source will be the filter value, change it back to the real value)
         new_alerts_sensor_attrs.update(
@@ -379,40 +411,58 @@ def more_info(key):
 #   ICLOUD3-DEBUG.LOG FILE ROUTINES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def open_ic3log_file_init():
+async def async_open_ic3log_file_init():
     '''
     Entry point for async_add_executor_job in __init__.py
+
+    Open log file in append mode (new_log_file=False.
+    Close and reopen the log file after the Configuration file has been read in __init__/config_file
     '''
-    open_ic3log_file(new_log_file=Gb.log_debug_flag)
+    new_log_file = True
+    await Gb.hass.async_add_executor_job(open_ic3log_file, new_log_file)
 
 #------------------------------------------------------------------------------
 def open_ic3log_file(new_log_file=False):
 
     # Items will be logged to home-assistane.log until the configuration file has been read
-    if is_empty(Gb.conf_general):
-        return
+    # if is_empty(Gb.conf_general):
+    #     return
 
-    ic3logger_file = Gb.hass.config.path(IC3LOG_FILENAME)
-    filemode = 'w' if new_log_file else 'a'
+    try:
+        ic3logger_file = Gb.hass.config.path(IC3LOG_FILENAME)
+        filemode = 'w' if new_log_file else 'a'
+        filemode = 'a' if Gb.was_icloud3_reloaded else filemode
 
-    if Gb.iC3Logger is None or new_log_file:
-        Gb.iC3Logger = logging.getLogger(DOMAIN)
-        Gb.iC3Logger.setLevel(logging.INFO)
 
-        handler   = logging.FileHandler(ic3logger_file, mode=filemode, encoding='utf-8')
-        formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%m-%d %H:%M:%S')
-        handler.setFormatter(formatter)
-        handler.addFilter(LoggerFilter)
+        if Gb.iC3Logger is None or new_log_file:
+            Gb.iC3Logger = logging.getLogger(DOMAIN)
+            Gb.iC3Logger.setLevel(logging.INFO)
 
-        Gb.iC3Logger.addHandler(handler)
+            handler   = logging.FileHandler(ic3logger_file, mode=filemode, encoding='utf-8')
+            formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%m-%d %H:%M:%S')
+            handler.setFormatter(formatter)
+            handler.addFilter(LoggerFilter)
 
-    if isnot_empty(Gb.conf_general):
-        Gb.iC3Logger.propagate = (Gb.conf_general[CONF_LOG_LEVEL] == 'debug-ha')
+            Gb.iC3Logger.addHandler(handler)
+
+        if isnot_empty(Gb.conf_general):
+            Gb.iC3Logger.propagate = (Gb.conf_general[CONF_LOG_LEVEL] == 'debug-ha')
+
+        if is_empty(Gb.conf_general):
+            write_ic3log_recd(f"Loading {ICLOUD3_VERSION_MSG}")
+
+        write_ic3log_recd(f"Open iCloud3 Log File ({IC3LOG_FILENAME})")
+
+    except Exception as err:
+        log_exception(err)
 
 #--------------------------------------------------------------------
-def close_ic3_log_file():
-    Gb.iC3Logger.removeHandler(Gb.iC3Logger.handlers[0])
-    # Gb.iC3Logger.flush()
+def close_ic3log_file():
+
+    if Gb.iC3Logger:
+        write_ic3log_recd(f"Close iCloud3 Log File  ({IC3LOG_FILENAME})")
+        Gb.iC3Logger.removeHandler(Gb.iC3Logger.handlers[0])
+        # Gb.iC3Logger.flush()
 
 #--------------------------------------------------------------------
 def write_ic3log_recd(log_msg):
@@ -423,11 +473,6 @@ def write_ic3log_recd(log_msg):
     '''
     try:
         if Gb.iC3Logger is None:
-            Gb.HALogger.info(log_msg)
-            return
-
-        if is_empty(Gb.conf_general):
-            Gb.prestartup_log += f"\n{dt_util.now().strftime(DATETIME_FORMAT)[5:19]} {log_msg}"
             return
 
         time_now_msecs = time.time()
@@ -460,7 +505,7 @@ def check_ic3log_file_exists(ic3logger_file):
             Gb.iC3Logger.removeHandler(Gb.iC3Logger.handlers[0])
             open_ic3log_file(new_log_file=True)
 
-            log_msg = f"{EVLOG_IC3_STARTING}Recreated iCloud3 Log File: {ic3logger_file}"
+            log_msg = f"{EVLOG_ALERT}Recreated iCloud3 Log File: {ic3logger_file}"
             log_msg = f"{format_startup_header_box(log_msg, 20)}"
             log_msg = log_msg.replace('⡇', '⛔')
             Gb.iC3Logger.info(log_msg)
@@ -481,11 +526,13 @@ def archive_ic3log_file():
     Remove icloud-2.log,
     rename icloud3-1.log to icloud3_2.log,
     rename icloud3-0.log to icloud3-1.log
+
+    CAN NOT USE FILE_IO ROUTINES BECAUSE OF IMPORT ERRORS
     '''
     try:
         log_file_0 = Gb.hass.config.path(IC3LOG_FILENAME)
-        log_file_1 = f"{Gb.hass.config.path(IC3LOG_FILENAME)}.1"    #.replace('.', '-1.')
-        log_file_2 = f"{Gb.hass.config.path(IC3LOG_FILENAME)}.2"    #.replace('.', '-2.')
+        log_file_1 = f"{Gb.hass.config.path(IC3LOG_FILENAME)}-1.log"
+        log_file_2 = f"{Gb.hass.config.path(IC3LOG_FILENAME)}-2.log"
 
         post_event(f"{ICLOUD3} Log File Archived")
 
@@ -498,6 +545,13 @@ def archive_ic3log_file():
 
         open_ic3log_file(new_log_file=True)
 
+        # Delete log files with old name
+        try:
+            os.remove(f"{Gb.hass.config.path(IC3LOG_FILENAME)}.1")
+            os.remove(f"{Gb.hass.config.path(IC3LOG_FILENAME)}.2")
+        except Exception as err:
+            pass
+
     except Exception as err:
         post_event(f"{ICLOUD3} Log File Archive encountered an error > {err}")
 
@@ -508,44 +562,42 @@ def write_config_file_to_ic3log():
         write_ic3log_recd(f"{Gb.prestartup_log}")
         Gb.prestartup_log = ''
 
-    conf_tracking_recd = Gb.conf_tracking.copy()
-    # conf_tracking_recd[CONF_PASSWORD] = obscure_field(conf_tracking_recd[CONF_PASSWORD])
-    # conf_tracking_recd[CONF_APPLE_ACCOUNTS] = len(Gb.conf_apple_accounts)
-    # conf_tracking_recd[CONF_DEVICES] = len(Gb.conf_devices)
+    _conf_tracking = Gb.conf_tracking.copy()
+    _conf_tracking.pop('devices', None)
+    _conf_tracking.pop('apple_accounts', None)
 
     Gb.trace_prefix = '_INIT_'
-    indent = SP(44) if Gb.log_debug_flag else SP(26)
-    log_msg = ( f"{ICLOUD3_VERSION_MSG}, "
-                f"{dt_util.now().strftime('%A')}, "
-                f"{dt_util.now().strftime(DATETIME_FORMAT)[:19]}")
-    log_msg = ( f" \n"
-                f"{indent}⛔{DASH_50}\n"
-                f"{indent}⛔    {log_msg}\n"
-                f"{indent}⛔{DASH_50}")
+    indent = SP(37) if Gb.is_log_level_debug else SP(18)
+    log_msg = ( f"iCloud3 Configuration File, {ICLOUD3_VERSION_MSG}")
+    log_msg = ( f"{NL4}⛔{DASH_50}{DASH_50}"
+                f"{NL4}⛔    {log_msg}"
+                f"{NL4}⛔{DASH_50}{DASH_50}")
 
-    Gb.iC3Logger.info(log_msg)
+    # Gb.iC3Logger.info(log_msg)
 
     # Write the ic3 configuration (general & devices) to the Log file
-    log_info_msg(f"PROFILE:\n"
-                f"{indent} {Gb.conf_profile}")
-    log_info_msg("")
-    log_info_msg(f"GENERAL CONFIGURAION:\n"
-                f"{indent} {Gb.conf_general}\n"
-                f"{indent} {Gb.ha_location_info}")
-    log_info_msg("")
-    log_info_msg(f"TRACKING:\n"
-                f"{indent} {conf_tracking_recd}")
+    log_msg  += (f""
+                f"{NLSP4}PROFILE:"
+                f"{NLSP4}{Gb.conf_profile}"
+                f"{NLSP4}TRACKING:"
+                f"{NLSP4}{_conf_tracking}"
+                f"{NLSP4}GENERAL CONFIGURAION:"
+                f"{NLSP4}{Gb.conf_general}"
+                f"{NLSP4}{Gb.ha_location_info}"
+                f"{NLSP4}SENSORS:"
+                f"{NLSP4}{Gb.conf_sensors}"
+                f"{NLSP4}DEVICE SENSORS:"
+                f"{NLSP4}{Gb.conf_device_sensors}")
 
-    log_info_msg("")
     for conf_apple_accounts in Gb.conf_apple_accounts:
-        log_info_msg(   f"APPLE ACCOUNTS: {conf_apple_accounts.get(CONF_USERNAME)}:\n"
-                        f"{indent} {conf_apple_accounts}")
+        log_msg += (f"{NLSP4}APPLE ACCOUNT: {conf_apple_accounts.get(CONF_USERNAME)}:"
+                    f"{NLSP4}{conf_apple_accounts}")
 
-    log_info_msg("")
     for conf_device in Gb.conf_devices:
-        log_info_msg(   f"DEVICE: {conf_device[CONF_FNAME]}, {conf_device[CONF_IC3_DEVICENAME]}:\n"
-                        f"{indent} {conf_device}")
-    log_info_msg("")
+        log_msg += (f"{NLSP4}DEVICE: {conf_device[CONF_IC3_DEVICENAME]}, {conf_device[CONF_FNAME]}:"
+                    f"{NLSP4}{conf_device}")
+    log_msg += f"{NLSP4}{DASH_50}{DASH_50}"
+    log_info_msg(log_msg)
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
@@ -574,14 +626,10 @@ def log_info_msg(module_name, log_msg='+'):
     log_msg = format_msg_line(log_msg)
     write_ic3log_recd(log_msg)
 
-    log_msg = log_msg.replace(' > +', f" > ……\n{SP(22)}+")
-    Gb.HALogger.debug(log_msg)
-
 #--------------------------------------------------------------------
 def log_warning_msg(module_name, log_msg='+'):
 
     log_msg = _resolve_module_name_log_msg(module_name, log_msg)
-    log_msg = filter_special_chars(log_msg)
     Gb.HALogger.warning(log_msg)
 
     log_msg = format_msg_line(log_msg)
@@ -591,7 +639,6 @@ def log_warning_msg(module_name, log_msg='+'):
 def log_error_msg(module_name, log_msg='+'):
 
     log_msg = _resolve_module_name_log_msg(module_name, log_msg)
-    log_msg = filter_special_chars(log_msg)
     Gb.HALogger.error(log_msg)
 
     log_msg = format_msg_line(log_msg)
@@ -610,20 +657,18 @@ def log_exception(err):
 #--------------------------------------------------------------------
 def log_debug_msg(devicename_or_Device, log_msg='+', msg_prefix=None):
 
-    if Gb.log_debug_flag is False: return
-    if devicename_or_Device and log_msg == '': return
+    if Gb.is_log_level_debug is False or Gb.iC3Logger is None:
+        return
+    if devicename_or_Device and log_msg == '':
+        return
 
     devicename, log_msg = _resolve_devicename_log_msg(devicename_or_Device, log_msg)
 
-    dn_str = '' if devicename == '*' else f"{devicename} > "
-    log_msg = f"{dn_str}{str(log_msg)}"
-    # log_msg = f"{dn_str}{str(log_msg).replace(CRLF, ', ')}"
+    if devicename: devicename = f"{devicename} > "
+    log_msg = f"{devicename}{str(log_msg)}"
     log_msg = format_msg_line(log_msg)
 
     write_ic3log_recd(log_msg)
-
-    log_msg = log_msg.replace(' > +', f" > ……\n{SP(22)}+")
-    Gb.HALogger.debug(log_msg)
 
 #--------------------------------------------------------------------
 def log_start_finish_update_banner(start_finish, devicename,
@@ -633,11 +678,59 @@ def log_start_finish_update_banner(start_finish, devicename,
     device update cycle
     '''
     # The devicename may be the 'appleacct~devicename'
-    # if instr(devicename, '~'): devicename = devicename.split('~')[1]
-    # Device = Gb.Devices_by_devicename[devicename]
     text  = (f"{devicename}, {method}, {update_reason} ")
-    log_msg = format_header_box(text, indent=43, start_finish=start_finish)
+    log_msg = format_header_box(text, start_finish=start_finish)
 
+    log_info_msg(log_msg)
+
+#--------------------------------------------------------------------
+def log_banner(start_finish, msg):
+
+    sf_char =   '🔻' if start_finish == 'start' else \
+                '🔺' if start_finish == 'finish' else \
+                '🔶'
+    log_info_msg(f"{NL3}{sf_char}{'═'*40}{sf_char}  {msg.upper()}  {sf_char}{'═'*40}{sf_char}")
+
+#--------------------------------------------------------------------
+def log_stack(hdr_msg=None, return_function=False, return_cnt=0):
+    '''
+    (frame=<frame at 0x7f16894c1c60, file '/usr/src/homeassistant/homeassistant/config_entries.py',
+    line 2595, code <genexpr>>, filename='/usr/src/homeassistant/homeassistant/config_entries.py',
+    lineno=2595, function='<genexpr>', code_context=['                create_eager_task(\n'],
+    index=0, positions=Positions(lineno=2595, end_lineno=2602, col_offset=16, end_col_offset=17))
+    '''
+    cnt = -1
+    stack_frames = inspect.stack()
+    hdr_msg = hdr_msg if hdr_msg else ''
+    log_msg = ''
+
+    for frame_recd in stack_frames[1:]:
+        cnt += 1
+        if cnt > 30:
+            break
+
+        filename = frame_recd.filename
+
+        if filename.startswith('/usr/local/lib/python'):
+            break
+
+        # Return function name if this is 1 above the fct that called log_stack
+        if return_function and cnt == 1:
+            return frame_recd.function
+
+        filename = filename.replace('/usr/src/homeassistant/homeassistant', 'ha')
+        filename = filename.replace('/config/custom_components/icloud3', 'ic3')
+
+        log_msg += (f"{NL4}{SP(5)}{DOT}{filename}, {frame_recd.lineno}, {frame_recd.function}, ")
+
+        if return_cnt == 0:
+            if cnt > 0:
+                code = frame_recd.code_context[0].replace('\n', '').strip()
+                log_msg += f"{NL4}{SP(9)}{[code]}"
+        elif return_cnt == cnt:
+            return log_msg
+
+    log_msg = f"{NL4}🟩 LOG STACK: {hdr_msg}{log_msg}"
     log_info_msg(log_msg)
 
 
@@ -647,25 +740,28 @@ def log_start_finish_update_banner(start_finish, devicename,
 #   LOG MESSAGE SUPPORT ROUTINES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def format_msg_line(log_msg, area=None):
+def format_msg_line(log_msg):
     try:
         if type(log_msg) is str is False:
             return log_msg
 
         msg_prefix= ' ' if log_msg.startswith('⡇') else \
-                    '\n🔺 ' if instr(log_msg, 'REQUEST') else \
-                    '\n🔻 ' if instr(log_msg, 'RESPONSE') else \
-                    '\n❗' if instr(log_msg, 'ICLOUD DATA') else \
+                    ''  if log_msg.startswith(NL) else \
+                    NL3U if instr(log_msg, 'REQUEST') else \
+                    NL3D if instr(log_msg, 'RESPONSE') else \
+                    NL3D if instr(log_msg, 'HDR') else \
+                    NL3_DATA if instr(log_msg, 'DATA') else \
                     ' ⡇ ' if Gb.trace_group else \
-                    '  '
-        program_area =  f"{RED_STOP}    "  if instr(log_msg, EVLOG_ALERT) else \
-                        f"{RED_ALERT}    " if instr(log_msg, EVLOG_ERROR) else \
-                        area               if area else \
-                        Gb.trace_prefix
+                    ' '
 
-        source  = f"{_called_from()}{program_area}"
+        program_area = ''
+
+        if instr(msg_prefix, '\n'):
+            source = f"{_called_from_history()}"
+        else:
+            source  = f"{_called_from()}{program_area}"
+
         log_msg = format_startup_header_box(log_msg)
-        log_msg = filter_special_chars(log_msg)
         log_msg = f"{source}{msg_prefix}{log_msg}"
 
     except:
@@ -678,10 +774,9 @@ def filter_special_chars(log_msg, evlog_export=False):
     '''
     Filter out EVLOG_XXX control fields
     '''
-
-    indent =SP(16) if evlog_export else \
-            SP(48) if Gb.log_debug_flag else \
-            SP(28)
+    indent =SP(9) if evlog_export else \
+            SP(37) if Gb.is_log_level_debug else \
+            SP(17)
     if log_msg.startswith('^'): log_msg = log_msg[3:]
 
     log_msg = log_msg.replace(EVLOG_MONITOR, '')
@@ -692,7 +787,7 @@ def filter_special_chars(log_msg, evlog_export=False):
     log_msg = log_msg.replace(NBSP5, ' ')
     log_msg = log_msg.replace(NBSP6, ' ')
     log_msg = log_msg.strip()
-    log_msg = log_msg.replace(CRLF, f"\n{indent}")
+    log_msg = log_msg.replace(CRLF, f"\n⠂{indent}")
     log_msg = log_msg.replace('◦', f"   ◦")
     log_msg = log_msg.replace('* >', '')
     log_msg = log_msg.replace('&lt;', '<')
@@ -706,9 +801,9 @@ def filter_special_chars(log_msg, evlog_export=False):
     log_msg = log_msg.replace(EVLOG_ERROR, '')
     log_msg = log_msg.replace(EVLOG_ALERT, '')
     log_msg = log_msg.replace(EVLOG_WARNING, '')
-    log_msg = log_msg.replace(EVLOG_INIT_HDR, '')
+    log_msg = log_msg.replace(EVLOG_ATTENTION, '')
     log_msg = log_msg.replace(EVLOG_HIGHLIGHT, '')
-    log_msg = log_msg.replace(EVLOG_IC3_STARTING, '')
+    log_msg = log_msg.replace(EVLOG_ATTENTION, '')
     log_msg = log_msg.replace(EVLOG_IC3_STAGE_HDR, '')
 
     log_msg = log_msg.replace('^1^', '').replace('^2^', '').replace('^3^', '')
@@ -728,8 +823,8 @@ def format_startup_header_box(log_msg):
         return log_msg
 
     hdr_code = log_msg[p:p+3]
-    log_msg = log_msg[:p] + log_msg[p+3:]
-    if hdr_code in [EVLOG_IC3_STARTING, EVLOG_IC3_STAGE_HDR]:
+    if hdr_code in [EVLOG_ATTENTION, EVLOG_IC3_STAGE_HDR]:
+        log_msg = log_msg[:p] + log_msg[p+3:]
         log_msg = format_header_box(log_msg)
 
     return log_msg
@@ -742,30 +837,30 @@ def format_header_box(log_msg, indent=None, start_finish=None, evlog_export=Fals
     start_pos = log_msg.find('^')
     if start_pos == -1: start_pos = 0
 
-    # Default indent for icloud3-0.log file is 43
-    if indent is None: indent = 44
+    indent = indent if indent is not None else 36 if Gb.is_log_level_debug else 16
 
     top_char = bot_char = DASH_50
     if start_finish == 'start':
-        bot_char = f"{'⠂'*37}"
+        bot_char = f"{'⠂'*20}"
         Gb.trace_group = True
     elif start_finish == 'finish':
-        top_char = f"{'⠂'*37}"
+        top_char = f"{'⠂'*20}"
         Gb.trace_group = False
 
-    return (f"⡇{top_char}\n"
-            f"{SP(indent)}⡇{SP(4)}{log_msg[start_pos:].upper()}\n"
-            f"{SP(indent)}⡇{bot_char}")
+    return (f"⡇{top_char}"
+            f"\n.{SP(indent)}⡇{SP(4)}{log_msg[start_pos:].upper()}"
+            f"\n.{SP(indent)}⡇{bot_char}")
 
 #-------------------------------------------------------------------------------------------
 def _resolve_devicename_log_msg(devicename_or_Device, event_msg):
+    if devicename_or_Device == '*': devicename_or_Device = ''
     if event_msg == '+':
-        return ("*", devicename_or_Device)
+        return ('', devicename_or_Device)
     if devicename_or_Device in Gb.Devices:
         return devicename_or_Device.devicename, event_msg
     if devicename_or_Device in Gb.Devices_by_devicename:
         return devicename_or_Device, event_msg
-    return ('*', event_msg)
+    return ('', event_msg)
 
 #--------------------------------------------------------------------
 def _resolve_module_name_log_msg(module_name, log_msg):
@@ -782,12 +877,13 @@ def _resolve_module_name_log_msg(module_name, log_msg):
 #   RAWDATA LOGGING ROUTINES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def log_data_unfiltered(title, rawdata, data_source=None, filter_id=None):
+def log_data_unfiltered(_hdr, rawdata, data_source=None, filter_id=None):
     try:
         rawdata_copy = rawdata['raw'].copy() if 'raw' in rawdata else rawdata.copy()
+        rawdata_copy = _set_validpw_invalidpw_text(rawdata_copy)
 
     except:
-        log_info_msg(f"__ {title.upper()}\n{rawdata}")
+        log_info_msg(f"{_hdr.upper()}{NL3_DATA}{rawdata}")
         return
 
     devices_data = {}
@@ -798,15 +894,72 @@ def log_data_unfiltered(title, rawdata, data_source=None, filter_id=None):
 
         rawdata_copy['content'] = 'DeviceData……'
 
-    log_info_msg(f"__ {title.upper()}\n{rawdata_copy}")
+    # Cycle thru rawdata items and create log line for each dict item
+    # Add dict items to rawdata_items list, save others and add at end
+    if type(rawdata_copy) is dict:
+        rawdata_items = ''
+        rawdata_non_dict_items = {}
+        for k, v in rawdata_copy.items():
+            if type(k) is dict:
+                d = {k: v}
+                rawdata_items += f"{NL3_DATA}{d}"
+            else:
+                rawdata_non_dict_items[k] = v
+        rawdata_items += f"{NL3_DATA}{rawdata_non_dict_items}"
+
+    else:
+        rawdata_items = f"{NL3_DATA}{rawdata_copy}"
+
+    log_info_msg(f"{_hdr.upper()}{rawdata_items}")
+
 
     for device_data in devices_data:
-        log_msg = ( f"iCloud PyiCloud Data (unfiltered -- "
+        log_msg = ( f"iCloud AppleAcct Data (unfiltered -- "
                     f"{device_data}")
         log_info_msg(log_msg)
 
 #--------------------------------------------------------------------
-def log_data(title, rawdata, log_data_flag=False, data_source=None, filter_id=None):
+def log_request_data(request_response_text, method, url, kwargs, AppleAcct=None, response=None):
+
+        is_log_level_rawdata = False if response is None else response.status_code != 200
+
+        is_log_level_rawdata = is_log_level_rawdata or (url.endswith('refreshClient') is False)
+        if Gb.is_log_level_rawdata or is_log_level_rawdata or Gb.is_icloud3_initial_startup:
+            pass
+        else:
+            return
+
+        try:
+            if AppleAcct in Gb.AppleAcct_by_username.values():
+                username = AppleAcct.username_base
+            else:
+                username = AppleAcct
+            _hdr = (f"{username}, {method}, {request_response_text}-{url.split('/')[-2:]}")
+
+            if request_response_text.startswith('Request'):
+                _data = {'url': url[8:], 'retry': kwargs.get("retry_cnt", 0)}
+                _data.update(kwargs)
+
+            elif request_response_text.startswith('Response'):
+                if response is None:
+                    _data = kwargs
+                else:
+                    try:
+                        data = response.json()
+                    except:
+                        data = {}
+                    _data = {'code': response.status_code, 'ok': response.ok, 'data': data}
+                    if Gb.is_log_level_rawdata_unfiltered:
+                        _data['headers'] = response.headers
+
+
+            log_data(_hdr, _data, is_log_level_rawdata=is_log_level_rawdata)
+
+        except Exception as err:
+            log_exception(err)
+
+#--------------------------------------------------------------------
+def log_data(_hdr, rawdata, is_log_level_rawdata=False, data_source=None, filter_id=None):
     '''
     Add raw data records to the HA log file for debugging purposes.
 
@@ -822,146 +975,161 @@ def log_data(title, rawdata, log_data_flag=False, data_source=None, filter_id=No
 
     if rawdata is None:
         return False
-    elif Gb.log_data_flag is False and log_data_flag is False:
+    elif Gb.is_log_level_rawdata is False and is_log_level_rawdata is False:
         return False
 
-    if (Gb.start_icloud3_inprocess_flag
+    if (Gb.is_icloud3_startup_inprocess
             or 'all' in Gb.log_level_devices
             or Gb.log_level_devices == []):
         pass
 
-    elif (Gb.log_level_devices
-            and (instr(title, ICLOUD)
-                or instr(title, MOBAPP)
-                or instr(title, 'iCloud')
-                or instr(title, 'Mobile'))):
-
-        if True is True or instr(title,'iCloud Data'):
-            log_level_devices = [devicename for devicename in Gb.log_level_devices if instr(title, devicename)]
-            if log_level_devices == []:
-                return
+    elif instr(_hdr,'iCloud Data'):
+        log_level_devices = [devicename for devicename in Gb.log_level_devices
+                                        if instr(_hdr, devicename)]
+        if log_level_devices == []:
+            return
 
     rawdata_data   = {}
     log_msg        = ''
 
     try:
         if type(rawdata) is not dict:
-            log_info_msg(f"__ {title.upper()}\n{rawdata}")
+            log_info_msg(f"{_hdr.upper()}{NL3_DATA}{rawdata}")
             return
 
-        rawdata_items = {k: _shrink_value(k, v)
-                                for k, v in rawdata['filter'].items()
-                                if type(v) not in [dict, list]}
+        rawdata_data = rawdata.pop('data', None)
+        log_msg += _create_log_msg_from_data(rawdata)
+        log_msg += _create_log_msg_from_data(rawdata_data, data=True)
 
-        rawdata_data['filter'] = {k: _shrink_value(k, v)
-                                for k, v in rawdata['filter'].items()
-                                if k in FILTER_FIELDS or Gb.log_data_flag_unfiltered}
-    except:
-        rawdata_items = {k: _shrink_value(k, v)
-                                for k, v in rawdata.items()
-                                if type(v) not in [dict, list]}
+        if log_msg:
+            log_info_msg(f"{_hdr.upper()} {_called_from(show_fct_name=True)}{log_msg}")
 
-        rawdata_data['filter'] = {k: _shrink_value(k, v)
-                                        for k, v in rawdata.items()
-                                        if (k in FILTER_FIELDS or Gb.log_data_flag_unfiltered)}
+        return
 
-    rawdata_data['filter']['items'] = rawdata_items
-    if rawdata_data['filter']:
-        for data_dict in FILTER_DATA_DICTS:
-            filter_results = filter_data_dict(rawdata_data['filter'], data_dict)
-            if filter_results:
-                log_msg += f"\n❗   {data_dict}={filter_results}"
+    except Exception as err:
+        log_exception(err)
+        log_info_msg(f"{_hdr.upper()} *** Data could not be filtered ***{NL3_DATA}{rawdata}")
+        return
 
-        for data_list in FILTER_DATA_LISTS:
-            if data_list in rawdata_data['filter']:
-                filter_results = _filter_data_list(rawdata_data['filter'][data_list])
-                if filter_results:
-                    log_msg += f"\n❗   {data_list}={filter_results}"
+#..........................................................................................
+def _create_log_msg_from_data(rawdata, data=None):
+    '''
+    Extract lists and dictionaries from the rawdata dictionary
 
+    Returns a new rawdata dictionary:
+        log_items_data[listitem]               - lists by the list item name
+        log_items_data[listitem.sublist]       - sublists of the list
+        log_items_data[dictitem]               - dictionaries by the dict item name
+        log_items_data[dictietm.subdictitem]   - dicts within that dict
+        log_items_data[items]                  - non-list & non_dict items
+    '''
+    if is_empty(rawdata):
+        return ''
 
-        if 'data' in rawdata_data['filter']:
+    log_items_data = {}
+    try:
+        filtered_rawdata = {k: v for k, v in rawdata.items() if k in FILTER_FIELDS}
+    except Exception as err:
+        log_exception(err)
+
+    for k, v in filtered_rawdata.copy().items():
+        if type(v) is list:
+            if is_empty(v): continue
+
+            # The list contains a dict item Format it as a sub dict
+            if type(v[0]) is dict:
+                idx = -1
+                for vsd in v:
+                    idx += 1
+                    if k == 'content':
+                        ksd = v[idx].get('name', idx)
+                        log_items_data[f"{k}.{ksd}"] = _filter_rawdata_items(vsd)
+                    else:
+                        log_items_data[f"{k}.{idx}"] = _filter_rawdata_items(vsd, shrink_only=True)
+
+            else:
+                log_items_data[f"{k}"] = _filter_rawdata_items(v)
+            filtered_rawdata.pop(k)
+
+        elif type(v) is dict:
+            if is_empty(v): continue
+
+            # The dict contains another dict item Format it as a sub dict
             try:
-                rawdata_data_items = {k: _shrink_value(k, v)
-                                            for k, v in rawdata_data['filter']['data'].items()
-                                            if k in FILTER_FIELDS and type(v) not in [dict, list]}
-                if rawdata_data_items:
-                    log_msg += f"\n❗   data.items={rawdata_data_items}"
+                # ksd_0 = v.keys()[0]
+                for ksd, vsd in v.items():
+                    if ksd not in FILTER_FIELDS: continue
+                    if type(vsd) is dict:
+                        vsd_data = v.pop(ksd)
+                        shrink_only = ksd in ['membersInfo']
+                        log_items_data[f"{k}.{ksd}"] = _filter_rawdata_items(vsd_data, shrink_only)
             except:
                 pass
 
-            for data_dict in FILTER_DATA_DICTS:
-                filter_results = filter_data_dict(rawdata_data['filter']['data'], data_dict)
-                if filter_results:
-                    log_msg += f"\n❗   data.{data_dict}={filter_results}"
+            log_items_data[f"{k}"] = _filter_rawdata_items(v)
 
+            filtered_rawdata.pop(k)
 
-    if log_msg:
-        log_info_msg(f"{title.upper()}{log_msg}")
+    filtered_rawdata = {k: shrink_item(v, k) for k, v in filtered_rawdata.items()}
+    log_items_data['items'] = filtered_rawdata
 
-    return
+    log_msg = ''
+    data_text = 'data.' if data else '_.'
+    for k, v in log_items_data.items():
+        if isnot_empty(v):
+            log_msg += f"{NL3_DATA}{data_text}{k}={v}"
+
+    return log_msg
+
+#..........................................................................................
+def _filter_rawdata_items(item_value_dict, shrink_only=None):
+    '''
+    Cycle thru the items dict, filter and shrink the value items
+    '''
+    if (Gb.is_log_level_rawdata_unfiltered
+            or type(item_value_dict) is not dict):
+        return item_value_dict
+
+    _filtered_rawdata_items = {}
+    for k, v in item_value_dict.items():
+        if k not in FILTER_FIELDS and shrink_only is None:
+            continue
+
+        _filtered_rawdata_items[k] = shrink_item(v, k)
+
+    return _filtered_rawdata_items
+
+#..........................................................................................
+def shrink_item(v, k=None):
+    '''
+    Reduce the size of str fields longer than 20-chars
+    '''
+    if k in DO_NOT_SHRINK:
+        return v
+
+    if (type(v) is str
+            and len(v) > 20
+            and v.startswith('http') is False):
+        v = f"{v[:6]}……{v[-6:]}"
+
+    return v
 
 #--------------------------------------------------------------------
-def filter_data_dict(rawdata_data, data_dict):
-    try:
-        if data_dict == 'webservices' and 'webservices' in rawdata_data:
-            webservices = { 'findme': rawdata_data['webservices']['findme'],
-                            'contacts': rawdata_data['webservices']['contacts']}
-            return webservices
-            # return rawdata_data.get('webservices')
+def _set_validpw_invalidpw_text(rawdata):
 
-        filter_results = {k: _shrink_value(k, v)
-                            for k, v in rawdata_data[data_dict].items()
-                            if (k in FILTER_FIELDS or Gb.log_data_flag_unfiltered)}
-
-        return filter_results
-
-    except Exception as err:
-        # log_exception(err)
-        return ''
-
-#--------------------------------------------------------------------
-def _filter_data_list(rawdata_data_list):
+    rawdata_items = rawdata['data'] if 'data' in rawdata else rawdata
 
     try:
-        filtered_list = ''
-        for list_item in rawdata_data_list:
-
-            filter_results = {k: _shrink_value(k, v)
-                                for k, v in list_item.items()
-                                if (k in FILTER_FIELDS or Gb.log_data_flag_unfiltered)}
-
-            if 'location' in filter_results and filter_results['location']:
-                if Gb.log_data_flag_unfiltered:
-                    filter_results['location'] = {k: v for k, v in filter_results['location'].items()}
-                else:
-                    filter_results['location'] = {k: v for k, v in filter_results['location'].items()
-                                                    if k in FILTER_FIELDS}
-                filter_results['location'].pop('address', None)
-
-            if filter_results:
-                filtered_list += f"\n❗     {filter_results['name']}={filter_results}"
-
-        return filtered_list
+        if 'code' in rawdata_items:
+            if rawdata_items['code'] == 409:
+                rawdata_items['ok'] = 'ValidPW'
+            elif rawdata_items['code'] == 401:
+                rawdata_items['ok'] = 'InvalidPW'
 
     except:
-        return ''
+        pass
 
-#--------------------------------------------------------------------
-def _shrink_value(k, v):
-    if (k in DO_NOT_SHRINK
-            or Gb.log_data_flag_unfiltered):
-        return v
-
-    if type(v) is str:
-        if v.startswith('http'):
-            return v
-
-        if len(v) > 20:
-            return f"{v[:6]}……{v[-6:]}"
-        else:
-            return v
-    else:
-        return v
+    return rawdata
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
@@ -970,10 +1138,11 @@ def _shrink_value(k, v):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def internal_error_msg(err_text, msg_text=''):
 
-    caller   = getframeinfo(stack()[1][0])
+    stack    = inspect.stack()
+    caller   = inspect.getframeinfo(stack()[1][0])
     filename = os.path.basename(caller.filename).split('.')[0][:12]
     try:
-        parent = getframeinfo(stack()[2][0])
+        parent = inspect.getframeinfo(stack()[2][0])
         parent_lineno = parent.lineno
     except:
         parent_lineno = ''
@@ -1021,7 +1190,7 @@ def post_internal_error(err_text, traceback_format_exec_obj='+'):
     log_error_msg(tb_err_msg)
 
     # rc9 Reworked message extraction due to Python code change
-    err_lines = tb_err_msg.split('\n')
+    err_lines = tb_err_msg.split('{NL4}')
     err_error_msg = err_code = err_file_line_module = ""
     err_lines.reverse()
 
@@ -1040,7 +1209,6 @@ def post_internal_error(err_text, traceback_format_exec_obj='+'):
 
         elif err_line.startswith('File') and err_file_line_module == '':
             err_file_line_module = err_line.replace(Gb.icloud3_directory, '')
-
 
     try:
         err_msg =  (f"{CRLF_DOT}File.. > {err_file_line_module})"
@@ -1069,69 +1237,140 @@ def dummy_log():
     _log(None, None)
 
 #--------------------------------------------------------------------
-def _evlog(devicename_or_Device, items='+'):
+def _evlog(items=None):
     '''
     Display a message or variable in the Event Log
     '''
-    devicename, items = _resolve_devicename_log_msg(devicename_or_Device, items)
+    if items is None:
+        return
 
     if (type(items) is str) is False:
         items = f"{items}"
-    items = items.replace('<', '&lt;')
-    called_from = _called_from(trace=True)
 
-    #rc9 Reworked post_event and write_config_file to call modules directly
+    items       = items.replace('<', '&lt;')
+    called_from = _called_from(trace=True)
+    function    = log_stack(return_function=True)
+
     if Gb.EvLog:
-        Gb.EvLog.post_event(devicename, f"{EVLOG_TRACE}{called_from} {items}")
-    write_ic3log_recd(f"{called_from}⛔.⛔ . . . {devicename} > {items}")
+        Gb.EvLog.post_event(f"{EVLOG_TRACE}{called_from} {items}")
+
+    _log(items)
 
 #--------------------------------------------------------------------
 def _log(items, v1='+++', v2='', v3='', v4='', v5=''):
     '''
     Display a message or variable in the HA log file
     '''
+    log_msg = ''
     try:
-        called_from = _called_from(trace=True)
-        if v1 == '+++':
-            trace_msg = ''
-        else:
-            trace_msg = (f"|{v1}|-|{v2}|-|{v3}|-|{v4}|-|{v5}|")
+        called_from_hist = _called_from_history(trace=True)
 
-        trace_msg = (f"{called_from}⛔.⛔ . . . {items} {trace_msg}")
+        if v1 != '+++':
+            log_msg = (f"|{v1}|-|{v2}|-|{v3}|-|{v4}|-|{v5}|")
 
-        write_ic3log_recd(trace_msg)
+        log_msg = (f"| _LOG | {called_from_hist}{NL}| 🟡 {items} {log_msg}  |")
+        write_ic3log_recd(log_msg)
 
     except Exception as err:
-        Gb.HARootLogger.info(trace_msg)
-        # log_exception(err)
+        log_exception(err)
 
 #--------------------------------------------------------------------
-def _called_from(trace=False):
+def _called_from(show_fct_name=False, trace=False):
 
-
-    if Gb.log_debug_flag is False and trace == False:
+    if Gb.is_log_level_debug is False and trace == False:
         return ''
 
     caller = None
-    level = 0
-    while level < 5:
-        level += 1
-        caller = getframeinfo(stack()[level][0])
 
+    level = 0
+    while level < 10:
+        level += 1
+        caller = inspect.getframeinfo(inspect.stack()[level][0])
+
+        if (caller.filename.endswith('_io.py')
+                or instr(caller.filename, 'requests')
+                or caller.filename.endswith('sessions.py')
+                or instr(caller.filename, 'httpx')):
+            continue
         if caller.filename.endswith('messaging.py') is False:
             break
 
     if caller is None:
         return ' '
 
-    caller_path = caller.filename.replace('.py','')
-    caller_filename = caller_path.split('/')[-1]
-    if len(caller_filename) > 12 and instr(caller_filename, '_ic3_'):
-        caller_filename = caller_filename.replace('_ic3_', '…')
-    caller_filename = f"{caller_filename}………………"
+    py_filename = _extract_py_filename(caller)
+
+    if show_fct_name is True:
+        return f"[{py_filename}: {caller.lineno}/{caller.function}]"
+
+    py_filename = f"{py_filename}……………………"
     caller_lineno = caller.lineno
 
-    return f"[{caller_filename[:12]}:{caller_lineno:04}] "
+    return f"[{py_filename[:12]}:{caller_lineno:04}] "
+
+#--------------------------------------------------------------------
+def _called_from_history(trace=False):
+
+    if Gb.is_log_level_debug is False and trace == False:
+        return ''
+
+    level = 0
+    py_filenames_list = ''
+    last_py_filename  = ''
+    hist_level_cnt    = 0
+    actual_caller     = ''  # Caller after io, session, messaging & requests
+    while level < 99:
+        level += 1
+        try:
+            caller = inspect.getframeinfo(inspect.stack()[level][0])
+            py_filename = _extract_py_filename(caller)
+
+            if py_filename.startswith('thread'):
+                break
+            if (py_filename == 'messaging'
+                    or py_filename == 'sessions'):
+                continue
+
+            if (actual_caller != ''
+                    or caller.filename.endswith('_io.py')
+                    or instr(caller.filename, 'requests')
+                    or instr(caller.filename, 'httpx')):
+                pass
+            else:
+                actual_caller = f"{py_filename}:{caller.lineno}/{caller.function[:10]}"
+
+            if py_filename == last_py_filename:
+                py_filenames_list += f",{caller.lineno}"
+
+            else:
+                last_py_filename = py_filename
+                if py_filename.endswith('io'):
+                    py_filename = 'io'
+                elif instr(py_filename, 'request'):
+                    py_filename = 'req'
+                else:
+                    hist_level_cnt += 1
+                    if len(py_filename) > 16:
+                        py_filename = f"{py_filename[:10]}…{py_filename.split('_')[-1][:6]}"
+
+                py_filenames_list += f"; {py_filename}:{caller.lineno}"
+
+                if hist_level_cnt == 3:
+                    break
+            if py_filename == '__init__':
+                break
+        except:
+            break
+
+    return f"[{actual_caller}] [{py_filenames_list[2:]}] "
+
+#--------------------------------------------------------------------
+def _extract_py_filename(caller):
+    py_filename = caller.filename.replace('.py','').split('/')[-1]
+
+    return py_filename
+
+
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
@@ -1149,7 +1388,9 @@ def add_log_file_filter(item, replacement_text=None):
 
     Note
     '''
-    if item is None:
+    if (item is None
+            or item.strip() == ''
+            or len(item) < 6):
         return
     elif Gb.disable_upw_filter:
         return item

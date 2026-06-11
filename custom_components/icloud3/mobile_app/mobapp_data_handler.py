@@ -14,8 +14,8 @@ from ..const            import (DEVICE_TRACKER, NOTIFY,
 
 from ..utils.utils      import (instr, is_statzone, is_zone, zone_dname,
                                     list_add, list_to_str, )
-from ..utils.messaging  import (post_event, post_monitor_msg, more_info,
-                                    log_debug_msg, log_exception, log_error_msg, log_data,
+from ..utils.messaging  import (post_event, post_alert, post_monitor_msg, more_info,
+                                    log_debug_msg, log_exception, log_error_msg, log_data, log_data_unfiltered,
                                     _evlog, _log, )
 from ..utils.time_util  import (secs_to_time, secs_since, mins_since, time_now, time_now_secs,
                                     format_time_age, format_age,  )
@@ -45,7 +45,7 @@ def check_mobapp_state_trigger_change(Device):
     'timestamp_secs': 1680103760.0, 'timestamp_time': '11:29:20a'}
     '''
     try:
-        Device.mobapp_data_updated_flag = False
+        Device.was_mobapp_data_updated = False
         Device.mobapp_data_change_reason = ''
         Device.mobapp_data_reject_reason = ''
 
@@ -110,9 +110,6 @@ def check_mobapp_state_trigger_change(Device):
         if mobapp_data_state == NOT_SET:
             change_msg += 'NotSet, '
 
-        if Gb.log_data_flag and change_msg:
-            log_data(f"MobApp Data - Changed - <{Device.devicename}> {change_msg}", device_trkr_attrs, log_data_flag=True)
-
         mobapp_data_change_flag = (Device.mobapp_data_trigger != mobapp_data_trigger
                                 or Device.mobapp_data_secs != mobapp_data_secs
                                 or Device.mobapp_data_state == NOT_SET)
@@ -156,7 +153,7 @@ def check_mobapp_state_trigger_change(Device):
         # Exiting a zone when we are in a zone
         elif (Device.mobapp_data_trigger == EXIT_ZONE
                 and Device.isin_zone):
-            Device.got_exit_trigger_flag = True
+            Device.got_exit_trigger = True
             Device.mobapp_zone_exit_secs = mobapp_data_secs
             Device.mobapp_zone_exit_time = mobapp_data_state_time
 
@@ -206,9 +203,9 @@ def check_mobapp_state_trigger_change(Device):
         elif (Device.mobapp_data_trigger == EXIT_ZONE
                 and Device.isnotin_zone
                 # and Device.isin_zone
-                and Device.got_exit_trigger_flag is False):
+                and Device.got_exit_trigger is False):
             if mobapp_data_secs > Device.located_secs_plus_5:
-                Device.got_exit_trigger_flag = True
+                Device.got_exit_trigger = True
                 Device.mobapp_zone_exit_secs = mobapp_data_secs
                 Device.mobapp_zone_exit_time = mobapp_data_state_time
                 exit_zone_name = Device.StatZone.dname if Device.StatZone else 'Unknown'
@@ -315,7 +312,7 @@ def check_mobapp_state_trigger_change(Device):
 
 #--------------------------------------------------------------------
 def new_mobapp_data_data_available(Device, after_secs):
-    if Device.mobapp_monitor_flag:
+    if Device.is_mobapp_monitored:
         return False
 
     device_trkr_attrs = get_mobapp_device_trkr_entity_attrs(Device)
@@ -340,8 +337,8 @@ def _display_mobapp_msg(Device, mobapp_msg):
             mobapp_msg +=(f", LastZoneExit-{Device.mobapp_zone_exit_zone}@"
                             f"{Device.mobapp_zone_exit_time}")
 
-        Device.mobapp_data_updated_flag = (Device.mobapp_data_reject_reason == "")
-        mobapp_msg += (f", WillUpdate-{Device.mobapp_data_updated_flag}")
+        Device.was_mobapp_data_updated = (Device.mobapp_data_reject_reason == "")
+        mobapp_msg += (f", WillUpdate-{Device.was_mobapp_data_updated}")
 
         if Device.mobapp_data_change_reason:
             mobapp_msg += (f"-{Device.mobapp_data_change_reason}")
@@ -390,7 +387,7 @@ def reset_statzone_on_enter_exit_trigger(Device):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def check_if_mobapp_is_alive(Device):
     try:
-        if (Device.mobapp_monitor_flag is False
+        if (Device.is_mobapp_monitored is False
                 or Device.is_offline
                 or Device.mobapp[NOTIFY] == ''):
             return
@@ -426,17 +423,15 @@ def get_mobapp_device_trkr_entity_attrs(Device):
         None -  error or no data is available
     '''
     try:
-        if (Device.mobapp_monitor_flag is False
-                or Gb.conf_data_source_MOBAPP is False):
+        if Device.is_mobapp_monitored is False or Gb.conf_data_source_MOBAPP is False:
             return None
 
         entity_id = Device.mobapp[DEVICE_TRACKER]
 
         device_trkr_attrs = get_and_verify_device_trkr_data(Device, entity_id)
-        # _log(f"{device_trkr_attrs=}")
 
-        Device.mobapp_device_unavailable_flag = (device_trkr_attrs is None)
-        if Device.mobapp_device_unavailable_flag:
+        Device.is_mobapp_device_unavailable = (device_trkr_attrs is None)
+        if Device.is_mobapp_device_unavailable:
             return
 
         Device.mobapp_data_invalid_error_cnt = 0
@@ -457,7 +452,10 @@ def get_mobapp_device_trkr_entity_attrs(Device):
             Device.write_ha_sensor_state(
                         NEXT_UPDATE, Device.FromZone_NextToUpdate.sensors[NEXT_UPDATE])
 
-        # log_data(f"MobApp Data - {entity_id}", device_trkr_attrs)
+        device_trkr_attrs['source_type'] = str(device_trkr_attrs.get('source_type', ''))
+        if device_trkr_attrs['source_type'] == 'gps': device_trkr_attrs['source_type'] = 'GPS'
+
+        # log_data_unfiltered(f"MobApp Data - {entity_id}", device_trkr_attrs)
 
         return device_trkr_attrs
 
@@ -484,11 +482,10 @@ def get_and_verify_device_trkr_data(Device, entity_id):
         device_trkr_attrs[DEVICE_TRACKER] = entity_io.get_state(entity_id)
 
         # Display an 'unknown' device msg every 2-hrs
-        # _log(f"{device_trkr_attrs=}")
         if device_trkr_attrs[DEVICE_TRACKER] in ['unavailable', 'unknown', NOT_SET]:
             if (Device.mobapp_data_invalid_error_cnt % 1440) == 0:
                 Device.mobapp_data_invalid_error_cnt += 1
-                post_event( f"{EVLOG_ALERT}MOBILE APP DEVICE ERROR > DEVICE UNAVAILABLE, "
+                post_alert( f"MOBILE APP DEVICE ERROR > DEVICE UNAVAILABLE, "
                             f"{CRLF}{Device.conf_mobapp_fname} ({entity_id}), "
                             f"AssignedTo-{Device.fname_devicename}, "
                             f"{CRLF}Disabled in MobApp Integration or Unknown Name in MobApp on device")
@@ -517,8 +514,8 @@ def get_and_verify_device_trkr_data(Device, entity_id):
         #         return None
 
             # More than 50 errors, shut down Mobile App monitoring for this device
-            Device.mobapp_monitor_flag            = False
-            Device.mobapp_device_unavailable_flag = True
+            Device.is_mobapp_monitored            = False
+            Device.is_mobapp_device_unavailable = True
 
             post_event(Device,
                         f"{EVLOG_ALERT}The Mobile App has not reported the gps "
@@ -537,7 +534,7 @@ def get_and_verify_device_trkr_data(Device, entity_id):
         if LATITUDE not in device_trkr_attrs or device_trkr_attrs[LATITUDE] == 0:
             Device.mobapp_data_invalid_error_cnt += 1
             if (Device.mobapp_data_invalid_error_cnt % 5) == 0:
-                post_event( f"{EVLOG_ALERT}MOBILE APP ERROR (#{Device.mobapp_data_invalid_error_cnt}) > "
+                post_alert( f"MOBILE APP ERROR (#{Device.mobapp_data_invalid_error_cnt}) > "
                             f"No gps location reported. It may be asleep, offline or not available"
                             f"{CRLF_DOT}{Device.fname_devicename}{RARROW}{entity_id}")
                             # f"{more_info('mobapp_device_no_location')}")
@@ -571,8 +568,6 @@ def update_mobapp_data_from_entity_attrs(Device, device_trkr_attrs):
     if Device.mobapp_data_secs >= mobapp_data_secs or gps_accuracy > Gb.gps_accuracy_threshold:
         return
 
-    log_data(f"MobApp Attrs - Updated - <{Device.devicename}>", device_trkr_attrs)
-
     Device.mobapp_data_state             = device_trkr_attrs.get(DEVICE_TRACKER, NOT_SET)
     Device.mobapp_data_state_secs        = device_trkr_attrs.get(f"state_{TIMESTAMP_SECS}", 0)
     Device.mobapp_data_state_time        = device_trkr_attrs.get(f"state_{TIMESTAMP_TIME}", HHMMSS_ZERO)
@@ -582,9 +577,13 @@ def update_mobapp_data_from_entity_attrs(Device, device_trkr_attrs):
     Device.mobapp_data_time              = mobapp_data_time
     Device.mobapp_data_latitude          = device_trkr_attrs.get(LATITUDE, 0)
     Device.mobapp_data_longitude         = device_trkr_attrs.get(LONGITUDE, 0)
+    Device.mobapp_data_source_type       = str(device_trkr_attrs.get('source_type', ''))
     Device.mobapp_data_gps_accuracy      = gps_accuracy
     Device.mobapp_data_vertical_accuracy = device_trkr_attrs.get(VERT_ACCURACY, 99999)
     Device.mobapp_data_altitude          = device_trkr_attrs.get(ALTITUDE, 0)
+
+    _hdr = f"{Device.devicename}, MobApp Data, {Device.mobapp_data_trigger}, Response, "
+    log_data_unfiltered(_hdr, device_trkr_attrs)
 
     if Device.FromZone_Home:
         home_dist = format_dist_km(Device.FromZone_Home.distance_km_mobapp)
@@ -616,7 +615,7 @@ def sync_mobapp_data_state_statzone(Device):
         False - The mobapp_data_state was not updated
 
     '''
-    if (Device.mobapp_monitor_flag is False
+    if (Device.is_mobapp_monitored is False
             or Gb.conf_data_source_MOBAPP is False
             or Device.mobapp.get(DEVICE_TRACKER) is None):
         return False
@@ -693,7 +692,7 @@ def verify_device_in_ha_mobile_app_config():
     Cycle through the iCloud3 device's configuration and see if a
     mobapp device is in the HA Mobiole App Integrations list
 
-    Update the Device's mobapp_monitor_flag to True if it is found.
+    Update the Device's is_mobapp_monitored to True if it is found.
     Do not change it if it is not found.
 
     Return:
@@ -706,12 +705,12 @@ def verify_device_in_ha_mobile_app_config():
         unverified_devices_list = []
         for conf_device in Gb.conf_devices:
             Device = Gb.Devices_by_devicename[conf_device[CONF_IC3_DEVICENAME]]
-            if (Device.mobapp_monitor_flag
+            if (Device.is_mobapp_monitored
                     or conf_device[CONF_MOBILE_APP_DEVICE] == 'None'):
                 continue
 
             if Device.conf_mobapp_fname in Gb.mobile_app_device_fnames:
-                Device.mobapp_monitor_flag = True
+                Device.is_mobapp_monitored = True
             else:
                 Gb.device_mobapp_verify_retry_needed = True
                 list_add(unverified_devices_list, Device.fname)
@@ -755,7 +754,7 @@ def unverified_devices_mobapp_list():
     unverified_devices_list = []
     for conf_device in Gb.conf_devices:
             Device = Gb.Devices_by_devicename[conf_device[CONF_IC3_DEVICENAME]]
-            if (Device.mobapp_monitor_flag is False
+            if (Device.is_mobapp_monitored is False
                     and conf_device[CONF_MOBILE_APP_DEVICE] != 'None'):
                 list_add(unverified_devices_list, Device.fname)
 

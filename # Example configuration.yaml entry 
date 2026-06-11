@@ -4,6 +4,6 @@ notify:
     resource: https://api.callmebot.com/whatsapp.php
     data:
       source: HA
-      phone: +491605605168   # <- Gebe hier deine Telefonnummer ein, im Format +491501234567890 (+49 ist die Ländervorwahl und ersetzt die 0 bei deutschen Telefonnummern)
+      phone: +491520685   # <- Gebe hier deine Telefonnummer ein, im Format +491501234567890 (+49 ist die Ländervorwahl und ersetzt die 0 bei deutschen Telefonnummern)
       apikey: 7119970   # <- Gebe hier deinen API-Key von CallmeBot ein, im Format 123456
      

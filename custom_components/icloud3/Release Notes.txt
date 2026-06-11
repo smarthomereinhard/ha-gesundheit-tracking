@@ -1,19 +1,298 @@
-### Important Links:
+### 📌 Important Links:
 **Installing for the first time_** - See [here](https://gcobb321.github.io/icloud3_v3_docs/#/chapters/3.2-installing-and-configuring) for instructions on installing as a New Installation
 **iCloud3 v3 Documentation** - iCloud3 User Guide can be found [here](https://gcobb321.github.io/icloud3_v3_docs/#/)
 **Migrating from v2.4.7_** - See [here](https://gcobb321.github.io/icloud3_v3_docs/#/chapters/3.1-migrating-v2-to-v3) for instructions on migrating from from an older version.
 
+-----
+*Thanks to all of you who clicked the coffee cup icon on the Event Log and bought me a coffee.*
+Gary
+
+
+📢🚩🐛✨💥🚀🎁
+
+
+<a href="https://www.buymeacoffee.com/gcobb321" target="_blank">
+<img src="https://gcobb321.github.io/icloud3_v3_docs/images/buymeacoffee-docs-button-icon.png" width="150" height="50"></a>
+
+
+🍎 iCloud3 v3.5 ()
+### 📢 Improvements to _Configure > Authenticate Apple Account Sign-in_ screen
+1. **Authentication with a Push Notification is working again**
+    - This method works again!!!!! Click _Request Authentication Code_ and the Apple Account Verification Cod_ pop-up window displays on all Trusted Devices like it did before the iOS 2026.4 update. Thanks @COsm0cats for figuring out what needed to be done
+
+2. **Improved  the _Apple Did Not Send Me a Code_ screen**:
+    - Simplified the instructions for getting the code. They are much easier to understand and follow
+    - You can now enter and send the code back to Apple on this screen
+
+3. **Added the _Change Authentication Method_ screen**:
+    - Text Message authentication would send the code request to Trusted Device #1. You can now select the Trusted Device to use for authentication from the list of Trusted Devices in your Apple Account.
+    - Requesting an Authentication Code uses the Reauthentication Method selected on this screen. Default is a Push Notification.
+
+4. **All Configuration Screens**:
+    - You can now click the 'X' in the upper-left corner to quickly exit the _Configure Screens_ and go back to iCloud3 without going back through the _Exit_ options on the various screens and menus.
+    - Completely reorganized the _Configuration Screen_ code.
+
+
+
+🍎 iCloud3 v3.4.3 (4/8/25/2026)
+### 🐞 Bug Fixes
+1. Fixed several bugs introduced in v3.4.2
+
+🍎 iCloud3 v3.4.2 (4/15/25/2026)
+### 📢 Improvements
+1. **Improved _Configure > Authenticate Apple Account Sign-in_ > _Apple Did Not Send Me a Code_** screen:
+    - Simplified the instructions for getting a code so they are much easier to understand and follow
+    - Added an _Authentication Code_ field. You can now enter the code and send it to Apple on this screen
+
+2. **Added the _Configure > Authenticate Apple Account Sign-in_ > _Change Authentication Method_** screen:
+    - Text Message authentication would send the code request to Trusted Device #1. You can now select the Trusted Device to use for authentication from the list of Trusted Devices in your Apple Account.
+
+3. **Improved _Configure > Authenticate Apple Account Sign-in_** screen:
+    - Removed the _Request Code using a Text Method_ Action
+    - Requesting an Authentication Code uses the Reauthentication Method selected on the Change Authentication Method screen. Default is a Push Notification.
+
+Note regarding the Apple Authentication Code:
+Apple changed the Push Notification Authentication Method to improve their security process. This has caused the normal Request an Authentication code to not deliver one. I am working on finding a solution to this problem. Another program has found a solution but it is very complicated and will be difficult to implement.
+
+The HA iCloud Integration also fails to provide an authentication code. And yes, icloud.com and other apps provide one. They live in the Apple ecosphere, not Home Assistant.
+
+
+
+🍎 iCloud3 v3.4.1 (4/8/25/2026)
+### 🐞 Bug Fixes
+1. Fixed a bug where the device_tracker state (zone) and attributes (location and a lot of other stuff) were not being updated.
+2. Fixed a bug authenticating access to the Apple Account.
+3. Fixed a bug where the orange Reauthenticate button was not displaying when displaying the iCloud3 Configure Settings screen was displayed.
+4. Fixed several other minor problems.
+
+
+🍎 iCloud3 v3.4 (4/4/2026)
+
+### 📢 Improvements
+1. **Configure > Authenticate Apple Account Sign-in_ screen** - Addresses the changes Apple has made account authentication and how authentication codes are delivered. The following changes have been made to address these issues:
+ - **IPv6 vs IPv4** - Apple supports IPv6 requests for signing into the Apple Account and refreshing a devices location. The Apple servers that handle authentication respond to IPv4 requests only. iCloud3 sends authentication requests via IPv4, all others use IPv4 or IPv6.
+ - **Code via Text Message** - You can now get the authentication code via a text message if the normal Push Notification is not be issued by Apple.
+ - **Manual Code Generation** - Instructions for generating the authentication code have been added if Apple does not send a code using the text message or Push Notification.
+ - Only Aple accounts that are logged into are displayed on the Account Selection list.
+ - The _Log into the Apple account_ Action has been removed. This has to be done on the _Update Apple Account_ screen.
+
+2. **Starting/Restarting iCloud3** - Reduced the time it takes to Start and Restart iCloud3.
+
+3. **HA Device/Sensor::iCloud3 Device/Sensor conflicts** - iCloud3 manages the device and sensor entities on the Device and Sensor screens. Disabling a device or sensor on the HA Settings screens creates a conflict with iCloud3 because it does not know they were disabled and tries to recreate them on the next restart. It is very difficult to resolve this conflict since HA stores the disabled information in it's device and entity registries.
+
+     iCloud3 now detects when a device or sensor is disabled on the HA Settings. It now sets the device to an 'Inactive' status and adds a sensor to the 'Excluded Sensors' list on the Configure screens. The disabled device and sensor is also removed from the HA registry files so they can not be reenabled on the HA settings screens. Enabling them is now done on the iCloud3 Configure Device and Sensor screens. The new _Cleanup HA Entity Registry_ screen detects the disabled entities and includes tools to delete them.
+
+4. **Added the _Configure > Tools > Cleanup HA Entity Registry_ screen** - This screen scans the HA Entity and Device registries and displays iCloud3 entities in following the categories:
+     - Active - Devices being tracked or monitored
+     - Inactive - Devices that are set to `Inactive` and not tracked by iCloud3
+     - Orphaned - Sensors that once existed but are no longer associated with the iCloud3 Integration
+     - Disabled - Devices & Sensors that have been disabled on the HA Devices, Entity or iCloud3 Integration screen
+     - Suffix Errors - Sensors that have been duplicated by HA and are now unavailable
+     - Deleted Devices - Sensors that were used by a device that has been deleted from iCloud3
+     - Deleted Sensors - Sensors that belong to an iCloud3 device that are no longer used
+
+      The Devices and Sensors in the non-Active categories can be removed from the Registry files. Those that are Active are removed and then recreated.
+
+     Removing all traces of a device or sensor from the HA Registries can solve various problems, including:
+     - Devices and sensors with duplicate entities not being created
+     - Sensors not being creating because they have been disabled in HA but Active in iCloud3
+     - Unused sensors are preventing new sensors with the same name for a new device not being created
+
+5. **Added the _Configure Tools > Reload iCloud3, Restart HA screen_** - iCloud can now be reloaded to reinitialize all settings without resting HA. This does not load a new code release, it only restarts the code that has already been loaded.
+
+6. **Number of iCloud3 devices** - The 10-device limit for the number of iCloud3 devices that can be tracked and monitored has been removed.
+
+### 🐞 Bug Fixes
+1. Fixed a bug preventing iCloud3 from loading in rare cases.
+2. Fixed a bug where no sensors would be created if there were several track_from_zone sensors that started with the same name (home, home2, home3).
+3. Fixed a bug preventing the iCloud3 Alerts sensor showing an Apple account needed to be authenticating from being cleared after the authentication was completed.
+4. Various minor bugs have been fixed.
+5. Other internal organization items.
+
+
+
+
+
+🍎 iCloud3 v3.3.4.4 (1/10/2026)
+### 🐞 Bug Fixes
+- **Configure > Tools**
+    - Fixed a bug handling a 'No' response when confirming the action for several items
+    - Fixed a bug where the results message was not displayed when the *Fix _2 Sensors Entity Name Errors* was selected. The 'fix' operation was ran correctly.
+
+
+🍎 iCloud3 v3.3.4.3 (1/5/2026)
+### 🐞 Bug Fixes
+- **Sensors**:
+    - Fixes the Undefined Sensors error created in v3.3.4.2
+    - Reduced the time needed to create the iCloud3 sensors. Instead of recreating the master sensors list every time iCloud3 starts, it is now only recreated it when changes have been made on the Configure Sensors screen.
+    - Fixed several bugs related to Excluded Sensors.
+- **Apple Account** - Fixed a bug when logging into an Apple account with a blank password.
+- **Internet Connection Error** - Fixed a bug handling the 1-minute timeout recheck routine after an Internet Connection Error occurred.
+
+### 📢 Improvements
+- **iCloud3 Documentation** - The iCloud3 documentation had not been reviewed and updated in a long time, probable since v3.0 or v3.1 and was due for an overhaul. It was updated and reorganized and is now, for the most part, up-to-date. The update is not complete and some items still need to be addressed. Hopefully, this will be done sometime in January, 2026. There is no question that it is better than it was. Particular attention is being paid to the _Help and Trouble Shooting Problems_ sections.
+
+
+
+
+🍎 iCloud3 v3.3.4.1 (12/10/2025)
+- Reverted to an unobscured Apple account on the _Update Apple Account_ and _Authenticate Apple Account Signon_ screens.
+
+
+
+🍎 iCloud3 v3.3.4 (12/9/2025)
+### 🍎 Improved Apple Accounts Handling
+- Errors occurring when validating a username/password or authenticating Apple account have been enhanced to provide more information.
+- Updated the PasswordSRP Authentication method to display more information messages if an error occurred.
+- Updated the PasswordSRP Authentication method to try to detecd accounts that could not be verified and needing a password change.
+- Enhanced the internal procedures for adding a new Apple account, relogging into an existing account and authenticating it.
+- Many other under the cover changes to improve error handling, messages and interaction with Apple servers.
+### 🗺️ Waze
+- Updated the Waze Route Time/Distance process to use Google's new data request URLs.
+
+### 🐞 Bug Fixes
+- If adding an Apple account on the _Update Apple Account screen_ was unsuccessful, an error would occur rebuilding the Apple accounts list.
+- If the username or password did not change and the Apple account was not logged into, nothing would happen when trying to log in again. Now, the login will be retried.
+- If a login was successful, the _NOT LOGGED INTO_ error message was not cleared on a successful login.
+
+
+
+
+🍎 iCloud3 v3.3.3 (11/22/2025)
+### Account Reauthentication
+- Fixed a `Config flow could not be loaded: 500 Internal Server Error Server got itself in trouble` error when trying to reauthenticate the Apple account after selecting the Orange Reauthentication button on _Devices & settings > iCloud3_. It did not occur when selecting the _Authenticate Apple Account Sign-In_ screen.
+### Startup
+- The results of the Internet Connection Test done during Startup, Stage 2 are now displayed in the Event Log and icloud3.log file.
+
+
+## iCloud3 v3.3.2 (11/21/2025)
+### Apple account Error 503/Password SRP handling
+- Fixed several issues in the PasswordSRP handler dealing with verifying the password. This was creating the Server Not Available 503 error resulting in password authentication failures and login delays.
+### Update Apple Account screen
+- When the Apple account password is changed, it needs to also be changed on this screen, otherwise the account will not be logged into on the next iCloud3 restart. Fixed a problem verifying the new password, relogging into the account and requesting an authentication code.
+- *Multiple Apple accounts* - Fixed a problem when going from this screen to the *Authenticate Apple Account Sign-in screen. The selected account was not being reselected.
+### Authenticate Apple Account Sign-in screen
+- *Multiple Apple accounts* - When several accounts need to be authenticated, the correct one was not being reselected after requesting new code.
+- Improved handling of logging into the Apple account
+- The Apple account login attempt would only be retried when the username and password was changed even though the account was not logged into. This as been fixed.
+### Hardware Security Keys (YubiKey)
+- Removed the security key selection fields from the *Authenticate Apple Account Sign-in* screen until I get it working.
+
+
+
+🍏 iCloud3 ➤ v3.3.1
+### 🚩 Updates to iCloud3 v3.3
+- Fixed the _TypeError: iCloudSession.request() got an unexpected keyword argument 'retry_cnt'_ error
+- Reverted displaying Security Key messages on the Authenticate Apple Account Sign-in screen
+- Changed the way Apple cookie files were handled to see if it helped cure the 'Server Not Available 503' error. It didn't.
+- The Apple Cookies are now being logged in the _icloud3.log_ file when the Apple account is logged into.
+
+🍏 iCloud3 ➤ v3.3
+### 📢🚩✨💥🚀🎁 iCloud3 works again, you can log into your Apple Account
+- **Comments**
+    - I believe Apple reimplemented the authentication process they introduced last November that caused the same errors. This time, however, the native Python PyiCloud interface had already incorporated the changes that solved the problem. Thanks go to the PyiCloud team headed by @timlaing. It also helped that I was home and not on a cruise ship off the western coast of Africa like last time.
+- **Some Notes about the 503 Error you may still see**:
+    - Condition 1 - This is a new login, the iCloud session files with the Trust Tokens and Cookies are being created.
+    - Condition 2 - You are using multiple Apple Accounts.
+    - What happens - One account may login in fine (usually the first one), the other will fail with a _Server/PW-503_ error. This is displayed in the Event Log, Stage 4, the greenbar at the top of the Event Log and in the _iCloud3 Alerts_ sensor (sensor.icloud3_alerts).
+    - What to do: Wait about 5-minutes, then restart iCloud3 using _Event Log > Actions > Restart iCloud3_ option. Do it again later if it gave you the 503 Error again.
+
+- **Thanks for the Coffee**
+    - For those who encouraged me with the comments and coffee, thank you. I appreciate it.
+
+<a href="https://www.buymeacoffee.com/gcobb321" target="_blank">
+<img src="https://gcobb321.github.io/icloud3_v3_docs/images/buymeacoffee-docs-button-icon.png" width="150" height="50"></a>
+
+
+### ✨ New and Improved Features
+- **Apple Account**
+    - Added support for accepting updates to Apple's 'Terms of Use' documents.
+    - Added _Update Display/Run-Time Parameters_ screen to the _Update Apple Account_ screen
+- **Password SRP**
+    - Added support for using the PasswordSRP (Secure Remote Password Verification protocol) for verifying the password when logging into the Apple Account. Instead of sending the actual password over the internet, a 256-bit encrypted one-time key is sent to Apple.
+    - Special Notes:
+      - This may reduce the need for the 6-digit verification code entry (under long term review).
+      - There are times when Apple will issue the Verification code popup and iCloud3 has not detected that the code is needed. I have ignored it and have not seen any problems. I have entered it and it was accepted.
+    - Added option to enable/disable it on the _Update Apple Account > Update Display/Runtime Parameters_ screen. There may be times when a lot of logins to an Apple account will generate a 503 error and the Password will fail to be validated. Apple is refusing to handle it thinking it is a fraudulent transaction. After 20-30 (?) minutes, restart iCloud3 from the Event Log and it will usually validate and log into the account correctly.
+- **Internet Errors**
+    - Improved the operation of internet error detection and handling
+    - Improved the status messages displayed while monitoring the internet
+- **Security Keys (Yubikey) Support** (Incomplete and Currently Disabled)
+    - Changed error and status messages in the _Configure_ screens to support Verification Code and Security Key handling
+    - Added the ability to show the Security Key Names in the _Configure > Authenticate Apple Account Sign-in_ screen
+    - ToDo - Tie into HA to detect the Security Key Name used to authenticate the Apple Account sign-in
+- **iCloud Account I/O**
+    - *HA Event Loop Errors* - Moved the Internet Connection Error handler and the Apple Account Username/Password validate handler from the HA Event Loop to the iCloud3 thread that runs outside of the Event Loop. This simplified requesting data from the Apple Account, handling internet errors and avoids problems related to doing I/O outside of the Event Loop.
+    - *Docker Container* - iCloud3 should no longer have I/O issues related to running in a Docker container (hopefully).
+    - *Common icloud.com I/O handler* - Consolidated all internet data request calls through a central point for improved reliability, control and monitoring
+- **Startup**
+    - Logging into and verifying Apple accounts is now done in _Event Log/Stage 4_ to improve status monitoring
+    - Added status messages to the Event Log that show the Apple Account the results of each event during the authentication process
+- **Other Changes**
+    - Internal changes, module name changes, code cleanup and reorganization
+
+
+### 🐞 Bug Fixes
+- Fixed several 'NoneType' and unknown variable errors associated with verifying Apple username-password and Internet Errors.
+
+
+### iCloud3 ➤ v3.2.4.2 (9/20/2025)
+### 🐞 Bug Fixes
+- **Away Time Zone** - Fixed a problem where the time zone adjustment was reset to the Home zone server time zone when iCloud3 was restarted
+- **Apple Account Login** - Fixed a problem where the Apple account server in China was not displaying an error message because the HA server was logged into through a VPN in another country.
+- **Other Bugs** - A few other minor bugs were fixed
+### ✨ Improvements
+- **Dashboard Builder:**
+    - When a device is added or deleted, all dashboards are now automatically updated. The new device is added to the Main View when it is displaying Result Summary information or when All Devices are displayed. It is removed from all views when it is deleted.
+    - The Dashboard Builder screen has been reformatted
+
+
+### iCloud3 ➤ v3.2.4.1 (8/22/2025)
+### 🐞 Bug Fixes
+- **Dashboard Builder** - Fixed a problem where the Dashboard Builder would fail if 'All Devices' was selected from the _Main View Devices_ selection list.
+- **Apple Account Login** - Fixed a problem where the error message description was not being set correctly when logging into an Apple Account being added failed.
+### ✨ Improvements
+- **Dashboard Builder:**
+    - The Devices to be displayed on the Main View (All Devices, First 2 iPhones or specific devices) can now be selected for both of the Main View formats (Result Summary & Tracking Details).
+    - Changed the Action options description t better describe their functions.
+
+
+
+### iCloud3 ➤ v3.2.4 (8/15/2025)
+### 🐞 Bug Fixes
+1. Dashboard Builder:
+     - Fixed an error reading the base template and dashboard files that are used to construct new dashboards.
+     - Fixed a problem where all devices would be inserted into a dashboards instead of only the selected ones.
+2. iCloud3 Log File - Fixed a problem when the log-level was set to 'unfiltered'.
+
+### ✨ Improvements
+1. Internet Connection Error - Added the following:
+    - The Event Log error description message and alerts are added after the internet has been down for 1-minute to prevent very short dropouts from creating a lot of unnecessary messages.
+    - Improved the error detection and testing done when verifying that Apple (icloud.com) can be connected to after the Internet is back online.
+    - Added a 1-minute timeout to catch Apple location requests that have not been responded to. This is usually caused by IPv6 being enabled in HA. Appropriate tests and error messages explain that it is probably an IPv6 issue with instructions on how to disable it.
+    - Improved the status message display messages.
+2. iCloud3 Startup:
+    - iCloud3 starts after HA has finished loading to prevent HA from locking up due to any iCloud3 errors.
+    - Significantly reduced the startup time when the log_level was set to `debug` (4 devices with 15 sensors went from pver 10-secs to less than 1-sec).
+3. Device Tracking - Devices not using the Mobile App (Watches) that are near other devices will be located 1-minute after the other devices have left a zone. This is not perfect and relies on Apple providing updated location data when it is relocated.
+4. Device Setup - Added Device Type categories to indicate if the iPad and Watch is WiFi only or Wifi+Cell.
+5. Tracking Results - The source of the GPS is displayed on the Event Log when a device's location is updated (GPS, WiFi, Cell, Unknown).
+6. iCloud3 Log File:
+    - Configuration file records were added to the log file when the log_level is set to `info` or `debug`.
+    - Fixed some problems formatting the log_level `debug` records.
+
+
+
 
 ### iCloud3 ➤ v3.2.3 (7/13/2025)
 ### 🎉 New and Updated Features
-1. **_icloud3_alerts_ sensor**:
-Errors and Alerts are displayed in the Event log as they are found and summarized in a green bar at the top of the Event Log. These may include device configuration errors, Apple account login errors, Apple account authentication is needed, Internet Connection Errors, etc. The _sensor.icloud3_alerts_ has been also report these errors. This sensor entity can be used to notify a device that an error or alert has occurred.
+1. **_icloud3_alerts_ sensor** - Errors and Alerts are displayed in the Event log as they are found and summarized in a green bar at the top of the Event Log. These may include device configuration errors, Apple account login errors, Apple account authentication is needed, Internet Connection Errors, etc. The _sensor.icloud3_alerts_ has been also report these errors. This sensor entity can be used to notify a device that an error or alert has occurred.
 
      Errors are prioritized based on the following - critical (Internet Connection Errors), Apple Account errors (account not found, login errors, authentication needed alert), devices (configuration errors), and other.
      - State Value - The highest priority error.
      - Attributes - The Apple account or Device that encountered the error.
      - Attribute 'message_text' - A text summary of all errors that can be sent to a device using the notify.devicename service.
-2. **Internet Connection Errors**:
+2. **Internet Connection Errors** - Redesigned the Internet Connection Error Handler to:
     - Improved the detection of Internet Connection Errors
     - Improved the method used to determine when the Interned was restored
     - Improved the progress bar notification on the Event Log to better show that the internet is being checked on a regular basis
@@ -32,6 +311,7 @@ Errors and Alerts are displayed in the Event log as they are found and summarize
 #### 🐛 Bug Fixes
 1. **Configure iCloud3** - Fixed a problem preventing the Apple devices list to be refreshed when the Verification Code was entered the first time on a new installation.
 2. **Tracking** - Fixed a problem displaying the number of devices in a stationary zone when a location update was being processed.
+
 
 
 

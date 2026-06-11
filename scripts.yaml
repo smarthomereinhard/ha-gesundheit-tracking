@@ -4,8 +4,8 @@ batterien_ansagen_low_liste:
   sequence:
   - variables:
       store: '{{ states(''input_text.batterie_low_liste'') }}'
-      data_obj: "{% if store in ['unknown','unavailable','none',''] %}\n  {{ dict()\
-        \ }}\n{% else %}\n  {{ store | from_json }}\n{% endif %}\n"
+      data_obj: "{% if store in ['unknown','unavailable','none',''] %}\n  {{ dict()
+        }}\n{% else %}\n  {{ store | from_json }}\n{% endif %}\n"
       items: '{{ data_obj.values() | list }}'
       count: '{{ items | length }}'
   - choose:
@@ -92,7 +92,7 @@ kaltwasser_ablesung_speichern:
   - alias: Logbuch-Eintrag Kaltwasser
     action: logbook.log
     data:
-      name: 💧 Kaltwasser Ablesung
+      name: "\U0001F4A7 Kaltwasser Ablesung"
       message: 'Stand: {{ states("input_number.wasser_kalt_zaehlerstand") }} m³ |
         Verbrauch seit letzter Ablesung: {{ (states("input_number.wasser_kalt_zaehlerstand")
         | float(0) - states("input_number.wasser_kalt_stand_vorherig") | float(0))
@@ -120,7 +120,7 @@ warmwasser_ablesung_speichern:
   - alias: Logbuch-Eintrag Warmwasser
     action: logbook.log
     data:
-      name: 🔴 Warmwasser Ablesung
+      name: "\U0001F534 Warmwasser Ablesung"
       message: 'Stand: {{ states("input_number.wasser_warm_zaehlerstand") }} m³ |
         Verbrauch seit letzter Ablesung: {{ (states("input_number.wasser_warm_zaehlerstand")
         | float(0) - states("input_number.wasser_warm_stand_vorherig") | float(0))
@@ -335,24 +335,23 @@ wasser_csv_log:
     action: notify.persistent_notification
     data:
       notification_id: wasser_ablesung_{{ now().strftime("%Y_%m") }}
-      title: 💧 Wasserablesung {{ now().strftime("%B %Y") }}
-      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n\U0001F535\
-        \ Kaltwasser (Nr. 28012348)\n  Stand: {{ states(\"input_number.wasser_kalt_zaehlerstand\"\
-        ) }} m³\n  Verbrauch: {{ (states(\"input_number.wasser_kalt_zaehlerstand\"\
-        ) | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))\
-        \ | round(3) }} m³\n  Kosten: {{ ((states(\"input_number.wasser_kalt_zaehlerstand\"\
-        ) | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))\
-        \ * 2.5) | round(2) }} €\n\n\U0001F534 Warmwasser (Nr. 28012458)\n  Stand:\
-        \ {{ states(\"input_number.wasser_warm_zaehlerstand\") }} m³\n  Verbrauch:\
-        \ {{ (states(\"input_number.wasser_warm_zaehlerstand\") | float(0) - states(\"\
-        input_number.wasser_warm_stand_vorherig\") | float(0)) | round(3) }} m³\n\
-        \  Kosten: {{ ((states(\"input_number.wasser_warm_zaehlerstand\") | float(0)\
-        \ - states(\"input_number.wasser_warm_stand_vorherig\") | float(0)) * 8.5)\
-        \ | round(2) }} €\n\n\U0001F4B6 Gesamtkosten Periode:\n  {{ (((states(\"input_number.wasser_kalt_zaehlerstand\"\
-        ) | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))\
-        \ * 2.5) + ((states(\"input_number.wasser_warm_zaehlerstand\") | float(0)\
-        \ - states(\"input_number.wasser_warm_stand_vorherig\") | float(0)) * 8.5))\
-        \ | round(2) }} €"
+      title: "\U0001F4A7 Wasserablesung {{ now().strftime(\"%B %Y\") }}"
+      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n\U0001F535
+        Kaltwasser (Nr. 28012348)\n  Stand: {{ states(\"input_number.wasser_kalt_zaehlerstand\")
+        }} m³\n  Verbrauch: {{ (states(\"input_number.wasser_kalt_zaehlerstand\")
+        | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))
+        | round(3) }} m³\n  Kosten: {{ ((states(\"input_number.wasser_kalt_zaehlerstand\")
+        | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))
+        * 2.5) | round(2) }} €\n\n\U0001F534 Warmwasser (Nr. 28012458)\n  Stand: {{
+        states(\"input_number.wasser_warm_zaehlerstand\") }} m³\n  Verbrauch: {{ (states(\"input_number.wasser_warm_zaehlerstand\")
+        | float(0) - states(\"input_number.wasser_warm_stand_vorherig\") | float(0))
+        | round(3) }} m³\n  Kosten: {{ ((states(\"input_number.wasser_warm_zaehlerstand\")
+        | float(0) - states(\"input_number.wasser_warm_stand_vorherig\") | float(0))
+        * 8.5) | round(2) }} €\n\n\U0001F4B6 Gesamtkosten Periode:\n  {{ (((states(\"input_number.wasser_kalt_zaehlerstand\")
+        | float(0) - states(\"input_number.wasser_kalt_stand_vorherig\") | float(0))
+        * 2.5) + ((states(\"input_number.wasser_warm_zaehlerstand\") | float(0) -
+        states(\"input_number.wasser_warm_stand_vorherig\") | float(0)) * 8.5)) |
+        round(2) }} €"
 heizung_ablesung_speichern:
   alias: 'Heizung: Ablesung speichern'
   icon: mdi:fire
@@ -373,22 +372,22 @@ heizung_ablesung_speichern:
     action: persistent_notification.create
     data:
       notification_id: heizung_ablesung_{{ now().strftime("%Y_%m") }}
-      title: 🔥 Heizungsablesung {{ now().strftime("%B %Y") }}
-      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n\U0001F525\
-        \ Wärmemengenzähler (Nr. 31018992)\n  Stand: {{ states(\"input_number.heizung_zaehlerstand\"\
-        ) }} kWh\n  Verbrauch: {{ (states(\"input_number.heizung_zaehlerstand\") |\
-        \ float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0)) |\
-        \ round(1) }} kWh\n  Kosten: {{ ((states(\"input_number.heizung_zaehlerstand\"\
-        ) | float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0))\
-        \ * 0.26) | round(2) }} €\n\n\U0001F4B6 Grundgebühr: {{ states(\"input_number.heizung_grundgebuehr_monatlich\"\
-        ) }} €\n\U0001F4B0 Gesamt: {{ (((states(\"input_number.heizung_zaehlerstand\"\
-        ) | float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0))\
-        \ * 0.26) + states(\"input_number.heizung_grundgebuehr_monatlich\") | float(19.54))\
-        \ | round(2) }} €"
+      title: "\U0001F525 Heizungsablesung {{ now().strftime(\"%B %Y\") }}"
+      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n\U0001F525
+        Wärmemengenzähler (Nr. 31018992)\n  Stand: {{ states(\"input_number.heizung_zaehlerstand\")
+        }} kWh\n  Verbrauch: {{ (states(\"input_number.heizung_zaehlerstand\") | float(0)
+        - states(\"input_number.heizung_stand_vorherig\") | float(0)) | round(1) }}
+        kWh\n  Kosten: {{ ((states(\"input_number.heizung_zaehlerstand\") | float(0)
+        - states(\"input_number.heizung_stand_vorherig\") | float(0)) * 0.26) | round(2)
+        }} €\n\n\U0001F4B6 Grundgebühr: {{ states(\"input_number.heizung_grundgebuehr_monatlich\")
+        }} €\n\U0001F4B0 Gesamt: {{ (((states(\"input_number.heizung_zaehlerstand\")
+        | float(0) - states(\"input_number.heizung_stand_vorherig\") | float(0)) *
+        0.26) + states(\"input_number.heizung_grundgebuehr_monatlich\") | float(19.54))
+        | round(2) }} €"
   - alias: Logbuch-Eintrag
     action: logbook.log
     data:
-      name: 🔥 Heizung Ablesung
+      name: "\U0001F525 Heizung Ablesung"
       message: 'Stand: {{ states("input_number.heizung_zaehlerstand") }} kWh | Verbrauch:
         {{ (states("input_number.heizung_zaehlerstand") | float(0) - states("input_number.heizung_stand_vorherig")
         | float(0)) | round(1) }} kWh'
@@ -419,18 +418,18 @@ strom_ablesung_speichern:
     data:
       notification_id: strom_ablesung_{{ now().strftime("%Y") }}
       title: ⚡ Stromablesung {{ now().strftime("%Y") }}
-      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n⚡ Stromzähler\
-        \ (Nr. 1ESY1162989798)\n  Stand: {{ states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
-        ) }} kWh\n  Verbrauch seit letzter Ablesung: {{ (states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
-        ) | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\"\
-        ) | float(0)) | round(1) }} kWh\n  Energiekosten: {{ ((states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
-        ) | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\"\
-        ) | float(0)) * 0.4871) | round(2) }} €\n  Grundpreis Jahr: {{ states(\"sensor.strom_grundpreis_brutto_pro_jahr\"\
-        ) }} €\n\n\U0001F4B0 Gesamtkosten Jahr: {{ (((states(\"input_number.strom_zaehlerstand_aktuell_kwh\"\
-        ) | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\"\
-        ) | float(0)) * 0.4871) + states(\"sensor.strom_grundpreis_brutto_pro_jahr\"\
-        ) | float(217)) | round(2) }} €\n\U0001F4B6 Abschläge bezahlt: {{ states(\"\
-        sensor.strom_abrechnung_abschlag_bisher\") }} €"
+      message: "\U0001F4C5 Datum: {{ now().strftime(\"%d.%m.%Y %H:%M\") }}\n\n⚡ Stromzähler
+        (Nr. 1ESY1162989798)\n  Stand: {{ states(\"input_number.strom_zaehlerstand_aktuell_kwh\")
+        }} kWh\n  Verbrauch seit letzter Ablesung: {{ (states(\"input_number.strom_zaehlerstand_aktuell_kwh\")
+        | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\")
+        | float(0)) | round(1) }} kWh\n  Energiekosten: {{ ((states(\"input_number.strom_zaehlerstand_aktuell_kwh\")
+        | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\")
+        | float(0)) * 0.4871) | round(2) }} €\n  Grundpreis Jahr: {{ states(\"sensor.strom_grundpreis_brutto_pro_jahr\")
+        }} €\n\n\U0001F4B0 Gesamtkosten Jahr: {{ (((states(\"input_number.strom_zaehlerstand_aktuell_kwh\")
+        | float(0) - states(\"input_number.strom_zaehlerstand_letzte_ablesung_kwh\")
+        | float(0)) * 0.4871) + states(\"sensor.strom_grundpreis_brutto_pro_jahr\")
+        | float(217)) | round(2) }} €\n\U0001F4B6 Abschläge bezahlt: {{ states(\"sensor.strom_abrechnung_abschlag_bisher\")
+        }} €"
   - alias: Logbuch-Eintrag
     action: logbook.log
     data:
@@ -456,6 +455,15 @@ spulmaschine_neue_packung:
     data:
       value: '{{ (states("input_number.spulmaschine_tabs") | int(0)) + (states("input_number.spulmaschine_tabs_pro_packung")
         | int(0)) }}'
+  - alias: Packung in Vorratskammer einbuchen
+    action: script.off_schnellwahl_buchen
+    data:
+      ean: '{{ states("input_text.spulmaschine_aktiver_ean") | string | trim }}'
+      produkt: Spülmaschinen-Tabs
+      lagerplatz: Vorratskammer
+      menge: '{{ states("input_number.spulmaschine_tabs_pro_packung") | int(0) | string
+        }} Stk.'
+      modus: Einbuchen
   description: ''
 spulmaschine_tab_verbraucht:
   alias: 'Spülmaschine: Tab verbraucht'
@@ -506,7 +514,7 @@ master_notify_v1_2_0_4:
       - 201c89f20eb577787e1bd5eabc4e05cf
   description: ''
 niimbot_inventar_labels_drucken:
-  alias: 🖨️ Inventar Labels drucken
+  alias: "\U0001F5A8️ Inventar Labels drucken"
   icon: mdi:label
   description: 'Druckt Inventar-Labels: Ausbuchen + alle Lagerorte'
   mode: queued
@@ -626,7 +634,7 @@ niimbot_inventar_labels_drucken:
         delay:
           seconds: 8
 niimbot_custom_label_drucken:
-  alias: 🖨️ Custom Label drucken
+  alias: "\U0001F5A8️ Custom Label drucken"
   icon: mdi:label-outline
   description: Druckt ein individuelles Label mit Name, Untertitel und Datum
   mode: queued
@@ -731,24 +739,11 @@ einkaufsliste_telegram:
     data:
       target: 988178587
       parse_mode: html
-      message: '{% set items = liste[''todo.einkaufsliste_2''][''items''] | default([])
-        %}
-
-        🛒 <b>Einkaufsliste</b> ({{ items | length }} Artikel) — {{ now().strftime(''%d.%m.%Y
-        %H:%M'') }}
-
-        {% if items | length == 0 %}
-
-        ✅ Einkaufsliste ist leer.
-
-        {% else %}
-
-        {% for item in items %}• {{ item.summary.split('' | '')[0] | replace('' nachkaufen'','''')
-        | trim }}
-
-        {% endfor %}{% endif %}
-
-        '
+      message: "{% set items = liste['todo.einkaufsliste_2']['items'] | default([])
+        %}\n\U0001F6D2 <b>Einkaufsliste</b> ({{ items | length }} Artikel) — {{ now().strftime('%d.%m.%Y
+        %H:%M') }}\n{% if items | length == 0 %}\n✅ Einkaufsliste ist leer.\n{% else
+        %}\n{% for item in items %}• {{ item.summary.split(' | ')[0] | replace(' nachkaufen','')
+        | trim }}\n{% endfor %}{% endif %}\n"
 bestandsliste_senden:
   alias: Bestandsliste an Telegram senden
   icon: mdi:package-variant-closed
@@ -788,60 +783,31 @@ bestandsliste_senden:
     data:
       target: 988178587
       parse_mode: html
-      message: '{% set v = r_vorrat[''todo.inventar_vorratskammer''][''items''] |
-        default([]) %}
-
-        {% set k = r_kuehl[''todo.inventar_kuehlschrank''][''items''] | default([])
-        %}
-
-        {% set g = r_gefrier[''todo.inventar_gefrierschrank''][''items''] | default([])
-        %}
-
-        {% set sc = r_schrank[''todo.inventar_schrank''][''items''] | default([])
-        %}
-
-        {% set o = r_sonstiges[''todo.inventar_sonstiges''][''items''] | default([])
-        %}
-
-        📦 <b>Inventar-Bestandsliste</b> — {{ now().strftime(''%d.%m.%Y %H:%M'') }}
-
-
-        🥫 <b>Vorratskammer</b> ({{ v | length }})
-
-        {% for item in v %}• {{ item.summary.split('' | '')[0] | trim }}
-
-        {% else %}– leer –
-
-        {% endfor %}
-
-        🧊 <b>Kühlschrank</b> ({{ k | length }})
-
-        {% for item in k %}• {{ item.summary.split('' | '')[0] | trim }}
-
-        {% else %}– leer –
-
-        {% endfor %}
-
-        ❄️ <b>Gefrierschrank</b> ({{ g | length }})
-
-        {% for item in g %}• {{ item.summary.split('' | '')[0] | trim }}
-
-        {% else %}– leer –
-
-        {% endfor %}
-
-        🚪 <b>Schrank</b> ({{ sc | length }})
-
-        {% for item in sc %}• {{ item.summary.split('' | '')[0] | trim }}
-
-        {% else %}– leer –
-
-        {% endfor %}
-
-        📦 <b>Sonstiges</b> ({{ o | length }})
-
-        {% for item in o %}• {{ item.summary.split('' | '')[0] | trim }}
-
-        {% else %}– leer –
-
-        {% endfor %}'
+      message: "{% set v = r_vorrat['todo.inventar_vorratskammer']['items'] | default([])
+        %}\n{% set k = r_kuehl['todo.inventar_kuehlschrank']['items'] | default([])
+        %}\n{% set g = r_gefrier['todo.inventar_gefrierschrank']['items'] | default([])
+        %}\n{% set sc = r_schrank['todo.inventar_schrank']['items'] | default([])
+        %}\n{% set o = r_sonstiges['todo.inventar_sonstiges']['items'] | default([])
+        %}\n\U0001F4E6 <b>Inventar-Bestandsliste</b> — {{ now().strftime('%d.%m.%Y
+        %H:%M') }}\n\n\U0001F96B <b>Vorratskammer</b> ({{ v | length }})\n{% for item
+        in v %}• {{ item.summary.split(' | ')[0] | trim }}\n{% else %}– leer –\n{%
+        endfor %}\n\U0001F9CA <b>Kühlschrank</b> ({{ k | length }})\n{% for item in
+        k %}• {{ item.summary.split(' | ')[0] | trim }}\n{% else %}– leer –\n{% endfor
+        %}\n❄️ <b>Gefrierschrank</b> ({{ g | length }})\n{% for item in g %}• {{ item.summary.split('
+        | ')[0] | trim }}\n{% else %}– leer –\n{% endfor %}\n\U0001F6AA <b>Schrank</b>
+        ({{ sc | length }})\n{% for item in sc %}• {{ item.summary.split(' | ')[0]
+        | trim }}\n{% else %}– leer –\n{% endfor %}\n\U0001F4E6 <b>Sonstiges</b> ({{
+        o | length }})\n{% for item in o %}• {{ item.summary.split(' | ')[0] | trim
+        }}\n{% else %}– leer –\n{% endfor %}"
+magic_mirror_shutdown:
+  alias: Magic Mirror Shutdown
+  icon: mdi:power
+  sequence:
+  - action: rest_command.magic_mirror_shutdown
+  mode: single
+magic_mirror_neustart:
+  alias: Magic Mirror Neustart
+  icon: mdi:restart
+  sequence:
+  - action: rest_command.magic_mirror_reboot
+  mode: single

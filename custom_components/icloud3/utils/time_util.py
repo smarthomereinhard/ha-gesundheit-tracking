@@ -3,7 +3,7 @@ from ..global_variables         import GlobalVariables as Gb
 from ..const                    import (HIGH_INTEGER, HHMMSS_ZERO, HHMM_ZERO, DATETIME_ZERO,
                                         DATETIME_FORMAT, WAZE_USED, )
 
-from .messaging                 import (_evlog, _log, post_event, log_exception, internal_error_msg, )
+from .messaging                 import (_evlog, _log, post_event, post_alert, log_exception, internal_error_msg, )
 from .utils                     import instr
 
 import homeassistant.util.dt    as dt_util
@@ -163,7 +163,27 @@ def secs_to_hhmm(secs_utc):
             return time_local(secs_utc+30)[:-3]
 
         hhmmss = time_to_12hrtime(time_local(secs_utc+30))
-        hhmm = hhmmss[:-4] + hhmmss[-1:]
+        hhmm   = hhmmss[:-4] + hhmmss[-1:]
+        hhmm  += secs_to_days(secs_utc, '-d')
+
+        return hhmm
+
+    except:
+        return '00:00'
+
+#--------------------------------------------------------------------
+def secs_to_ddmm_hhmm(secs_utc):
+    ''' secs --> dd/mm hh:mm or dd/mm hh:mma or hh:mmp '''
+
+    try:
+        if isnot_valid(secs_utc): return '00/00 00:00'
+
+        if Gb.time_format_24_hour:
+            return time_local(secs_utc+30)[:-3]
+
+        hhmmss = time_to_12hrtime(time_local(secs_utc+30))
+        hhmm   = hhmmss[:-4] + hhmmss[-1:]
+        hhmm  += secs_to_days(secs_utc, '-d')
 
         return hhmm
 
@@ -187,6 +207,39 @@ def secs_to(secs):
 
 def mins_to(secs):
     return round(secs_since(secs)/60)
+
+
+#--------------------------------------------------------------------
+def secs_to_days(secs, days_text):
+    ''' Return the number of days old as a text field '''
+
+    days = secs_since(secs)/86400
+    if days < 1:
+        return ''
+
+    if days_text.startswith('-'):
+        return f"-{days:.0f}{days_text[1:]}"
+    else:
+        return f"{days:.0f}{days_text}"
+
+#--------------------------------------------------------------------
+def next_min_mark_secs(mark_mins, plus_mins=0):
+    '''
+    now to next mins mark in secs
+        10:23:23 --> 10:23:25 (5)
+        10:23:23 --> 10:23:35 (5, 10)
+        10:23:23 --> 10:23:30 (10)
+        10:23:23 --> 10:23:40 (10, 10)
+    '''
+
+    now_secs  = time_now_secs()
+    mark_secs = mark_mins * 60
+
+    secs_since_last_mins_mark = now_secs % mark_secs
+    secs_to_next_mins_mark    = mark_secs - secs_since_last_mins_mark
+    next_mark_secs            = now_secs + secs_to_next_mins_mark + (plus_mins * 60)
+
+    return next_mark_secs
 
 #--------------------------------------------------------------------
 def time_to_12hrtime(hhmmss, ampm=True):
@@ -314,22 +367,24 @@ def format_mins_timer(mins):
     return time_str
 
 #--------------------------------------------------------------------
-def format_age(secs):
+def format_age(secs, xago=None):
     ''' secs --> 4.5 sec/mins/hrs ago '''
 
     if isnot_valid(secs): return 'Never'
     if secs < 1577854800: return 'Unknown'
+    ago = ' ago' if xago is None else ''
 
-    return f"{format_timer(secs_since(secs))} ago"
+    return f"{format_timer(secs_since(secs))}{ago}"
 
 #--------------------------------------------------------------------
-def format_age_hrs(secs):
+def format_age_hrs(secs, xago=None):
     ''' secs --> 4.5 hrs ago '''
 
     if isnot_valid(secs): return 'Never'
     if secs < 1577854800: return 'Unknown'
+    ago = ' ago' if xago is None else ''
 
-    return f"{format_timer_hrs(secs_since(secs))} ago"
+    return f"{format_timer_hrs(secs_since(secs))}{ago}"
 
 #--------------------------------------------------------------------
 def format_time_age(secs, xago=None):
@@ -375,19 +430,22 @@ def format_day_date():
     return f"{dt_util.now().strftime('%a, %b %-d')}"
 
 #--------------------------------------------------------------------
-def format_day_date_now():
-    ''' Saturday, June 14, 4:30p '''
+def format_date_time(secs):
+    ''' June 14, 4:30p '''
 
-    return f"{format_day_date()}, {secs_to_hhmm(time_now_secs())}"
+    date = datetime.fromtimestamp(secs).strftime('%b %d')
+
+    return f"{date}, {secs_to_hhmm(secs)}"
 
 #--------------------------------------------------------------------
-def format_age_hrs(secs):
+def format_age_hrs(secs, xago=None):
     ''' secs --> 4.5 hrs ago '''
 
     if isnot_valid(secs): return 'Never'
     if secs < 1577854800: return 'Unknown'
+    ago = ' ago' if xago is None else ''
 
-    return f"{format_timer_hrs(secs_since(secs))} ago"
+    return f"{format_timer_hrs(secs_since(secs))}{ago}"
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #

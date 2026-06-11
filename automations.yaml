@@ -2383,7 +2383,7 @@
     action: telegram_bot.send_message
     data:
       target:
-        - 988178587
+      - 988178587
       parse_mode: html
       message: "\U0001F6D2 Filterbestand leer. Bitte neue Filter kaufen. Aktueller
         Bestand: {{ states('input_number.filter_bestand') | int(0) }}\n"
@@ -2788,9 +2788,9 @@
       - action: telegram_bot.send_message
         data:
           target:
-            - 988178587
+          - 988178587
           parse_mode: html
-          message: "Schliesse das Fenster – Wohnzimmer Fenster ist Offen"
+          message: Schliesse das Fenster – Wohnzimmer Fenster ist Offen
       - action: notify.send_message
         target:
           entity_id: notify.andreas_s_sonos_beam_sprechen
@@ -4357,4 +4357,47 @@
   - action: input_boolean.turn_off
     target:
       entity_id: input_boolean.ich_schlafe_noch
+  mode: single
+- id: '1780959498954'
+  alias: '[Inventar] USB-Scanner → Barcode-Eingabe'
+  description: Leitet Scans vom Inateck BCST-70 (via Bridge auf RPi/Mac) an input_text.off_barcode_eingabe
+    weiter
+  triggers:
+  - platform: state
+    entity_id: sensor.inventar_bcst70
+    not_to:
+    - unknown
+    - unavailable
+    - ''
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.state | length > 3 }}'
+  actions:
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.off_barcode_eingabe
+    data:
+      value: '{{ trigger.to_state.state }}'
+  mode: restart
+- id: '1781015350908'
+  alias: Magic Mirror Monitor EIN
+  description: Schaltet den Magic Mirror Monitor an wenn der Schalter eingeschaltet
+    wird
+  triggers:
+  - platform: state
+    entity_id: input_boolean.magic_mirror_monitor
+    to: 'on'
+  actions:
+  - action: rest_command.magic_mirror_monitor_on
+  mode: single
+- id: '1781015356439'
+  alias: Magic Mirror Monitor AUS
+  description: Schaltet den Magic Mirror Monitor aus wenn der Schalter ausgeschaltet
+    wird
+  triggers:
+  - platform: state
+    entity_id: input_boolean.magic_mirror_monitor
+    to: 'off'
+  actions:
+  - action: rest_command.magic_mirror_monitor_off
   mode: single

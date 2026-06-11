@@ -340,6 +340,97 @@ input_datetime:
     icon: mdi:pill-remove
     has_date: true
     has_time: true
+  # Slot-spezifische Einnahme-Zeitstempel (7-Tage-Protokoll)
+  medikament_1_morgen_einnahme:
+    name: "Med 1 – Morgens genommen"
+    icon: mdi:weather-sunny
+    has_date: true
+    has_time: true
+  medikament_1_mittag_einnahme:
+    name: "Med 1 – Mittags genommen"
+    icon: mdi:weather-partly-cloudy
+    has_date: true
+    has_time: true
+  medikament_1_abend_einnahme:
+    name: "Med 1 – Abends genommen"
+    icon: mdi:weather-night
+    has_date: true
+    has_time: true
+  medikament_2_morgen_einnahme:
+    name: "Med 2 – Morgens genommen"
+    icon: mdi:weather-sunny
+    has_date: true
+    has_time: true
+  medikament_2_mittag_einnahme:
+    name: "Med 2 – Mittags genommen"
+    icon: mdi:weather-partly-cloudy
+    has_date: true
+    has_time: true
+  medikament_2_abend_einnahme:
+    name: "Med 2 – Abends genommen"
+    icon: mdi:weather-night
+    has_date: true
+    has_time: true
+  medikament_3_morgen_einnahme:
+    name: "Med 3 – Morgens genommen"
+    icon: mdi:weather-sunny
+    has_date: true
+    has_time: true
+  medikament_3_mittag_einnahme:
+    name: "Med 3 – Mittags genommen"
+    icon: mdi:weather-partly-cloudy
+    has_date: true
+    has_time: true
+  medikament_3_abend_einnahme:
+    name: "Med 3 – Abends genommen"
+    icon: mdi:weather-night
+    has_date: true
+    has_time: true
+  medikament_4_morgen_einnahme:
+    name: "Med 4 – Morgens genommen"
+    icon: mdi:weather-sunny
+    has_date: true
+    has_time: true
+  medikament_4_mittag_einnahme:
+    name: "Med 4 – Mittags genommen"
+    icon: mdi:weather-partly-cloudy
+    has_date: true
+    has_time: true
+  medikament_4_abend_einnahme:
+    name: "Med 4 – Abends genommen"
+    icon: mdi:weather-night
+    has_date: true
+    has_time: true
+  medikament_5_morgen_einnahme:
+    name: "Med 5 – Morgens genommen"
+    icon: mdi:weather-sunny
+    has_date: true
+    has_time: true
+  medikament_5_mittag_einnahme:
+    name: "Med 5 – Mittags genommen"
+    icon: mdi:weather-partly-cloudy
+    has_date: true
+    has_time: true
+  medikament_5_abend_einnahme:
+    name: "Med 5 – Abends genommen"
+    icon: mdi:weather-night
+    has_date: true
+    has_time: true
+  medikament_6_morgen_einnahme:
+    name: "Med 6 – Morgens genommen"
+    icon: mdi:weather-sunny
+    has_date: true
+    has_time: true
+  medikament_6_mittag_einnahme:
+    name: "Med 6 – Mittags genommen"
+    icon: mdi:weather-partly-cloudy
+    has_date: true
+    has_time: true
+  medikament_6_abend_einnahme:
+    name: "Med 6 – Abends genommen"
+    icon: mdi:weather-night
+    has_date: true
+    has_time: true
 
 input_number:
   medikament_1_vorrat:
@@ -361,7 +452,7 @@ input_number:
     icon: mdi:pill-multiple
     min: 0
     max: 999
-    step: 1
+    step: 0.25
     mode: box
   medikament_2_vorrat_warnung:
     name: "Medikament 2 Warnung ab"
@@ -375,7 +466,7 @@ input_number:
     icon: mdi:pill-multiple
     min: 0
     max: 999
-    step: 1
+    step: 0.25
     mode: box
   medikament_3_vorrat_warnung:
     name: "Medikament 3 Warnung ab"
@@ -389,7 +480,7 @@ input_number:
     icon: mdi:pill-multiple
     min: 0
     max: 999
-    step: 1
+    step: 0.25
     mode: box
   medikament_4_vorrat_warnung:
     name: "Medikament 4 Warnung ab"
@@ -403,7 +494,7 @@ input_number:
     icon: mdi:pill-multiple
     min: 0
     max: 999
-    step: 1
+    step: 0.25
     mode: box
   medikament_5_vorrat_warnung:
     name: "Medikament 5 Warnung ab"
@@ -417,7 +508,7 @@ input_number:
     icon: mdi:pill-multiple
     min: 0
     max: 999
-    step: 1
+    step: 0.25
     mode: box
   medikament_6_vorrat_warnung:
     name: "Medikament 6 Warnung ab"
@@ -494,6 +585,30 @@ input_select:
     name: "Medikament 6 Wochentage"
     icon: mdi:calendar-week
     options: ["Täglich","Werktags (Mo–Fr)","Wochenende (Sa+So)","Mo / Mi / Fr","Di / Do / Sa","Mo / Do"]
+  medikament_1_menge:
+    name: "Medikament 1 Menge"
+    icon: mdi:pill
+    options: ["1 Tablette","½ Tablette","¼ Tablette","2 Tabletten","1½ Tabletten"]
+  medikament_2_menge:
+    name: "Medikament 2 Menge"
+    icon: mdi:pill
+    options: ["1 Tablette","½ Tablette","¼ Tablette","2 Tabletten","1½ Tabletten"]
+  medikament_3_menge:
+    name: "Medikament 3 Menge"
+    icon: mdi:pill
+    options: ["1 Tablette","½ Tablette","¼ Tablette","2 Tabletten","1½ Tabletten"]
+  medikament_4_menge:
+    name: "Medikament 4 Menge"
+    icon: mdi:pill
+    options: ["1 Tablette","½ Tablette","¼ Tablette","2 Tabletten","1½ Tabletten"]
+  medikament_5_menge:
+    name: "Medikament 5 Menge"
+    icon: mdi:pill
+    options: ["1 Tablette","½ Tablette","¼ Tablette","2 Tabletten","1½ Tabletten"]
+  medikament_6_menge:
+    name: "Medikament 6 Menge"
+    icon: mdi:pill
+    options: ["1 Tablette","½ Tablette","¼ Tablette","2 Tabletten","1½ Tabletten"]
   medikament_1_mahlzeit:
     name: "Medikament 1 Mahlzeit"
     icon: mdi:food-fork-drink
@@ -521,6 +636,38 @@ input_select:
 
 
 script:
+  medikament_bestand_sync:
+    alias: "Medikament – Bestand zu Google Sheets"
+    mode: parallel
+    fields:
+      med_nr:
+        description: "Medikament Nummer (1-6)"
+    sequence:
+      - condition: template
+        value_template: "{{ is_state('input_boolean.medikament_' ~ med_nr ~ '_aktiv', 'on') }}"
+      - variables:
+          vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) }}"
+          warnung: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat_warnung') | int(10) }}"
+          menge_str: "{{ states('input_select.medikament_' ~ med_nr ~ '_menge') }}"
+          menge_faktor: >-
+            {% set m = states('input_select.medikament_' ~ med_nr ~ '_menge') %}
+            {% if m == '½ Tablette' %}{{ 0.5 }}
+            {% elif m == '¼ Tablette' %}{{ 0.25 }}
+            {% elif m == '2 Tabletten' %}{{ 2 }}
+            {% elif m == '1½ Tabletten' %}{{ 1.5 }}
+            {% else %}{{ 1 }}{% endif %}
+      - service: rest_command.medikament_sheets_bestand
+        data:
+          medikament: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          pzn: "{{ states('input_text.medikament_' ~ med_nr ~ '_pzn') }}"
+          dosierung: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') }}"
+          menge: "{{ menge_str }}"
+          vorrat: "{{ vorrat }}"
+          dosen: "{{ (vorrat | float / menge_faktor | float) | round(0) | int }}"
+          packung: "{{ states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(0) }}"
+          warnung: "{{ warnung }}"
+          status: "{{ '⚠️ Niedrig' if vorrat | float <= warnung | float else '✅ OK' }}"
+
   medikament_reset:
     alias: "Medikament – Alles zurücksetzen"
     mode: parallel
@@ -588,9 +735,29 @@ script:
           entity_id: "input_select.medikament_{{ med_nr }}_mahlzeit"
         data:
           option: "Egal"
+      - service: input_select.select_option
+        target:
+          entity_id: "input_select.medikament_{{ med_nr }}_menge"
+        data:
+          option: "1 Tablette"
       - service: input_datetime.set_datetime
         target:
           entity_id: "input_datetime.medikament_{{ med_nr }}_letzte_einnahme"
+        data:
+          datetime: "2000-01-01 00:00:00"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_morgen_einnahme"
+        data:
+          datetime: "2000-01-01 00:00:00"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_mittag_einnahme"
+        data:
+          datetime: "2000-01-01 00:00:00"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_abend_einnahme"
         data:
           datetime: "2000-01-01 00:00:00"
 
@@ -609,7 +776,7 @@ script:
             {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
             {% set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') -%}
             {% if pzn | trim != '' %} · PZN {{ pzn }}{% endif %}
-            ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+            ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }} übrig)
 
   medikament_packung_hinzufuegen:
     alias: "Medikament – Packung einbuchen"
@@ -625,6 +792,9 @@ script:
           value: >-
             {{ (states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0)) +
                (states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(1)) }}
+      - service: script.medikament_bestand_sync
+        data:
+          med_nr: "{{ med_nr }}"
 
   medikament_genommen:
     alias: "Medikament – Als genommen markieren"
@@ -637,7 +807,7 @@ script:
           item_alt: >-
             {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
             {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
-            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }} übrig)
       - service: input_boolean.turn_off
         target:
           entity_id: "input_boolean.medikament_{{ med_nr }}_offen"
@@ -646,14 +816,52 @@ script:
           entity_id: "input_datetime.medikament_{{ med_nr }}_letzte_einnahme"
         data:
           datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      - service: input_number.decrement
+      - service: input_number.set_value
         target:
           entity_id: "input_number.medikament_{{ med_nr }}_vorrat"
+        data:
+          value: >-
+            {% set m = states('input_select.medikament_' ~ med_nr ~ '_menge') %}
+            {% if m == '½ Tablette' %}{% set abzug = 0.5 %}
+            {% elif m == '¼ Tablette' %}{% set abzug = 0.25 %}
+            {% elif m == '2 Tabletten' %}{% set abzug = 2 %}
+            {% elif m == '1½ Tabletten' %}{% set abzug = 1.5 %}
+            {% else %}{% set abzug = 1 %}{% endif %}
+            {{ [0, (states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0)) - abzug] | max }}
+      - variables:
+          slot_key: >-
+            {% set h = now().hour %}
+            {{ 'morgen' if h < 12 else ('mittag' if h < 17 else 'abend') }}
+          slot_label: >-
+            {% set h = now().hour %}
+            {{ 'Morgens' if h < 12 else ('Mittags' if h < 17 else 'Abends') }}
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_{{ slot_key }}_einnahme"
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: shell_command.medikament_csv_init
+      - service: shell_command.medikament_csv_log
+        data:
+          ZEILE: >-
+            {{ now().strftime('%d.%m.%Y') }},{{ ['Mo','Di','Mi','Do','Fr','Sa','So'][now().weekday()] }},{{ now().strftime('%H:%M') }},{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }},{{ slot_label }},{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') or '-' }},{{ states('input_select.medikament_' ~ med_nr ~ '_menge') or '1 Tablette' }}
+      - service: rest_command.medikament_sheets_log
+        data:
+          datum: "{{ now().strftime('%d.%m.%Y') }}"
+          wochentag: "{{ ['Mo','Di','Mi','Do','Fr','Sa','So'][now().weekday()] }}"
+          uhrzeit: "{{ now().strftime('%H:%M') }}"
+          medikament: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          slot: "{{ slot_label }}"
+          dosierung: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') or '-' }}"
+          menge: "{{ states('input_select.medikament_' ~ med_nr ~ '_menge') or '1 Tablette' }}"
+      - service: script.medikament_bestand_sync
+        data:
+          med_nr: "{{ med_nr }}"
       - variables:
           item_neu: >-
             {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
             {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
-            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }} übrig)
       - service: todo.update_item
         target:
           entity_id: todo.arznei
@@ -663,10 +871,11 @@ script:
         continue_on_error: true
       - variables:
           tg_name: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
-          tg_vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }}"
+          tg_vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }}"
           tg_pkg: "{{ states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(0) }}"
           tg_warnung: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat_warnung') | int(10) }}"
           tg_dos: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') }}"
+          tg_menge: "{{ states('input_select.medikament_' ~ med_nr ~ '_menge') }}"
           tg_mahlzeit: "{{ states('input_select.medikament_' ~ med_nr ~ '_mahlzeit') }}"
           tg_hin: "{{ states('input_text.medikament_' ~ med_nr ~ '_hinweis') }}"
       - service: telegram_bot.send_message
@@ -677,10 +886,8 @@ script:
           message: >-
             ✅ <b>{{ tg_name }}</b> – genommen
             {{ '\n' }}🕐 {{ now().strftime('%H:%M') }} Uhr
+            {{ '\n' }}💊 {{ tg_menge }}{%- if tg_dos | trim != '' %} · {{ tg_dos }}{%- endif %}
             {{ '\n' }}📦 Vorrat: {{ tg_vorrat }} Stück{%- if tg_pkg > 0 %} (≈{{ (tg_vorrat / tg_pkg) | round(1) }} Pkg.){%- endif %}
-            {%- if tg_dos | trim != '' %}
-            {{ '\n' }}💊 {{ tg_dos }}
-            {%- endif %}
             {%- if tg_mahlzeit != 'Egal' %}
             {{ '\n' }}🍽️ {{ tg_mahlzeit }}
             {%- endif %}
@@ -1002,7 +1209,7 @@ automation:
           item_alt: >-
             {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
             {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
-            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }} übrig)
       - service: input_boolean.turn_off
         target:
           entity_id: "input_boolean.medikament_{{ med_nr }}_offen"
@@ -1011,9 +1218,44 @@ automation:
           entity_id: "input_datetime.medikament_{{ med_nr }}_letzte_einnahme"
         data:
           datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      - service: input_number.decrement
+      - service: input_number.set_value
         target:
           entity_id: "input_number.medikament_{{ med_nr }}_vorrat"
+        data:
+          value: >-
+            {% set m = states('input_select.medikament_' ~ med_nr ~ '_menge') %}
+            {% if m == '½ Tablette' %}{% set abzug = 0.5 %}
+            {% elif m == '¼ Tablette' %}{% set abzug = 0.25 %}
+            {% elif m == '2 Tabletten' %}{% set abzug = 2 %}
+            {% elif m == '1½ Tabletten' %}{% set abzug = 1.5 %}
+            {% else %}{% set abzug = 1 %}{% endif %}
+            {{ [0, (states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0)) - abzug] | max }}
+      - variables:
+          slot_key: >-
+            {% set h = now().hour %}
+            {{ 'morgen' if h < 12 else ('mittag' if h < 17 else 'abend') }}
+          slot_label: >-
+            {% set h = now().hour %}
+            {{ 'Morgens' if h < 12 else ('Mittags' if h < 17 else 'Abends') }}
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: "input_datetime.medikament_{{ med_nr }}_{{ slot_key }}_einnahme"
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: shell_command.medikament_csv_init
+      - service: shell_command.medikament_csv_log
+        data:
+          ZEILE: >-
+            {{ now().strftime('%d.%m.%Y') }},{{ ['Mo','Di','Mi','Do','Fr','Sa','So'][now().weekday()] }},{{ now().strftime('%H:%M') }},{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }},{{ slot_label }},{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') or '-' }},{{ states('input_select.medikament_' ~ med_nr ~ '_menge') or '1 Tablette' }}
+      - service: rest_command.medikament_sheets_log
+        data:
+          datum: "{{ now().strftime('%d.%m.%Y') }}"
+          wochentag: "{{ ['Mo','Di','Mi','Do','Fr','Sa','So'][now().weekday()] }}"
+          uhrzeit: "{{ now().strftime('%H:%M') }}"
+          medikament: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
+          slot: "{{ slot_label }}"
+          dosierung: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') or '-' }}"
+          menge: "{{ states('input_select.medikament_' ~ med_nr ~ '_menge') or '1 Tablette' }}"
       - service: todo.update_item
         target:
           entity_id: todo.arznei
@@ -1022,14 +1264,15 @@ automation:
           rename: >-
             {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) -}}
             {%- set pzn = states('input_text.medikament_' ~ med_nr ~ '_pzn') | trim -%}
-            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} übrig)
+            {%- if pzn != '' %} · PZN {{ pzn }}{%- endif %} ({{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }} übrig)
         continue_on_error: true
       - variables:
           tg_name: "{{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
-          tg_vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }}"
+          tg_vorrat: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }}"
           tg_pkg: "{{ states('input_number.medikament_' ~ med_nr ~ '_packung_groesse') | int(0) }}"
           tg_warnung: "{{ states('input_number.medikament_' ~ med_nr ~ '_vorrat_warnung') | int(10) }}"
           tg_dos: "{{ states('input_text.medikament_' ~ med_nr ~ '_dosierung') }}"
+          tg_menge: "{{ states('input_select.medikament_' ~ med_nr ~ '_menge') }}"
           tg_mahlzeit: "{{ states('input_select.medikament_' ~ med_nr ~ '_mahlzeit') }}"
           tg_hin: "{{ states('input_text.medikament_' ~ med_nr ~ '_hinweis') }}"
       - service: telegram_bot.send_message
@@ -1040,10 +1283,8 @@ automation:
           message: >-
             ✅ <b>{{ tg_name }}</b> – genommen
             {{ '\n' }}🕐 {{ now().strftime('%H:%M') }} Uhr
+            {{ '\n' }}💊 {{ tg_menge }}{%- if tg_dos | trim != '' %} · {{ tg_dos }}{%- endif %}
             {{ '\n' }}📦 Vorrat: {{ tg_vorrat }} Stück{%- if tg_pkg > 0 %} (≈{{ (tg_vorrat / tg_pkg) | round(1) }} Pkg.){%- endif %}
-            {%- if tg_dos | trim != '' %}
-            {{ '\n' }}💊 {{ tg_dos }}
-            {%- endif %}
             {%- if tg_mahlzeit != 'Egal' %}
             {{ '\n' }}🍽️ {{ tg_mahlzeit }}
             {%- endif %}
@@ -1056,7 +1297,7 @@ automation:
       - service: notify.mobile_app_andreas_iphone_15pro_max
         data:
           title: "✅ {{ states('input_text.medikament_' ~ med_nr ~ '_name') or ('Medikament ' ~ med_nr) }}"
-          message: "Genommen! Vorrat: {{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | int(0) }} Stück"
+          message: "Genommen! Vorrat: {{ states('input_number.medikament_' ~ med_nr ~ '_vorrat') | float(0) | round(2) | string | replace('.0','') }} Stück"
           data:
             push:
               interruption-level: passive
@@ -1080,6 +1321,20 @@ automation:
             target:
               entity_id: scene.medikament_licht_backup
     mode: parallel
+
+  # ── Wochenprotokoll – sonntags 20:00 per Telegram ────────────────────────
+  - id: medikament_wochenprotokoll
+    alias: "Medikamente – Wochenprotokoll Telegram"
+    description: "Jeden Sonntag 20:00 Uhr: Zusammenfassung der letzten 7 Tage per Telegram"
+    trigger:
+      - platform: time
+        at: "20:00:00"
+    condition:
+      - condition: template
+        value_template: "{{ now().weekday() == 6 }}"
+    action:
+      - service: shell_command.medikament_wochenbericht
+    mode: single
 
   # ── Vorrat niedrig – täglich 08:00 ────────────────────────────────────────
   - id: medikament_vorrat_warnung

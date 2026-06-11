@@ -1,41 +1,64 @@
 
-from ..global_variables  import GlobalVariables as Gb
-from ..const             import (NAME, BATTERY, WAZE_SERVERS_FNAME, )
+from ..global_variables     import GlobalVariables as Gb
+from ..const                import (NAME, BATTERY, WAZE_SERVERS_FNAME, )
 
 #----------------------------------------------------------------------------------------
-MENU_PAGE_0_INITIAL_ITEM = 1
+# Dashboard constants
+RESULT_SUMMARY = 'result-summary'
+TRACK_DETAILS  = 'track-details'
+ALL_DEVICES    = 'all-devices'
+IPHONE_FIRST_2 = 'iphone-first-2'
+ALL_IPH2_DEVICES = [ALL_DEVICES, IPHONE_FIRST_2]
+
+DATA           = 'data'
+CONFIG         = 'config'
+ITEMS          = 'items'
+VIEWS          = 'views'
+TITLE          = 'title'
+PATH           = 'path'
+ADD            = 'add'
+IC3DB          = 'ic3db-'
+NOT_LOGGED_IN  = 'NOT LOGGED IN'
+
+DATA_ENTRY_ALERT_CHAR = '⛔'
+DATA_ENTRY_ALERT      = f"      {DATA_ENTRY_ALERT_CHAR} "
+
+#----------------------------------------------------------------------------------------
 MENU_PAGE_TITLE = [
         'Devices & Sensors Menu',
         'Parameters Menu'
         ]
 MENU_KEY_TEXT = {
-        'data_source':          'APPLE ACCOUNTS & MOBILE APP > Add, Change and Delete Apple Accounts, Enable Monitoring the Mobile App ',
+        'apple_accounts':          'APPLE ACCOUNTS & MOBILE APP > Add, Change and Delete Apple Accounts, Enable Monitoring the Mobile App ',
         'device_list':          'ICLOUD3 DEVICES  > Add, Change and Delete Tracked and Monitored Devices',
-        'verification_code':    'ENTER/REQUEST AN APPLE ACCOUNT VERIFICATION CODE > Enter or Request the 6-digit Apple Account Verification Code',
+        'auth_code':            'AUTHENTICATE APPLE ACCT SIGN-IN > Send the 6-digit Authentication Code to Apple for account access verification',
+        'SK-auth_code':         'AUTHENTICATE APPLE ACCT SIGN-IN > Send the 6-digit Authentication Code/Security Key Name to Apple for verification. Refresh expired codes/Security Key approval requests',
         'change_device_order':  'CHANGE DEVICE ORDER > Change the Event Log Device display and tracking update sequence',
         'sensors':              'SENSORS > Set Sensors created by iCloud3, Exclude Specific Sensors from being created',
         'dashboard_builder':    'DASHBOARD BUILDER > Build a Lovelace Dashboard to display device tracking information',
-        'tools':                'TOOLS > Log Level, Delete Apple Acct & Device Assignment, Delete Apple Acct Cookie & iCloud3 Config files, Repair sensor ‘_2’ entity name errors, Restart HA/Reload iCloud3',
+        'tools':                'TOOLS > Log Level, Cleanup HA Device & Entity Registry, Reload iCloud3, Delete Apple Acct & Device Assignment, Delete Apple Acct Cookie & iCloud3 Config files',
 
         'away_time_zone':       'AWAY TIME ZONE > Select the displayed time zone for devices away from Home',
         'tracking_parameters':  'TRACKING PARAMETERS > Nearby Device Info, Accuracy Thresholds & Other Location Request Intervals',
-        'format_settings':      'FIELD FORMATS & OTHER PARAMETERS > Zone Display & Device Tracker State formats, Unit of Measure/Time & Distance formats, Picture Dir Filters, Event Log Overrides, etc',
+        'format_settings':      'DISPLAY SETTINGS & OTHER PARAMETERS > Zone Display & Device Tracker State formats, Unit of Measure/Time & Distance formats, Picture Dir Filters, etc',
         'display_text_as':      'DISPLAY TEXT AS > Event Log Text Replacement',
         'waze':                 'WAZE ROUTE DISTANCE, TIME & HISTORY > Route Server and Parameters, Waze History Database Parameters and Controls',
         'special_zones':        'SPECIAL ZONES > Enter Zone Delay Time. Stationary Zone. Primary Track-from-Home Zone Override',
         'inzone_intervals':     'DEFAULT INZONE INTERVALS > inZone Interval assigned to new devices',
 
         'select':               'SELECT > Select the parameter update form',
-        'next_page_0':          f'{MENU_PAGE_TITLE[0].upper()} > iCloud Account & Mobile App, iCloud3 Devices, Enter & Request Verification Code; Change Device Order; Sensors; Action Commands',
-        'next_page_1':          f'{MENU_PAGE_TITLE[1].upper()} > Tracking Parameters, Field Formats & Directories, Display Text As, Waze Route Distance/Time & History, Special Zones, Default inZone Intervals',
-        'exit':                 f'EXIT AND RESTART/RELOAD ICLOUD3 (Current version is v{Gb.version})'
+        'next_page_0':          f'{MENU_PAGE_TITLE[0].upper()} > iCloud Account & Mobile App, iCloud3 Devices, Enter & Request an Authentication Code; Change Device Order; Sensors; Action Commands',
+        'next_page_1':          f'{MENU_PAGE_TITLE[1].upper()} > Tracking Parameters, Display Settings & Other Parameters, Display Text As, Waze Route Distance/Time & History, Special Zones',
+        'exit':                 'EXIT AND RESTART ICLOUD3',
+        'exit_update_dashboards': 'EXIT AND RESTART ICLOUD3, UPDATE DASHBOARDS WITH DEVICE CHANGES',
+        'exit_add_dev_trkrs_sensors': 'EXIT AND RESTART ICLOUD3, ADD NEW DEVICES & SENSORS, UPDATE DASHBOARDS'
 }
 
+MENU_PAGE_0_INITIAL_ITEM = 2
 MENU_KEY_TEXT_PAGE_0 = [
-        MENU_KEY_TEXT['data_source'],
+        MENU_KEY_TEXT['apple_accounts'],
+        MENU_KEY_TEXT['auth_code'],
         MENU_KEY_TEXT['device_list'],
-        MENU_KEY_TEXT['verification_code'],
-        # MENU_KEY_TEXT['away_time_zone'],
         MENU_KEY_TEXT['sensors'],
         MENU_KEY_TEXT['dashboard_builder'],
         MENU_KEY_TEXT['tools'],
@@ -64,15 +87,25 @@ ACTION_LIST_OPTIONS = {
         'select_form':              'SELECT > Select the parameter update form',
 
         'update_apple_acct':        'SELECT APPLE ACCOUNT > Update the Username/Password of the selected Apple Account, Add a new Apple Account, Remove the Apple Account',
-        'save_log_into_apple_acct': 'SAVE CHANGES, LOG INTO APPLE ACCT > Save any configuration changes, Log into the Apple Account',
+        'save_log_into_apple_acct': 'SAVE & LOG INTO APPLE ACCT > Save any configuration changes, Log into the Apple Account',
         'log_into_apple_acct':      'LOG INTO APPLE ACCT > Log into the Apple Account, Save any configuration changes',
         'stop_using_apple_acct':    'STOP USING AN APPLE ACCOUNT > Stop using an Apple Account, Remove it from the Apple Accounts list and all devices using it',
-        'verification_code':        'ENTER/REQUEST AN APPLE ACCOUNT VERIFICATION CODE > Enter (or Request) the 6-digit Apple Account Verification Code',
+        'auth_code':                'AUTHENTICATE APPLE ACCT SIGN-IN > Send/Request the 6-digit Authentication Code',
         'delete_apple_acct':        'DELETE APPLE ACCOUNT > Delete the selected Apple Account. Delete or reassign iCloud3 devices using it',
+        'stop_login_retry':         'STOP RETRYING LOGIN > Stop retrying to log into the Apple Account',
+        'other_apple_acct_parameters': 'OTHER APPLE ACCOUNT PARAMETERS > Set other config parameters (China Apple Server Location)',
 
-        'send_verification_code':   'SEND THE VERIFICATION CODE TO APPLE > Send the 6-digit Apple Account Verification Code back to Apple to approve access to Apple Account',
-        "request_verification_code":'REQUEST A NEW APPLE ACCOUNT VERIFICATION CODE > Reset Apple Account Interface and request a new Apple Account Verification Code',
-        'cancel_verification_entry':'CANCEL > Cancel the Verification Code Entry and Close this screen',
+        'send_auth_code':           'SEND THE CODE TO APPLE TO AUTHENTICATE SIGN-IN > Send the Authentication Code back to Apple to confirm access to the Apple Account',
+        'request_auth_code':        'REQUEST AUTHENTICATION CODE > Delete the Trust Token. Get the Authenticate code from the Apple using the selected method',
+        'change_auth_method':       'CHANGE THE AUTHENTICATION METHOD > Change the method of getting the Authentication Code (Push Notification, Text Message)',
+        'reset_trust_token_return': 'RESET TRUST TOKEN, RETURN TO ENTER & SEND THE CODE TO APPLE > Resets the Trust Token. Return to the Authenticate Apple Sign-in screen',
+        'auth_code_from_applecom_login': 'APPLE DID NOT SEND A CODE (PUSH/TEXT), GET ONE FROM APPLE.COM > Sign into your Apple Acct, get a code, enter it here and send to Apple',
+
+        'SK-send_auth_code':        'SEND CODE/KEY TO APPLE TO AUTHENTICATE SIGN-IN > Send the Authentication Code or Security Key being used back to Apple to confirm access to the Apple Account',
+        'SK-request_auth_code':     'REQUEST NEW CODE/REFRESH SECURITY KEY LIST > Display `Apple Acct Sign-in is Requested` on a Trusted Device to get a new Code or to confirm using a Security Key',
+
+        'cancel_auth_entry':        'CANCEL > Cancel the Authentication Code Entry and Close this screen',
+        'accept_terms_of_use':      'ACCEPT `TERMS OF USE` > Send `I Agree` to Apple updates to the `Terms of Use`',
 
         'update_device':            'SELECT THE DEVICE > Update the selected device, Add a new device to be tracked by iCloud3, Display more Devices on the next page',
         'add_device':               'ADD DEVICE > Continue to the `‘Update Devices`’ screen to finish setting up the new device',
@@ -83,15 +116,22 @@ ACTION_LIST_OPTIONS = {
         'inactive_to_track':        'TRACK ALL OR SELECTED > Change the `Tracking Mode‘ of all of the devices (or the selected devices) from `Inactive‘ to `Tracked‘',
         'inactive_keep_inactive':   'DO NOT TRACK, KEEP INACTIVE > None of these devices should be `Tracked‘ and should remain `Inactive‘',
 
-        'restart_ha':               'RESTART HOME ASSISTANT > Restart HA, Restart iCloud3',
+        'restart_ha':               'RESTART HOME ASSISTANT > Restart HA & iCloud3',
         'restart_icloud3':          'RESTART ICLOUD3 > Restart iCloud3 (Does not restart Home Assistant)',
         'restart_ic3_now':          'RESTART NOW > Restart iCloud3 now to load the updated configuration',
         'reload_icloud3':           'RELOAD ICLOUD3 ᐳ Reload & Restart iCloud3 (This does not load a new version)',
         'restart_ic3_later':        'RESTART LATER > The configuration changes have been saved. Load the updated configuration the next time iCloud3 is started',
-        'review_inactive_devices':  'REVIEW INACTIVE DEVICES > Some Devices are `Inactive` and will not be located or tracked ^add-text^',
+        'review_inactive_devices':  'REVIEW INACTIVE DEVICES > Some Devices are `Inactive‘ and will not be located or tracked ^add-text^',
 
-        'update_dashboard':         'UPDATE A DASHBOARD > Update the *All Info, *Track Results & *Badge, Battery views with the current devices (Main and Other Devices views are not updated)',
-        'create_dashboard':         'RECREATE A DASHBOARD > Erase and recreate an existing Dashboard with current devices, Create a new Dashboard',
+        'update_sensor_list':       'UPDATE LIST, SELECT MORE SENSORS > Update the Excluded Sensors List, Select more Sensors to Exclude',
+        'return_to_sensor_screen':  'UPDATE LIST, RETURN TO SENSOR SCREEN > Return to the Sensor screen with the updated Excluded Sensors list',
+        'show_sensor_names_all':    'DISPLAY SENSOR NAMES (ALL) > Display all of the device‘s sensors',
+        'show_sensor_names_some':   'DISPLAY SENSOR NAMES (2-LINES) > Display the device‘s sensors that will fit on 2-lines',
+        'check_none':               'UNCHECK ALL ITEMS > Unselect all items',
+        'check_all':                'CHECK ALL ITEMS > Select all items',
+        'delete_device_sensors':    'DELETE SELECTED DEVICE SENSORS > Remove the selected device sensors from the HA Entity and Device Registry',
+
+        'create_dashboard':         'CREATE/UPDATE A DASHBOARD > Erase and recreate an existing Dashboard, Create a new Dashboard',
 
         'select_text_as':           'SELECT > Update selected `Display Text As‘ field',
         'clear_text_as':            'CLEAR > Remove `Display Text As‘ entry',
@@ -105,6 +145,7 @@ ACTION_LIST_OPTIONS = {
 
         'cancel_goto_previous':     'RETURN > Return to the previous screen. Cancel any unsaved changes',
         'goto_previous':            'RETURN > Return to the previous screen',
+        'goto_ha_auth_done':        'UPDATE COMPLETE > Configuration updates are complete. Return HA',
         'cancel_goto_menu':         'MENU > Return to the Menu screen. Cancel any unsaved changes',
         'goto_menu':                'MENU > Return to the Menu screen',
         'cancel_goto_select_device': 'BACK TO DEVICE SELECTION > Return to the Device Selection screen. Cancel any unsaved changes',
@@ -114,7 +155,7 @@ ACTION_LIST_OPTIONS = {
         'save_stay':                'SAVE > Update Configuration File',
 
         'confirm_action_yes':       'YES > Complete the requested action',
-        'confirm_return_no':        'NO  > Cancel the request',
+        'confirm_action_no':        'NO  > Cancel the request',
         'confirm_save':             'SAVE THE CONFIGURATION CHANGES > Save any changes, then return to the Main Menu',
 
         "divider1": "═══════════════════════════════════════",
@@ -123,6 +164,7 @@ ACTION_LIST_OPTIONS = {
         }
 
 ACTION_LIST_ITEMS_KEY_BY_TEXT = {text: key for key, text in ACTION_LIST_OPTIONS.items()}
+ACTION_LIST_ITEM_KEYS         = list(ACTION_LIST_OPTIONS.keys())
 
 ACTION_LIST_ITEMS_BASE = [
         ACTION_LIST_OPTIONS['save'],
@@ -142,23 +184,26 @@ ADD = UNSELECTED = -1
 # Action List Items for all screens
 APPLE_ACCOUNT_ACTIONS = [
         ACTION_LIST_OPTIONS['update_apple_acct'],
-        ACTION_LIST_OPTIONS['delete_apple_acct']]
+        ACTION_LIST_OPTIONS['delete_apple_acct'],
+        ACTION_LIST_OPTIONS['other_apple_acct_parameters']]
 APPLE_ACCOUNT_DELETE_ACTIONS = [
         ACTION_LIST_OPTIONS['delete_apple_acct'],
         ACTION_LIST_OPTIONS['cancel_goto_previous']]
 USERNAME_PASSWORD_ACTIONS = [
         ACTION_LIST_OPTIONS['save_log_into_apple_acct'],
         ACTION_LIST_OPTIONS['delete_apple_acct'],
-        ACTION_LIST_OPTIONS['verification_code'],
+        ACTION_LIST_OPTIONS['auth_code'],
         ACTION_LIST_OPTIONS['cancel_goto_previous']]
-REAUTH_CONFIG_FLOW_ACTIONS = [
-        ACTION_LIST_OPTIONS['send_verification_code'],
-        ACTION_LIST_OPTIONS['request_verification_code'],
-        ACTION_LIST_OPTIONS['cancel_verification_entry']]
 REAUTH_ACTIONS = [
-        ACTION_LIST_OPTIONS['send_verification_code'],
-        ACTION_LIST_OPTIONS['request_verification_code'],
+        ACTION_LIST_OPTIONS['send_auth_code'],
+        ACTION_LIST_OPTIONS['request_auth_code'],
+        ACTION_LIST_OPTIONS['change_auth_method'],
+        ACTION_LIST_OPTIONS['auth_code_from_applecom_login']]
+REAUTH_CODE_FROM_APPLECOM_LOGIN = [
+        ACTION_LIST_OPTIONS['send_auth_code'],
         ACTION_LIST_OPTIONS['goto_previous']]
+CHANGE_AUTH_METHOD = [
+        ACTION_LIST_OPTIONS['save']]
 DEVICE_LIST_ACTIONS = [
         ACTION_LIST_OPTIONS['update_device'],
         ACTION_LIST_OPTIONS['delete_device'],
@@ -173,7 +218,18 @@ DEVICE_LIST_ACTIONS_NO_ADD = [
         ACTION_LIST_OPTIONS['change_device_order'],
         ACTION_LIST_OPTIONS['goto_menu']]
 
-REVIEW_INACTIVE_DEVICES =  [
+SENSORS_ACTIONS = [
+        ACTION_LIST_OPTIONS['exclude_sensors'],
+        ACTION_LIST_OPTIONS['set_to_default_sensors'],
+        ACTION_LIST_OPTIONS['save_stay'],
+        ACTION_LIST_OPTIONS['goto_menu']]
+SENSORS_EXCLUDE_ACTIONS_= [
+        ACTION_LIST_OPTIONS['filter_sensors'],
+        ACTION_LIST_OPTIONS['update_sensor_list'],
+        ACTION_LIST_OPTIONS['return_to_sensor_screen']]
+
+
+REVIEW_INACTIVES = [
         ACTION_LIST_OPTIONS['inactive_to_track'],
         ACTION_LIST_OPTIONS['goto_previous'],
         ACTION_LIST_OPTIONS['goto_menu']]
@@ -183,42 +239,59 @@ RESTART_NOW_LATER_ACTIONS = [
         ACTION_LIST_OPTIONS['restart_ic3_now'],
         ACTION_LIST_OPTIONS['restart_ic3_later'],
         ACTION_LIST_OPTIONS['review_inactive_devices']]
-CONFIRM_ACTIONS =  [
+CONFIRM_ACTIONS = [
         ACTION_LIST_OPTIONS['confirm_action_yes'],
-        ACTION_LIST_OPTIONS['confirm_return_no']]
+        ACTION_LIST_OPTIONS['confirm_action_no']]
 DASHBOARD_BUILDER_ACTIONS = [
-        ACTION_LIST_OPTIONS['update_dashboard'],
         ACTION_LIST_OPTIONS['create_dashboard'],
         ACTION_LIST_OPTIONS['cancel_goto_menu']]
 TOOL_LIST = {
+        'tools_entity_registry_cleanup': 'CLEANUP HA ENTITY REGISTRY > Extract and Delete iCloud3  Entity Registry Devices and Sensors',
         'reset_data_source':      'CLEAR DEVICE`S DATA SOURCE SELECTIONS > Erase the `Apple Acct Device` and `Mobile App Device` selection fields for all iCloud3 devices (Update iCloud3 Device screen)',
-        'reset_tracking':         'REMOVE ALL APPLE ACCTS & DEVICES > Erase all Apple Accts (Data Sources - Apple Acct and Mobile App screen) and Erase all Devices (iCloud3 Devices screen)',
+        'reset_tracking':         'REMOVE ALL APPLE ACCTS & DEVICES > Erase all Apple Accts (Apple Acct and Mobile App screen) and Erase all Devices (iCloud3 Devices screen)',
         'reset_general':          'RESET GENERAL CONFIGURATION PARAMETERS > Set the `General Parameters` to their default value (Other Parameter Menu screens). Sensors are reset on the Sensors screen.',
         'del_apple_acct_cookies': 'DELETE ALL APPLE/ICLOUD COOKIE FILES > Delete Apple Acct Cookie & Session files in the ‘.storage/icloud3.apple_acct’ directory, Restart HA',
         'del_icloud3_config_files': 'DELETE ALL ICLOUD3 CONFIGURATION FILES > Delete the iCloud3  Configuration files in the ‘.storage/icloud3’ directory. Apple Accts will be reverified.',
-        'restart_ha_reload_icloud3': 'RESTART HA OR RELOAD ICLOUD3 > Restart Home Assistant, Reload current version of iCloud3',
-        'fix_entity_name_error':  'REPAIR ‘_2’ SENSOR ENTITY NAME ERRORS > Rename ‘_2’ sensor entities back to the correct name without the ‘_2’ extension',
+        'X-restart_ha_reload_icloud3': 'RESTART HA > Restart Home Assistant and iCloud3',
+        'restart_ha_reload_icloud3': 'RELOAD ICLOUD3, RESTART HA > Reload current version of iCloud3, Restart Home Assistant',
         'goto_menu':                 'MENU > Return to the Menu screen',
 }
 TOOL_LIST_ITEMS = [
+        TOOL_LIST['tools_entity_registry_cleanup'],
+        TOOL_LIST['restart_ha_reload_icloud3'],
         TOOL_LIST['reset_data_source'],
         TOOL_LIST['reset_tracking'],
         TOOL_LIST['reset_general'],
         TOOL_LIST['del_apple_acct_cookies'],
         TOOL_LIST['del_icloud3_config_files'],
-        TOOL_LIST['restart_ha_reload_icloud3'],
-        TOOL_LIST['fix_entity_name_error'],
         TOOL_LIST['goto_menu'],
 ]
 TOOL_LIST_ITEMS_KEY_BY_TEXT = {text: key for key, text in TOOL_LIST.items()}
+ACTIONS_REPAIR_ENTITY_ERRORS = [
+        'check_all',
+        'check_none',
+        'show_sensor_names_all',
+        'show_sensor_names_some',
+        'delete_device_sensors',
+        'goto_previous'
+]
 
 #   Parameter List Selections Items
 DATA_SOURCE_OPTIONS = {
         'iCloud':   'APPLE ACCOUNT - Location data is provided for devices in the Family Sharing List',
         'MobApp':   'HA MOBILE APP - Location data and zone enter/exit triggers from devices with the Mobile App'
         }
+REAUTH_AUTH_METHODS = {
+        'last_method': 'LAST METHOD - Use the last method (Shown on the on Account line)',
+        'push':     'PUSH NOTFICATION - Display the code in the Code popup screen',
+        'text_1':   'TEXT MESSAGE 1 - Send a Text msg to the Trusted Device (Primary)',
+        'text_2':   'TEXT MESSAGE 2 - Send a Text msg to the Trusted Device (Other)'
+        }
+        # 'hwkey_1':  'HARDWARE KEY 1 - Use a Hardware Key #1 (YubiKey)',
+        # 'hwkey_2':  'HARDWARE KEY 2 - Use a Hardware Key #2 (YubiKey)',
+        # }
 
-# Apple Server Endpoint value - Add onto the Server URL in PyiCloud_ic3 if this starts with a period ('.')
+# Apple Server Endpoint value - Add onto the Server URL in AppleAcct_ic3 if this starts with a period ('.')
 APPLE_SERVER_LOCATION_OPTIONS = {
         'usa':       'USA/OTHER - The Apple Server is not located in China',
         '.cn':       'CHINA - The Apple Server is located in China (GCJ02)',
@@ -236,17 +309,28 @@ MOBAPP_DEVICE_NONE_OPTIONS = {
 PICTURE_NONE_KEY_TEXT = {
         'None': 'None - Display the Device’s Icon instead of a picture'
         }
-DASHBOARD_MAIN_VIEW_STYLE_BASE = {
-        'result-summary':   'Tracking Result Summary',
-        'iphone-first-2':   'Tracking Results & Status - 2 iPhones',
-        'iphone-all':       'Tracking Results & Status - All iPhones',
+DASHBOARD_MAIN_VIEW_STYLE_OPTIONS = {
+        'result-summary': 'Result Summary - Show Arrival Time, Distance Travel Time, Battery Info',
+        'track-details':  'Tracking Details - Show all results of a location update',
+        }
+DASHBOARD_MAIN_VIEW_STYLES = {
+        'result-summary': 'Result Summary',
+        'track-details':  'Tracking Details',
+        }
+DASHBOARD_MAIN_VIEW_DEVICES_BASE = {
+        'all-devices':    'All Devices',
+        'iphone-first-2': 'First 2 iPhones',
         }
 LOG_ZONES_KEY_TEXT = {
-        'name-zone':        ' → [year]-[zone].csv',
-        'name-device':      ' → [year]-[device].csv',
-        'name-device-zone': ' → [year]-[device]-[zone].csv',
-        'name-zone-device': ' → [year]-[zone]-[device].csv',
+        '.hdr':             '⎯⎯⎯⎯⎯⎯ ACTIVITY FILE NAME ⎯⎯⎯⎯⎯⎯',
+        'name-zone':        '⋙ Zone (2026-warehouse.csv)',
+        'name-device':      '⋙ Device (2026-gary.csv)',
+        'name-device-zone': '⋙ Device+Zone (2026-gary_iphone-warehouse.csv)',
+        'name-zone-device': '⋙ Zone+Device (2026-warehouse-gary_iphone.csv)',
         }
+AWAY_FROM_ZONE_OPTIONS = {
+        'none': 'All at Home',
+        'all': 'All are Away'}
 TRACKING_MODE_OPTIONS = {
         'track':    'Track - Request Location and track the device',
         'monitor':  'Monitor - Report location only when another tracked device is updated',
@@ -301,12 +385,6 @@ WAZE_HISTORY_TRACK_DIRECTION_OPTIONS = {
         'north_south':      'North-South - You generally travel in North-to-South direction',
         'east_west':        'East-West - You generally travel in East-West direction'
         }
-
-SENSORS_EXCLUDE_ACTIONS_= [
-        ACTION_LIST_OPTIONS['filter_sensors'],
-        ACTION_LIST_OPTIONS['save_stay'],
-        ACTION_LIST_OPTIONS['cancel_goto_previous']]
-
 CONF_SENSORS_DEFAULT = {
         BATTERY:            '_battery, _battery_status > Create Battery Level (65%) and Battery Status (Charging, Low, etc) (ALWAYS CREATED)',
         'arrival_time':     '_arrival_time > Home Zone arrival time based on Waze Travel time (ALWAYS CREATED)',
@@ -409,7 +487,7 @@ ACTIONS_OTHER_ITEMS = {
         "wazehist_track":   "WAZE HIST MAP TRACK > Load route locations for map display",
         }
 ACTIONS_ACTION_ITEMS = {
-        "restart_ha":       "RESTART HA, RELOAD ICLOUD3 > Restart HA or Reload iCloud3",
+        "restart_ha":       "RESTART HA AND ICLOUD3 > Restart HA and iCloud3",
         "return":           "MAIN MENU > Return to the Main Menu"
         }
 
@@ -430,11 +508,11 @@ WAZE_HISTORY_USED_HEADER = (
         "for a GPS location (100m radius). It reduces the number of internet requests to the Waze Servers "
         "after it has been in use for a while and speed up response time when in a poor cell area")
 PASSTHRU_ZONE_HEADER = (
-        "You may be driving through a non-tracked zone but not stopping at tne zone. The Mobile "
+        "You may be driving through a non-tracked zone but not stopping at the zone. The Mobile "
         "App issues an Enter Zone trigger when the device enters the zone and changes the "
         "device_tracker entity state to the Zone. iCloud3 does not process the Enter Zone "
         "trigger until the delay time has passed. This prevents processing a Zone Enter "
-        "trig[er that is immediately followed by an Exit Zone trigger.")
+        "trigger that is immediately followed by an Exit Zone trigger.")
 STAT_ZONE_HEADER = (
         "A Stationary Zone is automatically created if the device remains in the same location "
         "(store, friends house, doctor`s office, etc.) for an extended period of time")
@@ -453,6 +531,3 @@ DATA_SOURCE_MOBAPP_HDR = (
         "HA MOBILE APP > Location data and zone Enter/Exit triggers are provided by the Mobile App")
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-DATA_ENTRY_ALERT_CHAR = '⛔'
-DATA_ENTRY_ALERT      = f"      {DATA_ENTRY_ALERT_CHAR} "

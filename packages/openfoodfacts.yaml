@@ -23,6 +23,54 @@ input_text:
     initial: ''
     max: 200
     icon: mdi:package-variant
+  letzte_buchung_modus:
+    name: 'Letzte Buchung: Modus'
+    max: 20
+    icon: mdi:swap-horizontal
+  letzte_buchung_produkt:
+    name: 'Letzte Buchung: Produkt'
+    max: 200
+    icon: mdi:food
+  letzte_buchung_ean:
+    name: 'Letzte Buchung: EAN'
+    max: 20
+    icon: mdi:barcode
+  letzte_buchung_lagerplatz:
+    name: 'Letzte Buchung: Lagerplatz'
+    max: 50
+    icon: mdi:warehouse
+  letzte_buchung_bestand:
+    name: 'Letzte Buchung: Bestand'
+    max: 20
+    icon: mdi:counter
+  letzte_buchung_zeit:
+    name: 'Letzte Buchung: Zeit'
+    max: 30
+    icon: mdi:clock
+  letzte_buchung_von:
+    name: 'Letzte Buchung: Von (Umbuchen)'
+    max: 50
+    icon: mdi:arrow-right
+  letzte_buchung_bestand_von:
+    name: 'Letzte Buchung: Bestand Von'
+    max: 20
+    icon: mdi:counter
+  letzte_buchung_bild:
+    name: 'Letzte Buchung: Produktbild URL'
+    max: 250
+    icon: mdi:image
+  letzte_buchung_marke:
+    name: 'Letzte Buchung: Marke'
+    max: 100
+    icon: mdi:tag-outline
+  letzte_buchung_menge:
+    name: 'Letzte Buchung: Menge'
+    max: 50
+    icon: mdi:scale
+  letzte_buchung_kategorie:
+    name: 'Letzte Buchung: Kategorie'
+    max: 100
+    icon: mdi:shape
 input_select:
   off_modus:
     name: Modus
@@ -35,6 +83,16 @@ input_select:
   off_lagerplatz:
     name: Lagerplatz
     icon: mdi:warehouse
+    options:
+    - Vorratskammer
+    - Kühlschrank
+    - Gefrierschrank
+    - Schrank
+    - Sonstiges
+    initial: Vorratskammer
+  off_umbuchen_von:
+    name: Umbuchen Von
+    icon: mdi:arrow-right
     options:
     - Vorratskammer
     - Kühlschrank
@@ -84,14 +142,18 @@ input_boolean:
     name: 'Marker: Produkt im Buffer'
     icon: mdi:basket-fill
 shell_command:
-  off_excel_log: "bash -c ' FILE=\"/config/www/off_inventar.csv\";\nif [ ! -f \"$FILE\"\
-    \ ]; then\n  echo \"Datum;Modus;Produkt;Marke;Menge;Barcode;Lagerplatz;Anzahl\"\
-    \ > \"$FILE\";\nfi;\necho \"{{ datum }};{{ modus }};{{ produkt }};{{ marke }};{{\
-    \ menge }};{{ code }};{{ lagerplatz }};{{ anzahl }}\" >> \"$FILE\"; '"
+  off_excel_log: "bash -c 'f=/config/www/off_inventar.csv; [ ! -f \"$f\" ] && printf\
+    \ \"Datum;Modus;Produkt;Marke;Menge;Barcode;Lagerplatz;Anzahl\\n\" > \"$f\";\
+    \ printf \"%s;%s;%s;%s;%s;%s;%s;%s\\n\" \"$1\" \"$2\" \"$3\" \"$4\" \"$5\"\
+    \ \"$6\" \"$7\" \"$8\" >> \"$f\"' -- {{ datum | tojson }} {{ modus | tojson\
+    \ }} {{ produkt | tojson }} {{ marke | tojson }} {{ menge | tojson }} {{ code\
+    \ | tojson }} {{ lagerplatz | tojson }} {{ anzahl | tojson }}"
   inventar_vorratskammer_csv_init: bash -c 'echo "Stk;Produkt;Marke;Barcode;Lagerplatz"
     > /config/www/inventar_vorratskammer.csv'
-  inventar_vorratskammer_csv_zeile: bash -c 'echo "{{ stk }};{{ produkt }};{{ marke
-    }};{{ barcode }};{{ lagerplatz }}" >> /config/www/inventar_vorratskammer.csv'
+  inventar_vorratskammer_csv_zeile: "bash -c 'printf \"%s;%s;%s;%s;%s\\n\" \"$1\"\
+    \ \"$2\" \"$3\" \"$4\" \"$5\" >> /config/www/inventar_vorratskammer.csv' --\
+    \ {{ stk | tojson }} {{ produkt | tojson }} {{ marke | tojson }} {{ barcode\
+    \ | tojson }} {{ lagerplatz | tojson }}"
 rest_command:
   off_sheet_lookup:
     url: https://script.google.com/macros/s/AKfycbxK3gFwtzbqtYK8jXkXgzVImmisYb9sIh-rtcFSj1ZakoGJRfKLj7i_47MVLREx01AKuw/exec?barcode={{
@@ -110,7 +172,7 @@ rest_command:
     timeout: 60
 rest:
 - resource_template: https://de.openfoodfacts.org/api/v2/product/{{ states('input_text.off_barcode_eingabe')
-    }}.json?fields=product_name,product_name_de,brands,quantity,categories
+    }}.json?fields=product_name,product_name_de,brands,quantity,categories,image_front_url
   scan_interval: 86400
   headers:
     User-Agent: HomeAssistant-OFF/1.0
@@ -124,7 +186,7 @@ rest:
     - product
     - code
 - resource_template: https://world.openbeautyfacts.org/api/v2/product/{{ states('input_text.off_barcode_eingabe')
-    }}.json?fields=product_name,product_name_de,brands,quantity,categories
+    }}.json?fields=product_name,product_name_de,brands,quantity,categories,image_front_url
   scan_interval: 86400
   headers:
     User-Agent: HomeAssistant-OFF/1.0
@@ -138,7 +200,7 @@ rest:
     - product
     - code
 - resource_template: https://world.openproductsfacts.org/api/v2/product/{{ states('input_text.off_barcode_eingabe')
-    }}.json?fields=product_name,product_name_de,brands,quantity,categories
+    }}.json?fields=product_name,product_name_de,brands,quantity,categories,image_front_url
   scan_interval: 86400
   headers:
     User-Agent: HomeAssistant-OFF/1.0
@@ -210,6 +272,9 @@ template:
         \ | default('') | string %}\n    {% if cats | length > 0 %}\n      {{ cats.split(',')\
         \ | last | trim }}\n    {% else %}\n      unknown\n    {% endif %}\n  {% else\
         \ %}\n    unknown\n  {% endif %}\n{% endif %}"
+      bild_url: "{% set q = states('sensor.off_quelle') %} {% if q in ['off', 'obf',\
+        \ 'opf'] %}\n  {% set p = state_attr('sensor.' ~ q ~ '_last_lookup', 'product')\
+        \ %}\n  {{ p.image_front_url | default('') }}\n{% else %}\n\n{% endif %}"
 - binary_sensor:
   - name: OFF Barcode Vorhanden
     unique_id: off_barcode_vorhanden
@@ -642,24 +707,18 @@ script:
       - condition: template
         value_template: '{{ modus == ''Umbuchen'' }}'
       then:
+      - variables:
+          quell_liste: "{% set lp = states('input_select.off_umbuchen_von') | string\
+            \ | trim %}{% if lp == 'Vorratskammer' %}todo.inventar_vorratskammer{%\
+            \ elif lp == 'Kühlschrank' %}todo.inventar_kuehlschrank{% elif lp == 'Gefrierschrank'\
+            \ %}todo.inventar_gefrierschrank{% elif lp == 'Schrank' %}todo.inventar_schrank{%\
+            \ else %}todo.inventar_sonstiges{% endif %}"
       - action: todo.get_items
         data:
           status: needs_action
         response_variable: alle_inv_u
         target:
-          entity_id:
-          - todo.inventar_vorratskammer
-          - todo.inventar_kuehlschrank
-          - todo.inventar_gefrierschrank
-          - todo.inventar_schrank
-          - todo.inventar_sonstiges
-      - variables:
-          quell_liste: '{% set ns = namespace(l='''') %}{% set c = code | string |
-            trim %}{% for lid, d in alle_inv_u.items() %}  {% for it in d[''items'']
-            | default([]) %}    {% set desc = it.description | default('''') | string
-            %}    {% set sum = it.summary | string %}    {% if (''EAN: ''~c) in desc
-            or (''EAN: ''~c) in sum %}      {% set ns.l = lid %}    {% endif %}  {%
-            endfor %}{% endfor %}{{ ns.l | trim }}'
+          entity_id: '{{ quell_liste }}'
       - if:
         - condition: template
           value_template: '{{ quell_liste | length == 0 }}'
@@ -824,6 +883,67 @@ script:
           menge: '{{ menge }}'
           modus: Einbuchen (Umbuchen)
           produkt: '{{ produkt }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_modus
+        data:
+          value: Umbuchen
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_produkt
+        data:
+          value: '{{ produkt | trim }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_ean
+        data:
+          value: '{{ code }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_lagerplatz
+        data:
+          value: '{{ lagerplatz }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_bestand
+        data:
+          value: '{{ neue_ziel_stk }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_von
+        data:
+          value: '{{ quell_lagerplatz }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_bestand_von
+        data:
+          value: '{{ neue_quell_stk }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_zeit
+        data:
+          value: '{{ now().strftime(''%d.%m.%Y %H:%M'') }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_bild
+        data:
+          value: '{{ state_attr(''sensor.off_product_name'', ''bild_url'') | default('''')
+            | string }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_marke
+        data:
+          value: '{{ marke | default('''') | string }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_menge
+        data:
+          value: '{{ menge | default('''') | string }}'
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.letzte_buchung_kategorie
+        data:
+          value: '{{ kategorie | default('''') | string }}'
       - stop: Umbuchen abgeschlossen.
     - action: todo.get_items
       target:
@@ -945,6 +1065,67 @@ script:
       continue_on_error: true
     - action: input_text.set_value
       target:
+        entity_id: input_text.letzte_buchung_modus
+      data:
+        value: '{{ modus }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_produkt
+      data:
+        value: '{{ produkt | trim }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_ean
+      data:
+        value: '{{ code }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_lagerplatz
+      data:
+        value: '{{ lagerplatz }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_bestand
+      data:
+        value: '{{ neue_stueckzahl }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_von
+      data:
+        value: ''
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_bestand_von
+      data:
+        value: ''
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_zeit
+      data:
+        value: '{{ now().strftime(''%d.%m.%Y %H:%M'') }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_bild
+      data:
+        value: '{{ state_attr(''sensor.off_product_name'', ''bild_url'') | default('''')
+          | string }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_marke
+      data:
+        value: '{{ marke | default('''') | string }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_menge
+      data:
+        value: '{{ menge | default('''') | string }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_kategorie
+      data:
+        value: '{{ kategorie | default('''') | string }}'
+    - action: input_text.set_value
+      target:
         entity_id: input_text.off_manuell_name
       data:
         value: ''
@@ -1064,16 +1245,17 @@ script:
     sequence:
     - action: rest_command.off_sheet_list
       response_variable: sheet_resp
-    - variables:
-        sheet_data: "{% set c = sheet_resp.content | default({}) %} {% if c is mapping\
-          \ %}\n  {{ c }}\n{% elif c is string and c | length > 0 %}\n  {{ c | from_json\
-          \ }}\n{% else %}\n  {}\n{% endif %}"
-        items_alle: '{{ sheet_data.items | default([]) }}'
-        items_aktiv: "{{ items_alle\n   | rejectattr('bestand', 'in', ['', None])\n\
-          \   | selectattr('bestand', '>', 0)\n   | list }}"
     - if:
       - condition: template
-        value_template: '{{ (sheet_data.status | default('''')) != ''ok'' }}'
+        value_template: >
+          {% set c = sheet_resp.content | default({}) %}
+          {% if c is mapping %}
+            {{ c.get('status', '') != 'ok' }}
+          {% elif c is string and c | length > 0 %}
+            {{ (c | from_json).get('status', '') != 'ok' }}
+          {% else %}
+            true
+          {% endif %}
       then:
       - stop: Sheet-Lookup fehlgeschlagen
     - repeat:
@@ -1102,7 +1284,17 @@ script:
                 item: '{{ repeat.item.summary }}'
               continue_on_error: true
     - repeat:
-        for_each: '{{ items_aktiv }}'
+        for_each: >
+          {% set c = sheet_resp.content | default({}) %}
+          {% set items = c.get('items', []) if c is mapping else
+             ((c | from_json).get('items', []) if (c is string and c | length > 0) else []) %}
+          {% set ns = namespace(r=[]) %}
+          {% for item in items %}
+            {% if item is mapping and (item.bestand | default(0) | int(0)) > 0 %}
+              {% set ns.r = ns.r + [item] %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.r | tojson }}
         sequence:
         - variables:
             p_lagerplatz: '{{ repeat.item.lagerplatz | default(''Vorratskammer'')
@@ -1318,6 +1510,311 @@ script:
       target:
         entity_id: input_select.off_modus
     - action: script.off_buchen
+  off_schnellwahl_buchen:
+    alias: 'OFF: Schnellwahl einbuchen'
+    icon: mdi:lightning-bolt
+    mode: queued
+    max: 5
+    fields:
+      produkt:
+        description: Produktname
+        required: true
+        example: H-Milch
+      ean:
+        description: EAN/Barcode (optional)
+        required: false
+        default: ''
+      lagerplatz:
+        description: Lagerort
+        required: false
+        default: Vorratskammer
+      marke:
+        description: Marke
+        required: false
+        default: ''
+      menge:
+        description: Menge/Einheit
+        required: false
+        default: ''
+      modus:
+        description: Einbuchen oder Ausbuchen
+        required: false
+        default: Einbuchen
+    sequence:
+    - variables:
+        p_lp: '{{ lagerplatz | default(''Vorratskammer'') | string | trim }}'
+        p_ean: '{{ ean | default('''') | string | trim }}'
+        ziel_liste: "{% set lp = lagerplatz | default('Vorratskammer') | string | trim\
+          \ %}{% if lp == 'Vorratskammer' %}todo.inventar_vorratskammer{% elif lp ==\
+          \ 'Kühlschrank' %}todo.inventar_kuehlschrank{% elif lp == 'Gefrierschrank'\
+          \ %}todo.inventar_gefrierschrank{% elif lp == 'Schrank' %}todo.inventar_schrank{%\
+          \ else %}todo.inventar_sonstiges{% endif %}"
+    - action: todo.get_items
+      target:
+        entity_id: '{{ ziel_liste }}'
+      data:
+        status: needs_action
+      response_variable: inventar
+    - variables:
+        p_name: '{{ produkt | string | trim }}'
+        vorhandenes_item: "{% set ns = namespace(item='') %} {% set p = produkt | string\
+          \ | trim | lower %} {% set e = ean | default('') | string | trim %} {% for\
+          \ it in inventar[ziel_liste]['items'] | default([]) %} {% set desc = it.description\
+          \ | default('') | string %} {% set sum = it.summary | string %} {% if e |
+          \ length >= 8 and ('EAN: ' ~ e) in desc %} {% set ns.item = sum %} {% elif\
+          \ e | length < 8 and p[:12] in sum | lower and ns.item == '' %} {% set ns.item\
+          \ = sum %} {% endif %} {% endfor %} {{ ns.item }}"
+        vorhandene_desc: "{% set ns = namespace(desc='') %} {% set p = produkt | string\
+          \ | trim | lower %} {% set e = ean | default('') | string | trim %} {% for\
+          \ it in inventar[ziel_liste]['items'] | default([]) %} {% set d = it.description\
+          \ | default('') | string %} {% if e | length >= 8 and ('EAN: ' ~ e) in d\
+          \ %} {% set ns.desc = d %} {% elif e | length < 8 and p[:12] in (it.summary\
+          \ | lower) and ns.desc == '' %} {% set ns.desc = d %} {% endif %} {% endfor\
+          \ %} {{ ns.desc }}"
+        p_modus: '{{ modus | default(''Einbuchen'') | string | trim }}'
+        alte_stk: "{% set m = vorhandenes_item | trim | regex_findall('^([0-9]+)\\s+Stk')\
+          \ %} {{ m[0] | int(0) if m | length > 0 else 0 }}"
+        neue_stk: "{% if (modus | default('Einbuchen')) == 'Ausbuchen' %}{{ [alte_stk\
+          \ | int(0) - 1, 0] | max }}{% else %}{{ alte_stk | int(0) + 1 }}{% endif %}"
+        rest_summary: "{{ vorhandenes_item.split('Stk.', 1)[1] | trim if 'Stk.' in\
+          \ vorhandenes_item else '' }}"
+        neu_item_name: "{{ produkt | string | trim }}{{ ' ' ~ (menge | default('') |\
+          \ string | trim) if (menge | default('') | string | trim) | length > 0 else\
+          \ '' }}{{ ' | Marke: ' ~ (marke | default('') | string | trim) if (marke |\
+          \ default('') | string | trim) | length > 0 else '' }}"
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: '{{ vorhandenes_item | trim | length > 0 }}'
+        sequence:
+        - action: todo.remove_item
+          target:
+            entity_id: '{{ ziel_liste }}'
+          data:
+            item: '{{ vorhandenes_item | trim }}'
+          continue_on_error: true
+        - if:
+          - condition: template
+            value_template: '{{ neue_stk | int(0) > 0 }}'
+          then:
+          - action: todo.add_item
+            target:
+              entity_id: '{{ ziel_liste }}'
+            data:
+              item: '{{ neue_stk }} Stk. {{ rest_summary if rest_summary | length > 0 else neu_item_name }}'
+              description: '{{ vorhandene_desc | trim if vorhandene_desc | trim | length > 0 else (''EAN: '' ~ p_ean) }}'
+      default:
+      - if:
+        - condition: template
+          value_template: '{{ p_modus == ''Einbuchen'' }}'
+        then:
+        - action: todo.add_item
+          target:
+            entity_id: '{{ ziel_liste }}'
+          data:
+            item: '1 Stk. {{ neu_item_name }}'
+            description: '{{ ''EAN: '' ~ p_ean if p_ean | length > 0 else ''manuell'' }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_modus
+      data:
+        value: '{{ p_modus }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_produkt
+      data:
+        value: '{{ p_name }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_ean
+      data:
+        value: '{{ p_ean }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_lagerplatz
+      data:
+        value: '{{ p_lp }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_bestand
+      data:
+        value: '{{ neue_stk }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_zeit
+      data:
+        value: '{{ now().strftime(''%d.%m.%Y %H:%M'') }}'
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.off_produkt_im_buffer
+  off_schnell_plus:
+    alias: 'OFF: Schnell +1 (letztes Produkt)'
+    icon: mdi:plus-circle
+    mode: single
+    sequence:
+    - variables:
+        ean: '{{ states(''input_text.letzte_buchung_ean'') | string | trim }}'
+        p_produkt: '{{ states(''input_text.letzte_buchung_produkt'') | string | trim }}'
+        ziel_liste: "{% set lp = states('input_text.letzte_buchung_lagerplatz') | string\
+          \ | trim %}{% if lp == 'Vorratskammer' %}todo.inventar_vorratskammer{% elif\
+          \ lp == 'Kühlschrank' %}todo.inventar_kuehlschrank{% elif lp == 'Gefrierschrank'\
+          \ %}todo.inventar_gefrierschrank{% elif lp == 'Schrank' %}todo.inventar_schrank{%\
+          \ else %}todo.inventar_sonstiges{% endif %}"
+    - condition: template
+      value_template: '{{ states(''input_text.letzte_buchung_ean'') | string | trim | length >= 8 or states(''input_text.letzte_buchung_produkt'') | string | trim | length > 2 }}'
+    - action: todo.get_items
+      target:
+        entity_id: '{{ ziel_liste }}'
+      data:
+        status: needs_action
+      response_variable: inventar
+    - variables:
+        vorhandenes_item: "{% set ns = namespace(item='') %} {% set e = ean | string\
+          \ %} {% set p = p_produkt | string | lower %} {% for it in inventar[ziel_liste]['items']\
+          \ | default([]) %}\n  {% set desc = it.description | default('') | string\
+          \ %}\n  {% set sum = it.summary | string %}\n  {% if e | length >= 8 and ('EAN:\
+          \ ' ~ e) in desc %}\n    {% set ns.item = sum %}\n  {% elif e | length < 8\
+          \ and p[:12] in sum | lower and ns.item == '' %}\n    {% set ns.item = sum\
+          \ %}\n  {% endif %}\n{% endfor %} {{ ns.item }}"
+        vorhandene_desc: "{% set ns = namespace(desc='') %} {% set e = ean | string\
+          \ %} {% set p = p_produkt | string | lower %} {% for it in inventar[ziel_liste]['items']\
+          \ | default([]) %}\n  {% set d = it.description | default('') | string %}\n\
+          \  {% set sum = it.summary | string %}\n  {% if e | length >= 8 and ('EAN:\
+          \ ' ~ e) in d %}\n    {% set ns.desc = d %}\n  {% elif e | length < 8 and\
+          \ p[:12] in sum | lower and ns.desc == '' %}\n    {% set ns.desc = d %}\n\
+          \  {% endif %}\n{% endfor %} {{ ns.desc }}"
+    - condition: template
+      value_template: '{{ vorhandenes_item | trim | length > 0 }}'
+    - variables:
+        alte_stk: "{% set m = vorhandenes_item | trim | regex_findall('^([0-9]+)\\s+Stk') %} {{ m[0] | int(0) if m | length > 0 else 0 }}"
+        neue_stk: '{{ alte_stk | int(0) + 1 }}'
+        rest_summary: "{{ vorhandenes_item.split('Stk.', 1)[1] | trim if 'Stk.' in vorhandenes_item else vorhandenes_item }}"
+    - action: todo.remove_item
+      target:
+        entity_id: '{{ ziel_liste }}'
+      data:
+        item: '{{ vorhandenes_item | trim }}'
+      continue_on_error: true
+    - action: todo.add_item
+      target:
+        entity_id: '{{ ziel_liste }}'
+      data:
+        item: '{{ neue_stk }} Stk. {{ rest_summary }}'
+        description: '{{ vorhandene_desc | trim if vorhandene_desc | trim | length > 0 else ''EAN: '' ~ ean }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_bestand
+      data:
+        value: '{{ neue_stk }}'
+    - action: rest_command.off_sheet_anlegen
+      continue_on_error: true
+      data:
+        barcode: '{{ states(''input_text.letzte_buchung_ean'') | string | trim }}'
+        bestand: '{{ neue_stk | int(0) }}'
+        kategorie: '{{ states(''input_text.letzte_buchung_kategorie'') | string | trim }}'
+        marke: '{{ states(''input_text.letzte_buchung_marke'') | string | trim }}'
+        menge: '{{ states(''input_text.letzte_buchung_menge'') | string | trim }}'
+        produkt: '{{ states(''input_text.letzte_buchung_produkt'') | string | trim }}'
+        lagerplatz: '{{ states(''input_text.letzte_buchung_lagerplatz'') | string | trim }}'
+  off_schnell_plus_smart:
+    alias: 'OFF: Schnell +1 (Buffer-aware)'
+    icon: mdi:plus-circle
+    mode: single
+    sequence:
+    - if:
+      - condition: state
+        entity_id: input_boolean.off_produkt_im_buffer
+        state: 'on'
+      then:
+      - action: script.off_einbuchen
+      else:
+      - action: script.off_schnell_plus
+  off_schnell_minus_smart:
+    alias: 'OFF: Schnell -1 (Buffer-aware)'
+    icon: mdi:minus-circle
+    mode: single
+    sequence:
+    - if:
+      - condition: state
+        entity_id: input_boolean.off_produkt_im_buffer
+        state: 'on'
+      then:
+      - action: script.off_ausbuchen
+      else:
+      - action: script.off_schnell_minus
+  off_schnell_minus:
+    alias: 'OFF: Schnell -1 (letztes Produkt)'
+    icon: mdi:minus-circle
+    mode: single
+    sequence:
+    - variables:
+        ean: '{{ states(''input_text.letzte_buchung_ean'') | string | trim }}'
+        p_produkt: '{{ states(''input_text.letzte_buchung_produkt'') | string | trim }}'
+        ziel_liste: "{% set lp = states('input_text.letzte_buchung_lagerplatz') | string\
+          \ | trim %}{% if lp == 'Vorratskammer' %}todo.inventar_vorratskammer{% elif\
+          \ lp == 'Kühlschrank' %}todo.inventar_kuehlschrank{% elif lp == 'Gefrierschrank'\
+          \ %}todo.inventar_gefrierschrank{% elif lp == 'Schrank' %}todo.inventar_schrank{%\
+          \ else %}todo.inventar_sonstiges{% endif %}"
+    - condition: template
+      value_template: '{{ states(''input_text.letzte_buchung_ean'') | string | trim | length >= 8 or states(''input_text.letzte_buchung_produkt'') | string | trim | length > 2 }}'
+    - action: todo.get_items
+      target:
+        entity_id: '{{ ziel_liste }}'
+      data:
+        status: needs_action
+      response_variable: inventar
+    - variables:
+        vorhandenes_item: "{% set ns = namespace(item='') %} {% set e = ean | string\
+          \ %} {% set p = p_produkt | string | lower %} {% for it in inventar[ziel_liste]['items']\
+          \ | default([]) %}\n  {% set desc = it.description | default('') | string\
+          \ %}\n  {% set sum = it.summary | string %}\n  {% if e | length >= 8 and ('EAN:\
+          \ ' ~ e) in desc %}\n    {% set ns.item = sum %}\n  {% elif e | length < 8\
+          \ and p[:12] in sum | lower and ns.item == '' %}\n    {% set ns.item = sum\
+          \ %}\n  {% endif %}\n{% endfor %} {{ ns.item }}"
+        vorhandene_desc: "{% set ns = namespace(desc='') %} {% set e = ean | string\
+          \ %} {% set p = p_produkt | string | lower %} {% for it in inventar[ziel_liste]['items']\
+          \ | default([]) %}\n  {% set d = it.description | default('') | string %}\n\
+          \  {% set sum = it.summary | string %}\n  {% if e | length >= 8 and ('EAN:\
+          \ ' ~ e) in d %}\n    {% set ns.desc = d %}\n  {% elif e | length < 8 and\
+          \ p[:12] in sum | lower and ns.desc == '' %}\n    {% set ns.desc = d %}\n\
+          \  {% endif %}\n{% endfor %} {{ ns.desc }}"
+    - condition: template
+      value_template: '{{ vorhandenes_item | string | trim | length > 0 }}'
+    - variables:
+        alte_stk: "{% set m = vorhandenes_item | string | trim | regex_findall('^([0-9]+)\\s+Stk') %} {{ m[0] | int(0) if m | length > 0 else 0 }}"
+        neue_stk: '{{ [alte_stk | int(0) - 1, 0] | max }}'
+        rest_summary: "{{ (vorhandenes_item | string).split('Stk.', 1)[1] | trim if 'Stk.' in (vorhandenes_item | string) else (vorhandenes_item | string) }}"
+    - action: todo.remove_item
+      target:
+        entity_id: '{{ ziel_liste }}'
+      data:
+        item: '{{ vorhandenes_item | string | trim }}'
+      continue_on_error: true
+    - if:
+      - condition: template
+        value_template: '{{ neue_stk | int(0) > 0 }}'
+      then:
+      - action: todo.add_item
+        target:
+          entity_id: '{{ ziel_liste }}'
+        data:
+          item: '{{ neue_stk }} Stk. {{ rest_summary }}'
+          description: '{{ vorhandene_desc | string | trim if vorhandene_desc | string | trim | length > 0 else "EAN: " ~ (ean | string) }}'
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.letzte_buchung_bestand
+      data:
+        value: '{{ neue_stk }}'
+    - action: rest_command.off_sheet_anlegen
+      continue_on_error: true
+      data:
+        barcode: '{{ states(''input_text.letzte_buchung_ean'') | string | trim }}'
+        bestand: '{{ neue_stk | int(0) }}'
+        kategorie: '{{ states(''input_text.letzte_buchung_kategorie'') | string | trim }}'
+        marke: '{{ states(''input_text.letzte_buchung_marke'') | string | trim }}'
+        menge: '{{ states(''input_text.letzte_buchung_menge'') | string | trim }}'
+        produkt: '{{ states(''input_text.letzte_buchung_produkt'') | string | trim }}'
+        lagerplatz: '{{ states(''input_text.letzte_buchung_lagerplatz'') | string | trim }}'
 automation:
 - alias: 'OFF: Barcode aus Share Event oder Kurzbefehl'
   id: off_barcode_aus_share
@@ -1751,4 +2248,14 @@ automation:
         set ns.r = ns.r ~ '' · '' %}{% endif %}{% set ns.r = ns.r ~ lname ~ '': ''
         ~ n ~ '' Stk.'' %}{% endif %}{% endfor %}{% endfor %}{{ ns.r if ns.r != ''''
         else ''Nicht im Inventar'' }}'
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.off_umbuchen_von
+    data:
+      option: '{% set produkt = trigger.to_state.state | string | trim | lower %}{% set
+        ns = namespace(lager='''') %}{% set listen = [(''todo.inventar_vorratskammer'',''Vorratskammer''),(''todo.inventar_kuehlschrank'',''Kühlschrank''),(''todo.inventar_gefrierschrank'',''Gefrierschrank''),(''todo.inventar_schrank'',''Schrank''),(''todo.inventar_sonstiges'',''Sonstiges'')]
+        %}{% for lid, lname in listen %}{% if ns.lager == '''' %}{% for item in inv_items[lid][''items'']
+        | default([]) %}{% if produkt[:12] in (item.summary | string | lower) %}{% set
+        ns.lager = lname %}{% endif %}{% endfor %}{% endif %}{% endfor %}{{ ns.lager
+        if ns.lager != '''' else states(''input_select.off_umbuchen_von'') }}'
   mode: restart

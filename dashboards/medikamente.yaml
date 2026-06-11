@@ -419,6 +419,10 @@ views:
                 name: Dosierung
                 icon: mdi:pill-multiple
               - type: tile
+                entity: input_select.medikament_1_menge
+                name: Menge pro Einnahme
+                icon: mdi:pill
+              - type: tile
                 entity: input_select.medikament_1_mahlzeit
                 name: Mahlzeit
                 icon: mdi:food-fork-drink
@@ -712,6 +716,10 @@ views:
                 entity: input_text.medikament_2_dosierung
                 name: Dosierung
                 icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_2_menge
+                name: Menge pro Einnahme
+                icon: mdi:pill
               - type: tile
                 entity: input_select.medikament_2_mahlzeit
                 name: Mahlzeit
@@ -1007,6 +1015,10 @@ views:
                 name: Dosierung
                 icon: mdi:pill-multiple
               - type: tile
+                entity: input_select.medikament_3_menge
+                name: Menge pro Einnahme
+                icon: mdi:pill
+              - type: tile
                 entity: input_select.medikament_3_mahlzeit
                 name: Mahlzeit
                 icon: mdi:food-fork-drink
@@ -1300,6 +1312,10 @@ views:
                 entity: input_text.medikament_4_dosierung
                 name: Dosierung
                 icon: mdi:pill-multiple
+              - type: tile
+                entity: input_select.medikament_4_menge
+                name: Menge pro Einnahme
+                icon: mdi:pill
               - type: tile
                 entity: input_select.medikament_4_mahlzeit
                 name: Mahlzeit
@@ -1595,6 +1611,10 @@ views:
                 name: Dosierung
                 icon: mdi:pill-multiple
               - type: tile
+                entity: input_select.medikament_5_menge
+                name: Menge pro Einnahme
+                icon: mdi:pill
+              - type: tile
                 entity: input_select.medikament_5_mahlzeit
                 name: Mahlzeit
                 icon: mdi:food-fork-drink
@@ -1889,6 +1909,10 @@ views:
                 name: Dosierung
                 icon: mdi:pill-multiple
               - type: tile
+                entity: input_select.medikament_6_menge
+                name: Menge pro Einnahme
+                icon: mdi:pill
+              - type: tile
                 entity: input_select.medikament_6_mahlzeit
                 name: Mahlzeit
                 icon: mdi:food-fork-drink
@@ -2030,29 +2054,34 @@ views:
                   {% set name = states('input_text.medikament_1_name') %}
                   {{ name if name | trim != '' else 'Medikament 1' }}
                 secondary: >-
-                  {% set l = states('input_datetime.medikament_1_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_1_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_1_aktiv','on') %}⬜ Inaktiv
-                  {% elif is_state('input_boolean.medikament_1_offen','on') %}
-                    {% if genommen %}⏰ Offen · ✅ {{ l[11:16] }} Uhr{% else %}⏰ Noch offen{% endif %}
-                  {% elif genommen %}✅ {{ l[11:16] }} Uhr
-                  {% elif verpasst %}❌ Verpasst
-                  {% else %}— Noch nicht genommen{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_1_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_1_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_1_abend_einnahme') %}
+                    {% set m_ok = m not in ['unavailable','unknown',''] and m[:10] == heute %}
+                    {% set mi_ok = mi not in ['unavailable','unknown',''] and mi[:10] == heute %}
+                    {% set a_ok = a not in ['unavailable','unknown',''] and a[:10] == heute %}
+                    {% set parts = namespace(l=[]) %}
+                    {% if is_state('input_boolean.medikament_1_morgen_aktiv','on') %}{% set parts.l = parts.l + [('🌅 ' + (m[11:16] if m_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_1_mittag_aktiv','on') %}{% set parts.l = parts.l + [('🕛 ' + (mi[11:16] if mi_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_1_abend_aktiv','on') %}{% set parts.l = parts.l + [('🌙 ' + (a[11:16] if a_ok else '—'))] %}{% endif %}
+                    {{ parts.l | join(' · ') if parts.l else 'Kein Zeitslot aktiv' }}
+                  {% endif %}
                 icon: mdi:pill
                 icon_color: >-
-                  {% set l = states('input_datetime.medikament_1_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_1_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_1_aktiv','on') %}grey
                   {% elif is_state('input_boolean.medikament_1_offen','on') %}orange
-                  {% elif genommen %}green
-                  {% elif verpasst %}red
-                  {% else %}grey{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_1_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_1_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_1_abend_einnahme') %}
+                    {% if (m not in ['unavailable','unknown',''] and m[:10] == heute) or
+                          (mi not in ['unavailable','unknown',''] and mi[:10] == heute) or
+                          (a not in ['unavailable','unknown',''] and a[:10] == heute) %}green{% else %}grey{% endif %}
+                  {% endif %}
                 fill_container: true
                 layout: horizontal
               - type: custom:mushroom-template-card
@@ -2060,29 +2089,34 @@ views:
                   {% set name = states('input_text.medikament_2_name') %}
                   {{ name if name | trim != '' else 'Medikament 2' }}
                 secondary: >-
-                  {% set l = states('input_datetime.medikament_2_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_2_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_2_aktiv','on') %}⬜ Inaktiv
-                  {% elif is_state('input_boolean.medikament_2_offen','on') %}
-                    {% if genommen %}⏰ Offen · ✅ {{ l[11:16] }} Uhr{% else %}⏰ Noch offen{% endif %}
-                  {% elif genommen %}✅ {{ l[11:16] }} Uhr
-                  {% elif verpasst %}❌ Verpasst
-                  {% else %}— Noch nicht genommen{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_2_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_2_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_2_abend_einnahme') %}
+                    {% set m_ok = m not in ['unavailable','unknown',''] and m[:10] == heute %}
+                    {% set mi_ok = mi not in ['unavailable','unknown',''] and mi[:10] == heute %}
+                    {% set a_ok = a not in ['unavailable','unknown',''] and a[:10] == heute %}
+                    {% set parts = namespace(l=[]) %}
+                    {% if is_state('input_boolean.medikament_2_morgen_aktiv','on') %}{% set parts.l = parts.l + [('🌅 ' + (m[11:16] if m_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_2_mittag_aktiv','on') %}{% set parts.l = parts.l + [('🕛 ' + (mi[11:16] if mi_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_2_abend_aktiv','on') %}{% set parts.l = parts.l + [('🌙 ' + (a[11:16] if a_ok else '—'))] %}{% endif %}
+                    {{ parts.l | join(' · ') if parts.l else 'Kein Zeitslot aktiv' }}
+                  {% endif %}
                 icon: mdi:pill
                 icon_color: >-
-                  {% set l = states('input_datetime.medikament_2_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_2_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_2_aktiv','on') %}grey
                   {% elif is_state('input_boolean.medikament_2_offen','on') %}orange
-                  {% elif genommen %}green
-                  {% elif verpasst %}red
-                  {% else %}grey{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_2_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_2_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_2_abend_einnahme') %}
+                    {% if (m not in ['unavailable','unknown',''] and m[:10] == heute) or
+                          (mi not in ['unavailable','unknown',''] and mi[:10] == heute) or
+                          (a not in ['unavailable','unknown',''] and a[:10] == heute) %}green{% else %}grey{% endif %}
+                  {% endif %}
                 fill_container: true
                 layout: horizontal
               - type: custom:mushroom-template-card
@@ -2090,29 +2124,34 @@ views:
                   {% set name = states('input_text.medikament_3_name') %}
                   {{ name if name | trim != '' else 'Medikament 3' }}
                 secondary: >-
-                  {% set l = states('input_datetime.medikament_3_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_3_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_3_aktiv','on') %}⬜ Inaktiv
-                  {% elif is_state('input_boolean.medikament_3_offen','on') %}
-                    {% if genommen %}⏰ Offen · ✅ {{ l[11:16] }} Uhr{% else %}⏰ Noch offen{% endif %}
-                  {% elif genommen %}✅ {{ l[11:16] }} Uhr
-                  {% elif verpasst %}❌ Verpasst
-                  {% else %}— Noch nicht genommen{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_3_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_3_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_3_abend_einnahme') %}
+                    {% set m_ok = m not in ['unavailable','unknown',''] and m[:10] == heute %}
+                    {% set mi_ok = mi not in ['unavailable','unknown',''] and mi[:10] == heute %}
+                    {% set a_ok = a not in ['unavailable','unknown',''] and a[:10] == heute %}
+                    {% set parts = namespace(l=[]) %}
+                    {% if is_state('input_boolean.medikament_3_morgen_aktiv','on') %}{% set parts.l = parts.l + [('🌅 ' + (m[11:16] if m_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_3_mittag_aktiv','on') %}{% set parts.l = parts.l + [('🕛 ' + (mi[11:16] if mi_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_3_abend_aktiv','on') %}{% set parts.l = parts.l + [('🌙 ' + (a[11:16] if a_ok else '—'))] %}{% endif %}
+                    {{ parts.l | join(' · ') if parts.l else 'Kein Zeitslot aktiv' }}
+                  {% endif %}
                 icon: mdi:pill
                 icon_color: >-
-                  {% set l = states('input_datetime.medikament_3_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_3_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_3_aktiv','on') %}grey
                   {% elif is_state('input_boolean.medikament_3_offen','on') %}orange
-                  {% elif genommen %}green
-                  {% elif verpasst %}red
-                  {% else %}grey{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_3_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_3_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_3_abend_einnahme') %}
+                    {% if (m not in ['unavailable','unknown',''] and m[:10] == heute) or
+                          (mi not in ['unavailable','unknown',''] and mi[:10] == heute) or
+                          (a not in ['unavailable','unknown',''] and a[:10] == heute) %}green{% else %}grey{% endif %}
+                  {% endif %}
                 fill_container: true
                 layout: horizontal
               - type: custom:mushroom-template-card
@@ -2120,29 +2159,34 @@ views:
                   {% set name = states('input_text.medikament_4_name') %}
                   {{ name if name | trim != '' else 'Medikament 4' }}
                 secondary: >-
-                  {% set l = states('input_datetime.medikament_4_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_4_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_4_aktiv','on') %}⬜ Inaktiv
-                  {% elif is_state('input_boolean.medikament_4_offen','on') %}
-                    {% if genommen %}⏰ Offen · ✅ {{ l[11:16] }} Uhr{% else %}⏰ Noch offen{% endif %}
-                  {% elif genommen %}✅ {{ l[11:16] }} Uhr
-                  {% elif verpasst %}❌ Verpasst
-                  {% else %}— Noch nicht genommen{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_4_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_4_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_4_abend_einnahme') %}
+                    {% set m_ok = m not in ['unavailable','unknown',''] and m[:10] == heute %}
+                    {% set mi_ok = mi not in ['unavailable','unknown',''] and mi[:10] == heute %}
+                    {% set a_ok = a not in ['unavailable','unknown',''] and a[:10] == heute %}
+                    {% set parts = namespace(l=[]) %}
+                    {% if is_state('input_boolean.medikament_4_morgen_aktiv','on') %}{% set parts.l = parts.l + [('🌅 ' + (m[11:16] if m_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_4_mittag_aktiv','on') %}{% set parts.l = parts.l + [('🕛 ' + (mi[11:16] if mi_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_4_abend_aktiv','on') %}{% set parts.l = parts.l + [('🌙 ' + (a[11:16] if a_ok else '—'))] %}{% endif %}
+                    {{ parts.l | join(' · ') if parts.l else 'Kein Zeitslot aktiv' }}
+                  {% endif %}
                 icon: mdi:pill
                 icon_color: >-
-                  {% set l = states('input_datetime.medikament_4_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_4_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_4_aktiv','on') %}grey
                   {% elif is_state('input_boolean.medikament_4_offen','on') %}orange
-                  {% elif genommen %}green
-                  {% elif verpasst %}red
-                  {% else %}grey{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_4_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_4_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_4_abend_einnahme') %}
+                    {% if (m not in ['unavailable','unknown',''] and m[:10] == heute) or
+                          (mi not in ['unavailable','unknown',''] and mi[:10] == heute) or
+                          (a not in ['unavailable','unknown',''] and a[:10] == heute) %}green{% else %}grey{% endif %}
+                  {% endif %}
                 fill_container: true
                 layout: horizontal
               - type: custom:mushroom-template-card
@@ -2150,29 +2194,34 @@ views:
                   {% set name = states('input_text.medikament_5_name') %}
                   {{ name if name | trim != '' else 'Medikament 5' }}
                 secondary: >-
-                  {% set l = states('input_datetime.medikament_5_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_5_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_5_aktiv','on') %}⬜ Inaktiv
-                  {% elif is_state('input_boolean.medikament_5_offen','on') %}
-                    {% if genommen %}⏰ Offen · ✅ {{ l[11:16] }} Uhr{% else %}⏰ Noch offen{% endif %}
-                  {% elif genommen %}✅ {{ l[11:16] }} Uhr
-                  {% elif verpasst %}❌ Verpasst
-                  {% else %}— Noch nicht genommen{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_5_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_5_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_5_abend_einnahme') %}
+                    {% set m_ok = m not in ['unavailable','unknown',''] and m[:10] == heute %}
+                    {% set mi_ok = mi not in ['unavailable','unknown',''] and mi[:10] == heute %}
+                    {% set a_ok = a not in ['unavailable','unknown',''] and a[:10] == heute %}
+                    {% set parts = namespace(l=[]) %}
+                    {% if is_state('input_boolean.medikament_5_morgen_aktiv','on') %}{% set parts.l = parts.l + [('🌅 ' + (m[11:16] if m_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_5_mittag_aktiv','on') %}{% set parts.l = parts.l + [('🕛 ' + (mi[11:16] if mi_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_5_abend_aktiv','on') %}{% set parts.l = parts.l + [('🌙 ' + (a[11:16] if a_ok else '—'))] %}{% endif %}
+                    {{ parts.l | join(' · ') if parts.l else 'Kein Zeitslot aktiv' }}
+                  {% endif %}
                 icon: mdi:pill
                 icon_color: >-
-                  {% set l = states('input_datetime.medikament_5_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_5_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_5_aktiv','on') %}grey
                   {% elif is_state('input_boolean.medikament_5_offen','on') %}orange
-                  {% elif genommen %}green
-                  {% elif verpasst %}red
-                  {% else %}grey{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_5_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_5_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_5_abend_einnahme') %}
+                    {% if (m not in ['unavailable','unknown',''] and m[:10] == heute) or
+                          (mi not in ['unavailable','unknown',''] and mi[:10] == heute) or
+                          (a not in ['unavailable','unknown',''] and a[:10] == heute) %}green{% else %}grey{% endif %}
+                  {% endif %}
                 fill_container: true
                 layout: horizontal
               - type: custom:mushroom-template-card
@@ -2180,50 +2229,92 @@ views:
                   {% set name = states('input_text.medikament_6_name') %}
                   {{ name if name | trim != '' else 'Medikament 6' }}
                 secondary: >-
-                  {% set l = states('input_datetime.medikament_6_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_6_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_6_aktiv','on') %}⬜ Inaktiv
-                  {% elif is_state('input_boolean.medikament_6_offen','on') %}
-                    {% if genommen %}⏰ Offen · ✅ {{ l[11:16] }} Uhr{% else %}⏰ Noch offen{% endif %}
-                  {% elif genommen %}✅ {{ l[11:16] }} Uhr
-                  {% elif verpasst %}❌ Verpasst
-                  {% else %}— Noch nicht genommen{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_6_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_6_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_6_abend_einnahme') %}
+                    {% set m_ok = m not in ['unavailable','unknown',''] and m[:10] == heute %}
+                    {% set mi_ok = mi not in ['unavailable','unknown',''] and mi[:10] == heute %}
+                    {% set a_ok = a not in ['unavailable','unknown',''] and a[:10] == heute %}
+                    {% set parts = namespace(l=[]) %}
+                    {% if is_state('input_boolean.medikament_6_morgen_aktiv','on') %}{% set parts.l = parts.l + [('🌅 ' + (m[11:16] if m_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_6_mittag_aktiv','on') %}{% set parts.l = parts.l + [('🕛 ' + (mi[11:16] if mi_ok else '—'))] %}{% endif %}
+                    {% if is_state('input_boolean.medikament_6_abend_aktiv','on') %}{% set parts.l = parts.l + [('🌙 ' + (a[11:16] if a_ok else '—'))] %}{% endif %}
+                    {{ parts.l | join(' · ') if parts.l else 'Kein Zeitslot aktiv' }}
+                  {% endif %}
                 icon: mdi:pill
                 icon_color: >-
-                  {% set l = states('input_datetime.medikament_6_letzte_einnahme') %}
-                  {% set v = states('input_datetime.medikament_6_letzte_verpasst') %}
                   {% set heute = now().strftime('%Y-%m-%d') %}
-                  {% set genommen = l not in ['unavailable','unknown',''] and l[:10] == heute %}
-                  {% set verpasst = v not in ['unavailable','unknown',''] and v[:10] == heute %}
                   {% if not is_state('input_boolean.medikament_6_aktiv','on') %}grey
                   {% elif is_state('input_boolean.medikament_6_offen','on') %}orange
-                  {% elif genommen %}green
-                  {% elif verpasst %}red
-                  {% else %}grey{% endif %}
+                  {% else %}
+                    {% set m = states('input_datetime.medikament_6_morgen_einnahme') %}
+                    {% set mi = states('input_datetime.medikament_6_mittag_einnahme') %}
+                    {% set a = states('input_datetime.medikament_6_abend_einnahme') %}
+                    {% if (m not in ['unavailable','unknown',''] and m[:10] == heute) or
+                          (mi not in ['unavailable','unknown',''] and mi[:10] == heute) or
+                          (a not in ['unavailable','unknown',''] and a[:10] == heute) %}green{% else %}grey{% endif %}
+                  {% endif %}
                 fill_container: true
                 layout: horizontal
 
       ##############################################
-      # VERLAUF 30 TAGE
+      # CSV DOWNLOAD
       ##############################################
-      - title: "📋 Verlauf (30 Tage)"
+      - title: "🛒 Arznei-Liste"
+        cards:
+          - type: todo-list
+            entity: todo.arznei
+            title: Arznei – Einkaufsliste
+
+      - title: "📎 CSV-Export"
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Protokoll als CSV herunterladen
+            secondary: Alle Einnahmen mit Datum, Uhrzeit, Medikament & Dosierung
+            icon: mdi:file-delimited-outline
+            icon_color: green
+            fill_container: true
+            layout: horizontal
+            card_mod:
+              style: |
+                ha-card { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.4); }
+            tap_action:
+              action: url
+              url_path: /local/medikamente_protokoll.csv
+
+      ##############################################
+      # VERLAUF 7 TAGE
+      ##############################################
+      - title: "📋 Verlauf (7 Tage)"
         cards:
           - type: logbook
             title: Einnahme-Protokoll
-            hours_to_show: 720
+            hours_to_show: 168
             entities:
-              - input_datetime.medikament_1_letzte_einnahme
+              - input_datetime.medikament_1_morgen_einnahme
+              - input_datetime.medikament_1_mittag_einnahme
+              - input_datetime.medikament_1_abend_einnahme
               - input_datetime.medikament_1_letzte_verpasst
-              - input_datetime.medikament_2_letzte_einnahme
+              - input_datetime.medikament_2_morgen_einnahme
+              - input_datetime.medikament_2_mittag_einnahme
+              - input_datetime.medikament_2_abend_einnahme
               - input_datetime.medikament_2_letzte_verpasst
-              - input_datetime.medikament_3_letzte_einnahme
+              - input_datetime.medikament_3_morgen_einnahme
+              - input_datetime.medikament_3_mittag_einnahme
+              - input_datetime.medikament_3_abend_einnahme
               - input_datetime.medikament_3_letzte_verpasst
-              - input_datetime.medikament_4_letzte_einnahme
+              - input_datetime.medikament_4_morgen_einnahme
+              - input_datetime.medikament_4_mittag_einnahme
+              - input_datetime.medikament_4_abend_einnahme
               - input_datetime.medikament_4_letzte_verpasst
-              - input_datetime.medikament_5_letzte_einnahme
+              - input_datetime.medikament_5_morgen_einnahme
+              - input_datetime.medikament_5_mittag_einnahme
+              - input_datetime.medikament_5_abend_einnahme
               - input_datetime.medikament_5_letzte_verpasst
-              - input_datetime.medikament_6_letzte_einnahme
+              - input_datetime.medikament_6_morgen_einnahme
+              - input_datetime.medikament_6_mittag_einnahme
+              - input_datetime.medikament_6_abend_einnahme
               - input_datetime.medikament_6_letzte_verpasst

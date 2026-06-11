@@ -2,16 +2,16 @@
 
 from ..global_variables     import GlobalVariables as Gb
 from ..const                import (NOTIFY, EVLOG_NOTICE, NEXT_UPDATE, DEVICE_TYPES,
-                                    CRLF_DOT, CRLF, NBSP6,RED_X, YELLOW_ALERT, RARROW,
+                                    CRLF_DOT, CRLF, NBSP6, NL3D, RED_X, YELLOW_ALERT, RARROW,
                                     CONF_IC3_DEVICENAME, CONF_MOBILE_APP_DEVICE)
-from ..utils.utils        import (instr, is_empty, list_add, list_to_str, )
-from ..utils                 import file_io
-from ..utils.messaging    import (post_event, post_error_msg, post_evlog_greenbar_msg,
+from ..utils.utils          import (instr, is_empty, list_add, list_to_str, )
+from ..utils                import  file_io
+from ..utils.messaging      import (post_event, post_alert, post_error_msg, post_greenbar_msg,
                                     log_info_msg, log_exception, log_data, log_debug_msg,
-                                    _evlog, _log, )
-from ..utils.time_util    import (secs_to_time, secs_since, mins_since, secs_to_time, format_time_age,
+                                    log_data_unfiltered, _evlog, _log, )
+from ..utils.time_util      import (secs_to_time, secs_since, mins_since, secs_to_time, format_time_age,
                                     format_timer, time_now_secs)
-from homeassistant.helpers  import entity_registry as er, device_registry as dr
+from homeassistant.helpers  import  entity_registry as er, device_registry as dr
 
 import json
 # from homeassistant.components import ios
@@ -63,7 +63,7 @@ def get_entity_registry_mobile_app_devices():
             if dup_cnt > 1:
                 alert_msg = (f"Duplicate Mobile App devices in Entity Registry for "
                             f"{dev_trkr_entity['entity_id']}")
-                post_evlog_greenbar_msg(alert_msg)
+                post_greenbar_msg(alert_msg)
 
 
             raw_model = 'Unknown'
@@ -72,8 +72,8 @@ def get_entity_registry_mobile_app_devices():
                 # Get raw_model from HA device_registry
                 device_reg_data = device_registry.async_get(device_id)
 
-                log_title = (f"MobApp device_registry entry - <{mobapp_dname}>)")
-                log_data(log_title, str(device_reg_data), log_data_flag=True)
+                log_title = (f"{NL3D}MobApp device_registry entry - <{mobapp_dname}>)")
+                log_data_unfiltered(log_title, str(device_reg_data)) #, is_log_level_rawdata=True)
 
                 raw_model = device_reg_data.model
 
@@ -96,7 +96,7 @@ def get_entity_registry_mobile_app_devices():
                     [mobapp_fname, raw_model, device_type, model_display_name]    # Gary-iPhone, iPhone15,2; iPhone; iPhone 14 Pro
 
             log_title = (f"MobApp entity_registry entry - <{mobapp_dname}>)")
-            log_data(log_title, dev_trkr_entity, log_data_flag=True)
+            log_data(log_title, dev_trkr_entity, is_log_level_rawdata=True)
 
         last_updt_trigger_sensors = _extract_mobile_app_entities(mobile_app_entities, '_last_update_trigger')
         battery_level_sensors     = _extract_mobile_app_entities(mobile_app_entities, '_battery_level')
@@ -304,7 +304,7 @@ def setup_notify_service_name_for_mobapp_devices(post_evlog_msg=False):
         Gb.mobapp_fnames_by_mobapp_id[mobapp_id] = mobapp_fname
 
         for devicename, Device in Gb.Devices_by_devicename.items():
-            if (Device.mobapp_monitor_flag is False
+            if (Device.is_mobapp_monitored is False
                     or Gb.conf_data_source_MOBAPP is False):
                     # or Device.mobapp[NOTIFY] != ''):
                 continue
@@ -373,7 +373,7 @@ def request_location(Device, is_alive_check=False, force_request=False):
     '''
 
     if (Gb.used_data_source_MOBAPP is False
-            or Device.mobapp_monitor_flag is False
+            or Device.is_mobapp_monitored is False
             or Device.mobapp[NOTIFY] == ''
             or Device.is_offline):
         return

@@ -1,8 +1,9 @@
 
 from ..global_variables     import GlobalVariables as Gb
-from ..const                import (CRLF_DOT,  )
+from ..const                import (CRLF_DOT, NL3, NL4, NL3D, NL3_DATA, NL3UD, )
 from .utils                 import (instr, is_empty, isnot_empty, list_to_str, )
-from .messaging             import (log_exception, _evlog, _log, log_error_msg, )
+from .messaging             import (log_exception, _evlog, _log, log_debug_msg,
+                                    log_data_unfiltered, write_ic3log_recd, )
 
 from collections            import OrderedDict
 import asyncio
@@ -24,207 +25,20 @@ _LOGGER = logging.getLogger(__name__)
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #
-#            HTTPX & REQUESTS URL UTILITIES
-#
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-async def async_httpx_request_url_data(url, headers=None):
-    '''
-    Set up and request data from a url using the httpx requests process.
-
-    Returns:
-        - data dictionary with the returned json data, the url and status_code
-        - error dictionary with the url, error and status_code if a connection or other error
-            occurred
-    '''
-    try:
-        error_type = ''
-        error_code = -99
-        try:
-            if headers is None:
-                # Use HA httpx client
-                httpx = httpx_client.get_async_client(Gb.hass, verify_ssl=False)
-
-            else:
-                httpx = create_async_httpx_client(headers=headers)
-
-
-            error_type = 'InternetError-'
-
-            # response = await Gb.httpx.get(url)
-            response = await httpx.get(url)
-            response.raise_for_status()
-
-            data = response.json()
-
-            data['url'] = url
-            data['status_code'] = response.status_code
-
-            return data
-
-        except HTTPStatusError:
-            error_type = 'ClientError'
-        except (ConnectTimeout) as err:
-            error_type += 'ConnectTimeout'
-        except (ConnectionError) as err:
-            error_type += 'ConnectionError'
-        except (HTTPError) as err:
-            error_type += 'HTTPError'
-        except Exception as err:
-            log_exception(err)
-            error_type += 'General'
-
-        try:
-            error_code = response.status_code
-        except:
-            if error_type == 'InternetError-':
-                error_code = 104
-            else:
-                error_code = -999
-
-        data = {'url': url, 'error': error_type, 'status_code': error_code}
-
-        return data
-
-    except Exception as err:
-        log_exception(err)
-        error_type = 'OverAll'
-
-    data = {'url': url, 'error': error_type, 'status_code': error_code}
-
-    return data
-
-#----------------------------------------------------------------------------
-def httpx_request_url_data(url, headers=None):
-    '''
-    Set up and request data from a url using the httpx requests process.
-
-    Returns:
-        - data dictionary with the returned json data, the url and status_code
-        - error dictionary with the url, error and status_code if a connection or other error
-            occurred
-    '''
-    try:
-        error_type = ''
-        error_code = -99
-        try:
-            # if Gb.httpx is None and headers is None:
-            #     # Use HA httpx client
-            #     # Gb.httpx = httpx_client.get_async_client(Gb.hass, verify_ssl=False)
-
-            #     # Create a new HA httpx client
-            #     Gb.httpx = create_async_httpx_client(headers=headers)
-            if headers is None:
-                # Use HA httpx client
-                httpx = httpx_client.get_async_client(Gb.hass, verify_ssl=False)
-
-            else:
-                httpx = create_async_httpx_client(headers=headers)
-
-            httpx = create_async_httpx_client(headers=headers)
-
-            error_type = 'InternetError-'
-
-            # response = await Gb.httpx.get(url)
-            response = httpx.get(url)
-            response.raise_for_status()
-
-            data = response.json()
-
-            data['url'] = url
-            data['status_code'] = response.status_code
-
-            return data
-
-        except HTTPStatusError:
-            error_type = 'ClientError'
-        except (ConnectTimeout) as err:
-            error_type += 'ConnectTimeout'
-        except (ConnectionError) as err:
-            error_type += 'ConnectionError'
-        except (HTTPError) as err:
-            error_type += 'HTTPError'
-        except Exception as err:
-            log_exception(err)
-            error_type += 'General'
-
-        try:
-            error_code = response.status_code
-        except:
-            if error_type == 'InternetError-':
-                error_code = 104
-            else:
-                error_code = -999
-
-        data = {'url': url, 'error': error_type, 'status_code': error_code}
-
-        return data
-
-    except Exception as err:
-        log_exception(err)
-        error_type = 'OverAll'
-
-    data = {'url': url, 'error': error_type, 'status_code': error_code}
-
-    return data
-
-#............................................................................
-def create_async_httpx_client(headers=None):
-    """Create a new httpx.AsyncClient with kwargs, i.e. for cookies.
-
-    If auto_cleanup is False, the client will be
-    automatically closed on homeassistant_stop.
-
-    This method must be run in the event loop.
-    """
-    client = httpx_client.HassHttpXAsyncClient(
-                    verify=False,
-                    headers=headers,
-                    limits=httpx_client.DEFAULT_LIMITS,
-    )
-
-    original_aclose = client.aclose
-
-    httpx_client._async_register_async_client_shutdown(Gb.hass, client, original_aclose)
-
-    return client
-
-#----------------------------------------------------------------------------
-def request_url_data(url):
-    try:
-        response = requests.get(url, timeout=3)
-
-    except requests.RequestException as err:
-        data = {'url': url, 'error': err, 'status_code': -2}
-
-        return data
-
-    except Exception as err:
-        log_exception(err)
-        data = {'url': url, 'error': err, 'status_code': -1}
-
-        return data
-
-    data = response.json()
-    data['url'] = url
-    data['status_code'] = response.status_code
-
-
-    return data
-
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-#
 #            JSON FILE UTILITIES
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def async_read_json_file(filename):
+async def async_read_json_file(filename):
 
     if file_exists(filename) is False:
+        log_debug_msg(f"Read Json File (async)-{filename}, File Not Found")
         return {}
 
     try:
-        data = Gb.hass.async_add_executor_job(
+        data = await Gb.hass.async_add_executor_job(
                             read_json_file,
-                            filename)
+                            filename,
+                            True)
         return data
 
     except Exception as err:
@@ -235,31 +49,31 @@ def async_read_json_file(filename):
     return {}
 
 #--------------------------------------------------------------------
-def read_json_file(filename):
+def read_json_file(filename, async_msg=False):
+
+    _async_msg = '' if async_msg is False else ' (async)'
+    filename_msg = f"{NL3UD}READ JSON FILE{_async_msg}--{filename}"
 
     if file_exists(filename) is False:
+        log_debug_msg(f"{filename_msg}❗ File Not Found")
         return {}
 
     try:
-        if Gb.initial_icloud3_loading_flag:
-            data = json_util.load_json(filename)
-        else:
-            data = Gb.hass.async_add_executor_job(
-                            json_util.load_json,
-                            filename)
-
-        return data
+        data = json_util.load_json(filename)
 
     except RuntimeError as err:
-        if str(err) == 'no running event loop':
-            data = json_util.load_json(filename)
-            return data
+        # log_exception(err)
+        log_debug_msg(f"{filename_msg}{NL3_DATA}NoEventLoop-`await` not needed")
+        data = {}
 
     except Exception as err:
-        _LOGGER.exception(err)
-        pass
+        log_exception(err)
+        data = {}
 
-    return {}
+    _data = {str(data)[:100]}
+    log_data_unfiltered(f"{filename_msg}", _data)
+
+    return data
 
 #--------------------------------------------------------------------
 async def async_save_json_file(filename, data):
@@ -280,7 +94,6 @@ async def async_save_json_file(filename, data):
 #--------------------------------------------------------------------
 def save_json_file(filename, data):
     try:
-        # The HA event loop has not been set up yet during initialization
         json_helpers.save_json(filename, data)
         return True
 
@@ -350,10 +163,12 @@ def json_str_to_dict(json_str):
         json_str = json_str.replace("'", '"')
         json_str = json_str.replace('True', 'true')
         json_str = json_str.replace('False', 'false')
-        # json_str = json_str.replace(' ', '')
-        return json.loads(json_str)
+        json_str_json = json.loads(json_str)
+
+        return json_str_json
 
     except Exception as err:
+        log_exception(err)
         pass
 
     return {}
@@ -472,21 +287,6 @@ def _os(os_module, filename):
     results = os_module(filename)
     return results
 
-#--------------------------------------------------------------------
-def is_event_loop_running():
-    try:
-        asyncio.get_running_loop()
-        return True
-    except RuntimeError:
-        return False
-    except Exception as err:
-        log_exception(err)
-    return False
-
-def is_event_loop_running2():
-    if asyncio.get_event_loop_policy()._local._loop:
-        return True
-    return False
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 #

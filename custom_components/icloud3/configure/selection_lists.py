@@ -1,33 +1,35 @@
 
 
 from ..global_variables import GlobalVariables as Gb
-from ..const            import (RARROW, PHDOT, CRLF_DOT, DOT, HDOT, PHDOT, CIRCLE_STAR, RED_X,
-                                YELLOW_ALERT, RED_ALERT, EVLOG_NOTICE, EVLOG_ALERT, EVLOG_ERROR, LINK, LLINK, RLINK,
+from ..const            import (RARROW, CRLF_DOT, DOT, HDOT, CIRCLE_STAR, RED_X, INACTIVE_SYMB, MONITOR_SYMB,
+                                YELLOW_ALERT, RED_ALERT, YELLOW_WARNING,
+                                EVLOG_NOTICE, EVLOG_ALERT, EVLOG_ERROR, LINK, LLINK, RLINK,
                                 IPHONE_FNAME, IPHONE, IPAD, WATCH, MAC, AIRPODS, ICLOUD, OTHER, HOME, FAMSHR,
                                 DEVICE_TYPES, DEVICE_TYPE_FNAME, DEVICE_TYPE_FNAMES, DEVICE_TRACKER_DOT,
-                                TRACK_DEVICE, MONITOR_DEVICE, INACTIVE_DEVICE,
-                                CONF_APPLE_ACCOUNTS, CONF_APPLE_ACCOUNT, CONF_TOTP_KEY,
+                                TRACK, MONITOR, INACTIVE,
+                                CONF_APPLE_ACCOUNTS, CONF_APPLE_ACCOUNT,
+                                CONF_AUTH_METHODS, CONF_LAST_METHOD,
+                                PUSH, TEXT, TEXT_1, TEXT_2, HWKEY, HWKEY_1, HWKEY_2,
                                 CONF_USERNAME, CONF_PASSWORD, CONF_DEVICES, CONF_SETUP_ICLOUD_SESSION_EARLY,
-                                CONF_DATA_SOURCE, CONF_VERIFICATION_CODE, CONF_LOCATE_ALL,
-                                CONF_TRACK_FROM_ZONES,
+                                CONF_DATA_SOURCE, CONF_AUTH_CODE, CONF_LOCATE_ALL,
+                                CONF_TRACK_FROM_ZONES, CONF_PICTURE_WWW_DIRS,
                                 CONF_TRACK_FROM_BASE_ZONE_USED, CONF_TRACK_FROM_BASE_ZONE, CONF_TRACK_FROM_HOME_ZONE,
                                 CONF_PICTURE, CONF_DEVICE_TYPE, CONF_INZONE_INTERVALS,
                                 CONF_IC3_DEVICENAME, CONF_FNAME, CONF_FAMSHR_DEVICENAME, CONF_MOBILE_APP_DEVICE, CONF_FMF_EMAIL,CONF_FMF_DEVICE_ID,
                                 CONF_TRACKING_MODE, CONF_INZONE_INTERVAL, CONF_FIXED_INTERVAL,
                                 )
 
-from ..utils.utils      import (instr, isnumber, is_empty, isnot_empty, list_to_str, str_to_list,
+from ..utils.utils      import (instr, is_number, is_empty, isnot_empty, list_to_str, str_to_list,
                                 is_statzone, zone_dname, isbetween, list_del, list_add,
-                                sort_dict_by_values,
+                                sort_dict_by_values, username_id, username_base,
                                 encode_password, decode_password, )
 from ..utils.messaging  import (log_exception, log_debug_msg, log_info_msg, add_log_file_filter,
                                 _log, _evlog, )
 
-from .                  import apple_acct_support as aas
-from .const_form_lists  import (NONE_FAMSHR_DICT_KEY_TEXT, MOBAPP_DEVICE_NONE_OPTIONS, )
+from ..apple_acct       import apple_acct_support_cf as aascf
+from .const_form_lists  import (NONE_FAMSHR_DICT_KEY_TEXT, MOBAPP_DEVICE_NONE_OPTIONS, AWAY_FROM_ZONE_OPTIONS, )
 from ..startup          import config_file
 from ..utils            import file_io
-
 
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -46,52 +48,179 @@ def build_apple_accounts_list(self):
         include_icloud_dnames:
             True - Add a list of the devices in the Apple Account and add a
                     new account option
+
+
+    The list is built:
+        - At the start of the forms functions for the Data Sources, Update Apple Acct,
+            and Reauth screens
+        - When the Apple Acct config is updated
+        - When an Apple Acct is deleted
     '''
 
     self.apple_acct_items_by_username = {}
-    self.is_verification_code_needed = False
+    self.is_auth_code_needed = False
 
     aa_idx = -1
-    for apple_account in Gb.conf_apple_accounts:
+    for conf_apple_acct in Gb.conf_apple_accounts:
         aa_idx += 1
-        username = apple_account[CONF_USERNAME]
-        devicenames_by_username, icloud_dnames_by_username = \
-                    self.get_conf_device_names_by_username(username)
-        devices_assigned_cnt = len(devicenames_by_username)
+        username = conf_apple_acct[CONF_USERNAME]
+        AppleAcct = Gb.AppleAcct_by_username.get(username)
 
         if aa_idx == 0 and username == '':
             break
-        elif username == '':
+        elif AppleAcct is None or username == '':
             continue
+
+        aa_text = _build_aa_text_line(self, AppleAcct, username)
+        self.apple_acct_items_by_username[username] = f"{username_base(username)}{RARROW}{aa_text}"
+
+#...............................................................................
+def _build_aa_text_line(self, AppleAcct, username):
+    '''
+    Build info line for apple acct selection list
+    '''
+
+    tracked_cnt, tracked_devices, untracked_cnt, untracked_devices = tracked_untracked_form_msg(username)
+    valid_upw = Gb.valid_upw_by_username.get(username)
+
+    aa_text = ''
+    if AppleAcct.is_auth_code_needed:
+        aa_text += f"{RED_ALERT}AUTH NEEDED, "
+
+    aa_text += (f"{tracked_cnt} of "
+                f"{tracked_cnt+untracked_cnt} Devices Tracked "
+                f"({tracked_devices})")
+    return aa_text
+
+#--------------------------------------------------------------------
+def build_apple_accounts_auth_list(self):
+    '''
+    Build a list of the Apple Accounts that is used in the data source,
+    username/password and reauthentication screens to s select the
+    Apple Account or add a new one.
+
+    Parameters:
+        include_icloud_dnames:
+            True - Add a list of the devices in the Apple Account and add a
+                    new account option
+
+
+    The list is built:
+        - At the start of the forms functions for the Data Sources, Update Apple Acct,
+            and Reauth screens
+        - When the Apple Acct config is updated
+        - When an Apple Acct is deleted
+    '''
+
+    auth_needed_items_by_username = {}
+    auth_not_needed_items_by_username = {}
+    self.apple_acct_auth_items_by_username = {}
+    self.is_auth_code_needed = False
+
+    aa_idx = -1
+    for conf_apple_acct in Gb.conf_apple_accounts:
+        aa_idx += 1
+        username = conf_apple_acct[CONF_USERNAME]
+        AppleAcct = Gb.AppleAcct_by_username.get(username)
+
+        if aa_idx == 0 and username == '':
+            break
+        elif AppleAcct is None or username == '':
+            continue
+
+        aa_text = _build_aa_auth_text_line(self, AppleAcct, conf_apple_acct)
+        if AppleAcct.is_auth_code_needed:
+            auth_needed_items_by_username[username] = \
+                f"{username_base(username)}{RARROW}{aa_text}"
         else:
-            valid_upw = Gb.username_valid_by_username.get(username)
-            PyiCloud = Gb.PyiCloud_by_username.get(username)
-            if PyiCloud is None or PyiCloud.is_AADevices_setup_complete is False:
-                aa_text = f"{username}{RARROW}{RED_ALERT}"
-                if valid_upw is False:
-                    aa_text += 'NOT LOGGED IN, INVALID USERNAME/PASSWORD'
-                elif instr(Gb.conf_tracking[CONF_DATA_SOURCE], ICLOUD) is False:
-                    aa_text += 'NOT LOGGED IN, APPLE DATA SOURCE DISABLED'
-                elif valid_upw is None:
-                    aa_text += 'NOT LOGGED INTO THIS APPLE ACCOUNT'
-                else:
-                    aa_text += 'NOT LOGGED IN DUE TO ANOTHER ERROR, SEE EVENT LOG'
-                self.apple_acct_items_by_username[username] = aa_text
-                continue
+            auth_not_needed_items_by_username[username] = \
+                f"{username_base(username)}{RARROW}{aa_text}"
 
-        # PyiCloud.username_id is the filtered text (geekstergary=gee**2**ry)
-        # Convert it back to the real username_id text for displaying on the screen
-        username_id = Gb.upw_unfilter_items.get(PyiCloud.username_id, PyiCloud.username_id)
-        aa_text = f"{username_id}{RARROW}"
-        if PyiCloud.requires_2fa:
-            self.is_verification_code_needed = True
-            aa_text += f"{RED_ALERT} AUTHENTICATION NEEDED, "
+    self.apple_acct_auth_items_by_username = auth_needed_items_by_username
+    self.apple_acct_auth_items_by_username.update(auth_not_needed_items_by_username)
 
-        aa_text += (f"{devices_assigned_cnt} of "
-                    f"{len(PyiCloud.icloud_dnames)} iCloud Devices Tracked "
-                    f"{self.tracked_untracked_form_msg(username)[0]}")
+#...............................................................................
+def _build_aa_auth_text_line(self, AppleAcct, conf_apple_acct):
+    build_aa_auth_methods_list(self, AppleAcct)
 
-        self.apple_acct_items_by_username[username] = aa_text
+    aa_text = ''
+    aa_text += f"{self.aa_auth_methods_by_auth_method[AppleAcct.auth_method]}"
+    if AppleAcct.is_auth_code_needed:
+        aa_text = aa_text.split('> ')[0]
+        aa_text += f"> {RED_ALERT}AUTH NEEDED"
+
+    return aa_text
+
+#...............................................................................
+def build_aa_auth_methods_list(self, AppleAcct):
+
+    self.aa_auth_methods_by_auth_method = {}
+    self.aa_auth_methods_by_auth_method['push'] =  ('Push Notification > '
+                                                    'From `Apple Account Sign-in Requested` popup window')
+    for auth_method, method_info in AppleAcct.conf_apple_acct[CONF_AUTH_METHODS].items():
+        if method_info == '':
+            continue
+        if auth_method.startswith(TEXT):
+            self.aa_auth_methods_by_auth_method[auth_method] = (
+                                        f"Text Msg to Device #{auth_method[-1:]} ({method_info}) > "
+                                        f"Send a Text Message to this Trusted Device")
+        elif auth_method.startswith(HWKEY):
+            self.aa_auth_methods_by_auth_method[auth_method] = (
+                                        f"Hardware Key #{auth_method[-1:]} ({method_info}) > "
+                                        f"Authenticate with this Hardware Key (YubiKey)")
+
+    return self.aa_auth_methods_by_auth_method
+
+
+
+
+#-------------------------------------------------------------------------------------------
+def tracked_untracked_form_msg(username):
+    '''
+    This is used in the config_flow_forms to fill in the tracked and untracked devices
+    on the Apple Acct Username Password form
+    '''
+
+    AppleAcct = Gb.AppleAcct_by_username.get(username)
+    if AppleAcct is None:
+        return [0, '', 0, '']
+
+    icloud_dnames = AppleAcct.icloud_dnames if AppleAcct else []
+
+    devicenames_by_username, icloud_dnames_by_username = get_conf_device_names_by_username(username)
+    tracked_devices = [icloud_dname
+                            for icloud_dname in icloud_dnames
+                            if icloud_dname in icloud_dnames_by_username]
+    untracked_devices = [icloud_dname
+                            for icloud_dname in icloud_dnames
+                            if icloud_dname not in icloud_dnames_by_username]
+
+    return [len(tracked_devices), list_to_str(tracked_devices),
+            len(untracked_devices), list_to_str(untracked_devices)]
+
+#--------------------------------------------------------------------
+def get_conf_device_names_by_username(username):
+    '''
+    Cycle through the conf_devices and build a list of device names by the
+    apple account usernames
+
+    Parameter:
+        username
+    Return:
+        {devicenames_by_username}, {icloud_dnames_by_username}
+    '''
+    devicenames_by_username = [conf_device[CONF_IC3_DEVICENAME]
+                                for conf_device in Gb.conf_devices
+                                if conf_device[CONF_APPLE_ACCOUNT] == username]
+
+    icloud_dnames_by_username = [conf_device[CONF_FAMSHR_DEVICENAME]
+                                    for conf_device in Gb.conf_devices
+                                    if conf_device[CONF_APPLE_ACCOUNT] == username]
+
+    devicenames_by_username.sort()
+    icloud_dnames_by_username.sort()
+
+    return devicenames_by_username, icloud_dnames_by_username
 
 #-------------------------------------------------------------------------------------------
 def build_devices_list(self):
@@ -122,10 +251,10 @@ def format_device_list_item(self, conf_device):
     device_text  = (f"{conf_device[CONF_FNAME]}"
                     f" ({conf_device[CONF_IC3_DEVICENAME]}){RARROW}")
 
-    if conf_device[CONF_TRACKING_MODE] == MONITOR_DEVICE:
-        device_text += " Ⓜ MONITOR, "
-    elif conf_device[CONF_TRACKING_MODE] == INACTIVE_DEVICE:
-        device_text += "✪ INACTIVE, "
+    if conf_device[CONF_TRACKING_MODE] == MONITOR:
+        device_text += F" {MONITOR_SYMB} MONITOR, "
+    elif conf_device[CONF_TRACKING_MODE] == INACTIVE:
+        device_text += f" {INACTIVE_SYMB} INACTIVE, "
 
     if conf_device[CONF_FAMSHR_DEVICENAME] != 'None':
         icloud_dname_apple_acct, status_msg = \
@@ -161,7 +290,7 @@ def format_apple_acct_device_info(self, conf_device):
     '''
     Format the icloud_dname><apple_account field based on the device's
     CONF_FAMSHR_DEVICENAME and CONF_APPLE_ACCOUNT configuration values
-    and the status of PyiCloud state and the devices available in PyiCloud
+    and the status of AppleAcct state and the devices available in AppleAcct
 
     Input:
         - device confiuration
@@ -176,11 +305,11 @@ def format_apple_acct_device_info(self, conf_device):
     apple_acct_base = f"{apple_acct}@".split('@')[0]
     status_msg   = ''
 
-    if PyiCloud := Gb.PyiCloud_by_username.get(apple_acct):
-        icloud_dname_apple_acct = f"{icloud_dname}{PyiCloud.account_owner_link}"
-        if icloud_dname in PyiCloud.device_id_by_icloud_dname:
+    if AppleAcct := Gb.AppleAcct_by_username.get(apple_acct):
+        icloud_dname_apple_acct = f"{icloud_dname}{AppleAcct.account_owner_link}"
+        if icloud_dname in AppleAcct.device_id_by_icloud_dname:
             pass
-        elif is_empty(PyiCloud.device_id_by_icloud_dname):
+        elif is_empty(AppleAcct.device_id_by_icloud_dname):
             status_msg = f" {RED_ALERT}APPLE ACCT UNAVAILABLE"
         else:
             status_msg = f" {RED_ALERT}`{icloud_dname}` DEVICE NOT IN APPLE ACCT"
@@ -214,11 +343,6 @@ async def build_update_device_selection_lists(self, selected_devicename=None):
         await build_mobapp_entity_selection_list(self, selected_devicename)
         await build_picture_filename_selection_list(self)
         await build_zone_selection_list(self)
-
-        # _xtraceha(f"{self.icloud_list_text_by_fname=}")
-        # _xtraceha(f"{self.mobapp_list_text_by_entity_id=}")
-        # _xtraceha(f"{self.conf_device=}")
-        # _xtraceha(f"{self.zone_name_key_text=}")
 
     except Exception as err:
         log_exception(err)
@@ -256,7 +380,6 @@ async def build_icloud_device_selection_list(self, selected_devicename=None):
         if status_msg == '':
             continue
 
-        # if Gb.username_valid_by_username.get(conf_device[CONF_APPLE_ACCOUNT], False) is False:
         apple_acct = conf_device[CONF_APPLE_ACCOUNT] if conf_device[CONF_APPLE_ACCOUNT] != '' else 'NONE'
         device_list_item_key = f"{devicename}{LINK}{apple_acct}"
         all_devices_not_available[device_list_item_key] = (
@@ -269,12 +392,12 @@ async def build_icloud_device_selection_list(self, selected_devicename=None):
             selected_device_icloud_dname = conf_device[CONF_FAMSHR_DEVICENAME]
 
     max_len_aa_owner_msg = 0
-    for _PyiCloud in Gb.PyiCloud_by_username.values():
-        aa_owner_msg = f"{_PyiCloud.account_owner} ({_PyiCloud.username_base})"
+    for _AppleAcct in Gb.AppleAcct_by_username.values():
+        aa_owner_msg = f"{_AppleAcct.account_owner} ({_AppleAcct.username_base})"
         if len(aa_owner_msg) > max_len_aa_owner_msg:
             max_len_aa_owner_msg = len(aa_owner_msg)
-    if max_len_aa_owner_msg < 26: max_len_aa_owner_msg = 26
-    final_dots_fixed = '⋯'*(max_len_aa_owner_msg - 27) if max_len_aa_owner_msg > 27 else ''
+    if max_len_aa_owner_msg < 19: max_len_aa_owner_msg = 19
+    final_line_fixed = '_'*(max_len_aa_owner_msg - 19) if max_len_aa_owner_msg > 19 else '?'
 
 
     # Get the list of devices with valid apple accounts
@@ -285,40 +408,40 @@ async def build_icloud_device_selection_list(self, selected_devicename=None):
         aa_idx += 1
         aa_idx_dots = '.'*aa_idx
 
-        if Gb.username_valid_by_username.get(username, False) is False:
+        if Gb.valid_upw_by_username.get(username, False) is False:
             continue
 
-        PyiCloud = Gb.PyiCloud_by_username.get(username)
-        if PyiCloud is None:
+        AppleAcct = Gb.AppleAcct_by_username.get(username)
+        if AppleAcct is None:
             continue
 
-        if PyiCloud.AADevices is None or PyiCloud.is_AADevices_setup_complete is False:
+        if AppleAcct.AADevices is None or AppleAcct.is_AADevices_setup_complete is False:
             _AppleDev = await Gb.hass.async_add_executor_job(
-                                    aas.create_AADevices_config_flow,
-                                    PyiCloud)
+                                    aascf.create_AADevices_config_flow,
+                                    AppleAcct)
 
-        if PyiCloud:
+        if AppleAcct:
             # self._check_finish_v2v3conversion_for_icloud_dname()
 
             devices_available, devices_used, devices_not_available, this_device = \
                     get_icloud_devices_list_avail_used_this(
-                            aa_idx, PyiCloud, PyiCloud.account_owner, selected_devicename)
+                            aa_idx, AppleAcct, AppleAcct.account_owner, selected_devicename)
 
             # Available devices
             devices_cnt  = len(devices_used) + len(devices_available) + len(this_device)
             assigned_cnt = len(devices_used) + len(this_device)
-            len_aa_owner_msg = len(f"{PyiCloud.account_owner} ({PyiCloud.username_base})")
-
-            final_dots       = f"{'⋯'*int((max_len_aa_owner_msg - len_aa_owner_msg)*.4)}"
+            len_aa_owner_msg = len(f"{AppleAcct.account_owner} ({AppleAcct.username_base})")
+            final_line       = f"{'_'*int((max_len_aa_owner_msg - len_aa_owner_msg) + 6)}"
 
             username_hdr_available = {  f"{aa_idx_dots}hdr":
-                                        f"🍏 ⋯⋯⋯ AVAILABLE ⋯⋯⋯ {PyiCloud.account_owner} "
-                                        f"({PyiCloud.username_base}), "
-                                        f"{assigned_cnt} of {devices_cnt} Assigned ⋯⋯⋯{final_dots} 🍏"}
-
+                                        f"🍏 ________ AVAILABLE ______ {AppleAcct.account_owner} "
+                                        f"({AppleAcct.username_base}), "
+                                        f"{assigned_cnt} of {devices_cnt} Assigned) "
+                                        f"{final_line}"}
 
             if devices_available == {}:
-                devices_available = {f"{aa_idx_dots}nodev": f"{CIRCLE_STAR} All Apple account devices are assigned"}
+                devices_available ={f"nodev": "All Apple account devices are assigned"}
+                # devices_available ={f"{aa_idx_dots}nodev": "All Apple account devices are assigned"}
 
             all_devices_available.update(username_hdr_available)
             all_devices_available.update(devices_available)
@@ -327,16 +450,16 @@ async def build_icloud_device_selection_list(self, selected_devicename=None):
             all_devices_this_device.update(this_device)
 
     if isnot_empty(all_devices_this_device):
-        #self.icloud_list_text_by_fname2.update({f".thisdevice":
-        #               f"☑️ ⋯⋯⋯ APPLE DEVICE ASSIGNED TO THIS ICLOUD3 DEVICE ⋯⋯⋯ ☑️"})
         self.icloud_list_text_by_fname2.update(all_devices_this_device)
-        self.icloud_list_text_by_fname2.update({'.dashes': '═'*51})
+        self.icloud_list_text_by_fname2.update({'.dashes': '_'*76 + final_line_fixed})
+        # self.icloud_list_text_by_fname2.update({'.dashes': '═'*51})
 
     self.icloud_list_text_by_fname2.update(NONE_FAMSHR_DICT_KEY_TEXT)
 
     if isnot_empty(all_devices_not_available):
         self.icloud_list_text_by_fname2.update({".notavail":
-                        f"⛔ ⋯⋯⋯ ICLOUD3 DEVICES WITH APPLE CONFIGURATION ERRORS ⋯⋯⋯⋯{final_dots_fixed} ⛔"})
+                        f"⛔ ________ ICLOUD3 DEVICES WITH APPLE CONFIGURATION ERRORS _____"
+                        f"{final_line_fixed}"})
         self.icloud_list_text_by_fname2.update(sort_dict_by_values(all_devices_not_available))
 
     if isnot_empty(all_devices_available):
@@ -344,13 +467,15 @@ async def build_icloud_device_selection_list(self, selected_devicename=None):
 
     if isnot_empty(all_devices_used):
         self.icloud_list_text_by_fname2.update({".assigned":
-                        f"🅰️ ⋯⋯⋯ APPLE DEVICES ASSIGNED TO ANOTHER ICLOUD3 DEVICE ⋯⋯⋯{final_dots_fixed}⋯ 🅰️"})
+                        f"🍎 ______ APPLE DEVICES ASSIGNED TO ANOTHER ICLOUD3 DEVICE ______"
+                        f"{final_line_fixed}"})
+
         self.icloud_list_text_by_fname2.update(sort_dict_by_values(all_devices_used))
 
     self.icloud_list_text_by_fname = self.icloud_list_text_by_fname2.copy()
 
 #----------------------------------------------------------------------
-def get_icloud_devices_list_avail_used_this(aa_idx, PyiCloud, apple_acct_owner,
+def get_icloud_devices_list_avail_used_this(aa_idx, AppleAcct, apple_acct_owner,
                                                 selected_devicename=None):
     '''
     Build the dictionary with the Apple Account devices
@@ -375,24 +500,24 @@ def get_icloud_devices_list_avail_used_this(aa_idx, PyiCloud, apple_acct_owner,
         icloud_dname = _conf_device[CONF_FAMSHR_DEVICENAME]
         username     = _conf_device[CONF_APPLE_ACCOUNT]
         if (icloud_dname == 'None'
-                or PyiCloud.username != username):
+                or AppleAcct.username != username):
             continue
 
         devices_assigned[icloud_dname] = devicename
         devices_assigned[devicename]   = icloud_dname
 
     try:
-        for icloud_dname, device_model in PyiCloud.device_model_name_by_icloud_dname.items():
-            device_id = PyiCloud.device_id_by_icloud_dname[icloud_dname]
-            _AADevData  = PyiCloud.AADevData_by_device_id[device_id]
-            conf_apple_acct, conf_aa_idx = config_file.conf_apple_acct(PyiCloud.username)
+        for icloud_dname, device_model in AppleAcct.device_model_name_by_icloud_dname.items():
+            device_id = AppleAcct.device_id_by_icloud_dname[icloud_dname]
+            _AADevData  = AppleAcct.AADevData_by_device_id[device_id]
+            conf_apple_acct, conf_aa_idx = config_file.conf_apple_acct(AppleAcct.username)
             locate_all_sym = '' if conf_apple_acct[CONF_LOCATE_ALL] else 'ⓧ '
             family_device = ', FamilyDevice' if _AADevData.family_share_device else ''
             if family_device  and locate_all_sym:
                 family_device = 'FamilyDevice, APPLE ACCT NOT LOCATING ALL DEVICES'
 
-            device_list_item_key = f"{icloud_dname}{LINK}{PyiCloud.username}"
-            icloud_dname_owner   = f"{icloud_dname}{LINK}{PyiCloud.account_owner}{RLINK}"
+            device_list_item_key = f"{icloud_dname}{LINK}{AppleAcct.username}"
+            icloud_dname_owner   = f"{icloud_dname}{LINK}{AppleAcct.account_owner}{RLINK}"
             icloud_dname_owner_model = f"{icloud_dname_owner}{family_device}, {device_model}"
 
             # If not assigned to an ic3 device
@@ -419,7 +544,7 @@ def get_icloud_devices_list_avail_used_this(aa_idx, PyiCloud, apple_acct_owner,
                 continue
 
             # Assigned to another device
-            _assigned_to_fname = icloud_device_assigned_to(PyiCloud, icloud_dname)
+            _assigned_to_fname = icloud_device_assigned_to(AppleAcct, icloud_dname)
             err = RED_ALERT if instr(icloud_dname_owner_model, 'NOT LOCATING') else ''
             devices_used[device_list_item_key] = (
                             f"{err}{icloud_dname_owner}{RARROW}"
@@ -436,10 +561,10 @@ def get_icloud_devices_list_avail_used_this(aa_idx, PyiCloud, apple_acct_owner,
     return devices_available, devices_used, devices_not_available, this_device
 
 #----------------------------------------------------------------------
-def icloud_device_assigned_to(PyiCloud, icloud_dname):
+def icloud_device_assigned_to(AppleAcct, icloud_dname):
     _assigned_to_fname = [f"{conf_device[CONF_FNAME]} ({conf_device[CONF_IC3_DEVICENAME]})"
                             for conf_device in Gb.conf_devices
-                            if (PyiCloud.username == conf_device[CONF_APPLE_ACCOUNT]
+                            if (AppleAcct.username == conf_device[CONF_APPLE_ACCOUNT]
                                     and icloud_dname == conf_device[CONF_FAMSHR_DEVICENAME])]
 
     if _assigned_to_fname:
@@ -512,7 +637,7 @@ async def build_mobapp_entity_selection_list(self, selected_devicename=None):
         scan_for_mobapp_devices = {}
 
     if devices_available == {}:
-        devices_available = {f"nodev": f"{CIRCLE_STAR} All MobApp devices are assigned"}
+        devices_available = {f"nodev": "All MobApp devices are assigned"}
     if (selected_devicename
             and is_empty(devices_this_device)
             and self.conf_device[CONF_MOBILE_APP_DEVICE] != 'None'
@@ -525,14 +650,26 @@ async def build_mobapp_entity_selection_list(self, selected_devicename=None):
         self.mobapp_list_text_by_entity_id.update(devices_this_device)
         self.mobapp_list_text_by_entity_id.update({'.dashes': '═'*51})
     self.mobapp_list_text_by_entity_id.update(MOBAPP_DEVICE_NONE_OPTIONS)
-    self.mobapp_list_text_by_entity_id.update({'.available': f"✅ ⋯⋯⋯ AVAILABLE MOBILE APP DEVICES {'⋯'*17} ✅"})
+    self.mobapp_list_text_by_entity_id.update({'.available': f"✅ ______ AVAILABLE MOBILE APP DEVICES {'_'*40}"})
     self.mobapp_list_text_by_entity_id.update(sort_dict_by_values(devices_available))
-    self.mobapp_list_text_by_entity_id.update({'.assigned': f"🅰️ ⋯⋯⋯ ASSIGNED TO ANOTHER ICLOUD3 DEVICE {'⋯'*13} 🅰️"})
+    self.mobapp_list_text_by_entity_id.update({'.assigned': f"🅰️ ______ ASSIGNED TO ANOTHER ICLOUD3 DEVICE {'_'*32} "})
     self.mobapp_list_text_by_entity_id.update(sort_dict_by_values(devices_used))
-    self.mobapp_list_text_by_entity_id.update({'.scanfor': f"🔄 ⋯⋯⋯ SCAN FOR DEVICE TRACKER ENTITY {'⋯'*16} 🔄"})
+    self.mobapp_list_text_by_entity_id.update({'.scanfor': f"🔄 ______ SCAN FOR DEVICE TRACKER ENTITY {'_'*38}"})
     self.mobapp_list_text_by_entity_id.update(sort_dict_by_values(scan_for_mobapp_devices))
 
     return
+
+#-------------------------------------------------------------------------------------------
+async def build_www_directory_filter_list(self):
+    '''
+    Set up the list of all www directories for selecting those that should be filteredd
+    '''
+
+    if self.www_directory_list == []:
+        start_dir = 'www'
+        self.www_directory_list = await Gb.hass.async_add_executor_job(
+                                                file_io.get_directory_list,
+                                                start_dir)
 
 #-------------------------------------------------------------------------------------------
 async def build_picture_filename_selection_list(self):
@@ -548,6 +685,17 @@ async def build_picture_filename_selection_list(self):
                                                 start_dir,
                                                 file_filter)
 
+        await build_www_directory_filter_list(self)
+
+        # Make sure all directories in the filter list still exist,
+        # delete it if it does not exist
+        www_gb_dirs_unknown = [dir  for dir in Gb.picture_www_dirs
+                                    if dir not in self.www_directory_list]
+        if isnot_empty(www_gb_dirs_unknown):
+            for www_gb_dir_unknown in www_gb_dirs_unknown:
+                list_del(Gb.picture_www_dirs, www_gb_dir_unknown)
+            Gb.conf_profile[CONF_PICTURE_WWW_DIRS] = Gb.picture_www_dirs
+
         sorted_image_filenames = []
         over_25_warning_msgs = []
         for image_filename in image_filenames:
@@ -558,6 +706,7 @@ async def build_picture_filename_selection_list(self):
         sorted_image_filenames.sort()
         self.picture_by_filename = {}
         www_dir_idx = 0
+
 
         if Gb.picture_www_dirs:
             while www_dir_idx < len(Gb.picture_www_dirs):
@@ -570,8 +719,8 @@ async def build_picture_filename_selection_list(self):
             www_dir_idx += 1
             self.picture_by_filename[f".www_dirs{www_dir_idx}"] = over_25_warning_msg
 
-        self.picture_by_filename['.available'] = f"✅ ⋯⋯⋯ DEVICE PICTURE FILE NAMES {'⋯'*16} ✅"
-        self.picture_by_filename['setup_dir_filter'] = "➤ FILTER IMAGE DIRECTORIES > Select directories with the picture image files"
+        self.picture_by_filename['setup_dir_filter'] = "️️▶️ SET IMAGE DIRECTORY FILTER > Select directories with the picture image files"
+        self.picture_by_filename['.available'] = f"⏬ ______ DEVICE PICTURE FILE NAMES {'_'*38}"
         self.picture_by_filename.update(self.picture_by_filename_base)
 
         for sorted_image_filename in sorted_image_filenames:
@@ -639,9 +788,7 @@ def build_away_time_zone_hours_list(self):
 #-------------------------------------------------------------------------------------------
 def build_away_time_zone_devices_list(self):
 
-    self.away_time_zone_devices_key_text = {
-                    'none': 'None > All devices are at Home',
-                    'all': 'All > All device are away from home'}
+    self.away_time_zone_devices_key_text = AWAY_FROM_ZONE_OPTIONS.copy()
     self.away_time_zone_devices_key_text.update(devices_selection_list())
 
 #-------------------------------------------------------------------------------------------
@@ -657,4 +804,4 @@ def devices_selection_list():
                     f"{conf_device[CONF_FNAME]} "
                     f"({DEVICE_TYPE_FNAME(conf_device[CONF_DEVICE_TYPE])})")
                 for conf_device in Gb.conf_devices
-                if conf_device[CONF_TRACKING_MODE] != INACTIVE_DEVICE}
+                if conf_device[CONF_IC3_DEVICENAME] in Gb.Devices_by_devicename}

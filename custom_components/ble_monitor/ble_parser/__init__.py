@@ -29,6 +29,7 @@ from .jinou import parse_jinou
 from .kegtron import parse_kegtron
 from .kkm import parse_kkm
 from .laica import parse_laica
+from .michelin import parse_michelin_tms
 from .mikrotik import parse_mikrotik
 from .miscale import parse_miscale
 from .moat import parse_moat
@@ -42,6 +43,7 @@ from .sensirion import parse_sensirion
 from .sensorpush import parse_sensorpush
 from .senssun import parse_senssun
 from .smartdry import parse_smartdry
+from .sonoff import parse_sonoff
 from .switchbot import parse_switchbot
 from .teltonika import parse_teltonika
 from .thermobeacon import parse_thermobeacon
@@ -136,6 +138,11 @@ class BleParser:
                 elif adstuct_type == 0x03:
                     # AD type 'Complete List of 16-bit Service Class UUIDs'
                     service_class_uuid16 = (adstruct[2] << 8) | adstruct[3]
+                elif adstuct_type == 0x05:
+                    # AD type 'Complete List of 32-bit Service Class UUIDs'
+                    if mac == b"\x66\x55\x44\x33\x22\x11":
+                        # Sonoff specific data
+                        man_spec_data_list.append(adstruct)
                 elif adstuct_type == 0x06:
                     # AD type '128-bit Service Class UUIDs'
                     service_class_uuid128 = adstruct[2:]
@@ -291,6 +298,10 @@ class BleParser:
                     comp_id = (man_spec_data[3] << 8) | man_spec_data[2]
                     data_len = man_spec_data[0]
                     # Filter on Company Identifier
+                    if comp_id == 0x0828:
+                        # Michelin TMS
+                        sensor_data = parse_michelin_tms(self, man_spec_data, mac)
+                        break
                     if comp_id == 0x0001 and data_len in [0x09, 0x0C, 0x22, 0x25]:
                         # Govee H5101/H5102/H5106/H5177
                         sensor_data = parse_govee(self, man_spec_data, service_class_uuid16, local_name, mac)
@@ -429,6 +440,10 @@ class BleParser:
                         # Grundfos
                         sensor_data = parse_grundfos(self, man_spec_data, mac)
                         break
+                    elif comp_id == 0xFFFF and man_spec_data[4:6] == b"\xee\x1b" and mac == b"\x66\x55\x44\x33\x22\x11":
+                        # Sonoff
+                        sensor_data = parse_sonoff(self, man_spec_data, mac)
+                        break
                     elif comp_id == 0xFFFF and data_len == 0x1E:
                         # Kegtron
                         sensor_data = parse_kegtron(self, man_spec_data, mac)
@@ -489,6 +504,10 @@ class BleParser:
                             # Inkbird
                             sensor_data = parse_inkbird(self, man_spec_data, local_name, mac)
                             break
+                        elif comp_id == 0x004A and local_name == "ST7" and data_len == 0x11:
+                            # Mocreo ST7, see below under local_name checks for the other Mocreo models
+                            sensor_data = parse_mocreo(self, man_spec_data, local_name, mac)
+                            break
                         else:
                             unknown_sensor = True
 
@@ -506,7 +525,7 @@ class BleParser:
                         sensor_data = parse_inkbird(self, man_spec_data, local_name, mac)
                         break
                     elif local_name == "MOCREO" and data_len == 0x13:
-                        # MOCREO
+                        # MOCREO non-ST7 models, see above in the service_class_uuid16 == 0xF0FF elif for ST7
                         sensor_data = parse_mocreo(self, man_spec_data, local_name, mac)
                         break
                     elif local_name[0:5] in ["TP357", "TP359"] and data_len >= 0x07:
