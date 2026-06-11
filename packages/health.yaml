@@ -1,0 +1,939 @@
+# ===========================================
+# Health Auto Export – Vollständige Integration
+# ===========================================
+# Persistenz-Strategie:
+#   hae.* (flüchtig) → input_number.hae_* (persistent)
+#   → sensor.health_* (template, InfluxDB-tracked)
+# ===========================================
+
+input_number:
+  # ---- Persistenter Datenspeicher (von hae.* befüllt) ----
+  hae_schritte:
+    name: "HAE Schritte"
+    min: 0
+    max: 100000
+    step: 1
+    unit_of_measurement: "Schritte"
+    icon: mdi:shoe-print
+    mode: box
+
+  hae_aktive_kalorien:
+    name: "HAE Aktive kcal"
+    min: 0
+    max: 10000
+    step: 1
+    unit_of_measurement: "kcal"
+    icon: mdi:fire
+    mode: box
+
+  hae_grundumsatz:
+    name: "HAE Grundumsatz"
+    min: 0
+    max: 5000
+    step: 1
+    unit_of_measurement: "kcal"
+    icon: mdi:fire-circle
+    mode: box
+
+  hae_ruhepuls:
+    name: "HAE Ruhepuls"
+    min: 0
+    max: 220
+    step: 1
+    unit_of_measurement: "bpm"
+    icon: mdi:heart
+    mode: box
+
+  hae_herzrate_min:
+    name: "HAE Herzrate Min"
+    min: 0
+    max: 220
+    step: 1
+    unit_of_measurement: "bpm"
+    icon: mdi:heart-outline
+    mode: box
+
+  hae_herzrate_avg:
+    name: "HAE Herzrate Mittel"
+    min: 0
+    max: 220
+    step: 1
+    unit_of_measurement: "bpm"
+    icon: mdi:heart-outline
+    mode: box
+
+  hae_herzrate_max:
+    name: "HAE Herzrate Max"
+    min: 0
+    max: 220
+    step: 1
+    unit_of_measurement: "bpm"
+    icon: mdi:heart-outline
+    mode: box
+
+  hae_hrv:
+    name: "HAE HRV"
+    min: 0
+    max: 300
+    step: 0.1
+    unit_of_measurement: "ms"
+    icon: mdi:heart-pulse
+    mode: box
+
+  hae_spo2:
+    name: "HAE SpO2"
+    min: 50
+    max: 100
+    step: 0.1
+    unit_of_measurement: "%"
+    icon: mdi:blood-bag
+    mode: box
+
+  hae_schlafdauer:
+    name: "HAE Schlafdauer"
+    min: 0
+    max: 24
+    step: 0.01
+    unit_of_measurement: "h"
+    icon: mdi:sleep
+    mode: box
+
+  hae_schlaf_in_bett:
+    name: "HAE Schlaf im Bett"
+    min: 0
+    max: 24
+    step: 0.01
+    unit_of_measurement: "h"
+    icon: mdi:bed
+    mode: box
+
+  hae_gewicht:
+    name: "HAE Gewicht"
+    min: 0
+    max: 300
+    step: 0.1
+    unit_of_measurement: "kg"
+    icon: mdi:scale
+    mode: box
+
+  hae_bmi:
+    name: "HAE BMI"
+    min: 0
+    max: 60
+    step: 0.1
+    unit_of_measurement: ""
+    icon: mdi:scale-balance
+    mode: box
+
+  hae_korperfett:
+    name: "HAE Körperfett"
+    min: 0
+    max: 60
+    step: 0.1
+    unit_of_measurement: "%"
+    icon: mdi:human
+    mode: box
+
+  hae_bewegungsminuten:
+    name: "HAE Bewegungsmin."
+    min: 0
+    max: 600
+    step: 1
+    unit_of_measurement: "min"
+    icon: mdi:run
+    mode: box
+
+  hae_stand_stunden:
+    name: "HAE Stand-Stunden"
+    min: 0
+    max: 24
+    step: 1
+    unit_of_measurement: "h"
+    icon: mdi:human-handsup
+    mode: box
+
+  hae_gehstrecke:
+    name: "HAE Gehstrecke"
+    min: 0
+    max: 100
+    step: 0.01
+    unit_of_measurement: "km"
+    icon: mdi:map-marker-distance
+    mode: box
+
+  hae_stockwerke:
+    name: "HAE Stockwerke"
+    min: 0
+    max: 200
+    step: 1
+    unit_of_measurement: "Etagen"
+    icon: mdi:stairs
+    mode: box
+
+  hae_radfahrstrecke:
+    name: "HAE Radfahrstrecke"
+    min: 0
+    max: 500
+    step: 0.01
+    unit_of_measurement: "km"
+    icon: mdi:bicycle
+    mode: box
+
+  hae_vo2_max:
+    name: "HAE VO2 Max"
+    min: 0
+    max: 80
+    step: 0.1
+    unit_of_measurement: "ml/kg·min"
+    icon: mdi:lungs
+    mode: box
+
+  hae_gehgeschwindigkeit:
+    name: "HAE Gehgeschwindigkeit"
+    min: 0
+    max: 20
+    step: 0.01
+    unit_of_measurement: "km/h"
+    icon: mdi:walk
+    mode: box
+
+  hae_schrittlaenge:
+    name: "HAE Schrittlänge"
+    min: 0
+    max: 150
+    step: 1
+    unit_of_measurement: "cm"
+    icon: mdi:shoe-heel
+    mode: box
+
+  hae_tageslicht:
+    name: "HAE Tageslicht"
+    min: 0
+    max: 900
+    step: 1
+    unit_of_measurement: "min"
+    icon: mdi:weather-sunny
+    mode: box
+
+  hae_kopfhoerer_laerm:
+    name: "HAE Kopfhörer dB"
+    min: 0
+    max: 130
+    step: 0.1
+    unit_of_measurement: "dB"
+    icon: mdi:headphones
+    mode: box
+
+  hae_umgebungslaerm:
+    name: "HAE Umgebung dB"
+    min: 0
+    max: 130
+    step: 0.1
+    unit_of_measurement: "dB"
+    icon: mdi:ear-hearing
+    mode: box
+
+  hae_nahrung_kalorien:
+    name: "HAE Nahrung kcal"
+    min: 0
+    max: 10000
+    step: 1
+    unit_of_measurement: "kcal"
+    icon: mdi:food-apple
+    mode: box
+
+  hae_protein:
+    name: "HAE Protein"
+    min: 0
+    max: 500
+    step: 0.1
+    unit_of_measurement: "g"
+    icon: mdi:food-steak
+    mode: box
+
+  hae_kohlenhydrate:
+    name: "HAE Kohlenhydrate"
+    min: 0
+    max: 1000
+    step: 0.1
+    unit_of_measurement: "g"
+    icon: mdi:bread-slice
+    mode: box
+
+  hae_fett:
+    name: "HAE Fett"
+    min: 0
+    max: 500
+    step: 0.1
+    unit_of_measurement: "g"
+    icon: mdi:oil
+    mode: box
+
+  hae_zucker:
+    name: "HAE Zucker"
+    min: 0
+    max: 500
+    step: 0.1
+    unit_of_measurement: "g"
+    icon: mdi:cube-outline
+    mode: box
+
+  hae_ballaststoffe:
+    name: "HAE Ballaststoffe"
+    min: 0
+    max: 200
+    step: 0.1
+    unit_of_measurement: "g"
+    icon: mdi:barley
+    mode: box
+
+  hae_wasser:
+    name: "HAE Wasser"
+    min: 0
+    max: 10000
+    step: 1
+    unit_of_measurement: "ml"
+    icon: mdi:water
+    mode: box
+
+  # ---- Blutdruck (via iOS Kurzbefehl aus iCloud CSV) ----
+  health_bp_systolisch:
+    name: "Blutdruck Systolisch"
+    min: 0
+    max: 300
+    step: 1
+    unit_of_measurement: "mmHg"
+    icon: mdi:gauge
+    mode: box
+
+  health_bp_diastolisch:
+    name: "Blutdruck Diastolisch"
+    min: 0
+    max: 200
+    step: 1
+    unit_of_measurement: "mmHg"
+    icon: mdi:gauge-low
+    mode: box
+
+  health_bp_puls:
+    name: "Blutdruck Puls"
+    min: 0
+    max: 250
+    step: 1
+    unit_of_measurement: "bpm"
+    icon: mdi:heart
+    mode: box
+
+  # ---- Ziele ----
+  health_schritte_ziel:
+    name: "Schrittziel"
+    min: 1000
+    max: 30000
+    step: 500
+    initial: 10000
+    unit_of_measurement: "Schritte"
+    icon: mdi:flag-checkered
+    mode: box
+
+  health_schlaf_ziel:
+    name: "Schlafziel"
+    min: 5
+    max: 10
+    step: 0.5
+    initial: 7.5
+    unit_of_measurement: "h"
+    icon: mdi:flag-checkered
+    mode: box
+
+  health_gewicht_ziel:
+    name: "Gewichtsziel"
+    min: 40
+    max: 200
+    step: 0.5
+    initial: 80
+    unit_of_measurement: "kg"
+    icon: mdi:flag-checkered
+    mode: box
+
+template:
+  - sensor:
+      # =====================
+      # AKTIVITÄT
+      # =====================
+      - name: "Health Schritte"
+        unique_id: health_schritte
+        unit_of_measurement: "Schritte"
+        icon: mdi:shoe-print
+        state: "{{ states('input_number.hae_schritte') | int(0) }}"
+
+      - name: "Health Aktive Kalorien"
+        unique_id: health_aktive_kalorien
+        unit_of_measurement: "kcal"
+        icon: mdi:fire
+        state: "{{ states('input_number.hae_aktive_kalorien') | int(0) }}"
+
+      - name: "Health Grundumsatz"
+        unique_id: health_grundumsatz
+        unit_of_measurement: "kcal"
+        icon: mdi:fire-circle
+        state: "{{ states('input_number.hae_grundumsatz') | int(0) }}"
+
+      - name: "Health Bewegungsminuten"
+        unique_id: health_bewegungsminuten
+        unit_of_measurement: "min"
+        icon: mdi:run
+        state: "{{ states('input_number.hae_bewegungsminuten') | int(0) }}"
+
+      - name: "Health Stand-Stunden"
+        unique_id: health_stand_stunden
+        unit_of_measurement: "h"
+        icon: mdi:human-handsup
+        state: "{{ states('input_number.hae_stand_stunden') | int(0) }}"
+
+      - name: "Health Gehstrecke"
+        unique_id: health_gehstrecke
+        unit_of_measurement: "km"
+        icon: mdi:map-marker-distance
+        state: "{{ states('input_number.hae_gehstrecke') | float(0) | round(2) }}"
+
+      - name: "Health Stockwerke"
+        unique_id: health_stockwerke
+        unit_of_measurement: "Etagen"
+        icon: mdi:stairs
+        state: "{{ states('input_number.hae_stockwerke') | int(0) }}"
+
+      - name: "Health Radfahrstrecke"
+        unique_id: health_radfahrstrecke
+        unit_of_measurement: "km"
+        icon: mdi:bicycle
+        state: "{{ states('input_number.hae_radfahrstrecke') | float(0) | round(2) }}"
+
+      - name: "Health Gehgeschwindigkeit"
+        unique_id: health_gehgeschwindigkeit
+        unit_of_measurement: "km/h"
+        icon: mdi:walk
+        state: "{{ states('input_number.hae_gehgeschwindigkeit') | float(0) | round(2) }}"
+
+      - name: "Health Schrittlänge"
+        unique_id: health_schrittlaenge
+        unit_of_measurement: "cm"
+        icon: mdi:shoe-heel
+        state: "{{ states('input_number.hae_schrittlaenge') | int(0) }}"
+
+      - name: "Health VO2 Max"
+        unique_id: health_vo2_max
+        unit_of_measurement: "ml/kg·min"
+        icon: mdi:lungs
+        state: "{{ states('input_number.hae_vo2_max') | float(0) | round(1) }}"
+
+      # =====================
+      # HERZRATE & HERZ
+      # =====================
+      - name: "Health Ruhepuls"
+        unique_id: health_ruhepuls
+        unit_of_measurement: "bpm"
+        icon: mdi:heart
+        state: "{{ states('input_number.hae_ruhepuls') | int(0) }}"
+
+      - name: "Health Herzrate Min"
+        unique_id: health_herzrate_min
+        unit_of_measurement: "bpm"
+        icon: mdi:heart-outline
+        state: "{{ states('input_number.hae_herzrate_min') | int(0) }}"
+
+      - name: "Health Herzrate Mittel"
+        unique_id: health_herzrate_avg
+        unit_of_measurement: "bpm"
+        icon: mdi:heart-outline
+        state: "{{ states('input_number.hae_herzrate_avg') | int(0) }}"
+
+      - name: "Health Herzrate Max"
+        unique_id: health_herzrate_max
+        unit_of_measurement: "bpm"
+        icon: mdi:heart-outline
+        state: "{{ states('input_number.hae_herzrate_max') | int(0) }}"
+
+      - name: "Health HRV"
+        unique_id: health_hrv
+        unit_of_measurement: "ms"
+        icon: mdi:heart-pulse
+        state: "{{ states('input_number.hae_hrv') | float(0) | round(1) }}"
+
+      - name: "Health SpO2"
+        unique_id: health_spo2
+        unit_of_measurement: "%"
+        icon: mdi:blood-bag
+        state: "{{ states('input_number.hae_spo2') | float(0) | round(1) }}"
+
+      # =====================
+      # KÖRPER
+      # =====================
+      - name: "Health Gewicht"
+        unique_id: health_gewicht
+        unit_of_measurement: "kg"
+        icon: mdi:scale
+        device_class: weight
+        state: "{{ states('input_number.hae_gewicht') | float(0) | round(1) }}"
+
+      - name: "Health BMI"
+        unique_id: health_bmi
+        unit_of_measurement: ""
+        icon: mdi:scale-balance
+        state: "{{ states('input_number.hae_bmi') | float(0) | round(1) }}"
+
+      - name: "Health Körperfett"
+        unique_id: health_koerperfett
+        unit_of_measurement: "%"
+        icon: mdi:human
+        availability: "{{ states('input_number.hae_korperfett') | float(0) > 0 }}"
+        state: "{{ states('input_number.hae_korperfett') | float(0) | round(1) }}"
+
+      # =====================
+      # SCHLAF
+      # =====================
+      - name: "Health Schlafdauer"
+        unique_id: health_schlafdauer
+        unit_of_measurement: "h"
+        icon: mdi:sleep
+        state: "{{ states('input_number.hae_schlafdauer') | float(0) | round(2) }}"
+
+      - name: "Health Schlaf im Bett"
+        unique_id: health_schlaf_in_bett
+        unit_of_measurement: "h"
+        icon: mdi:bed
+        state: "{{ states('input_number.hae_schlaf_in_bett') | float(0) | round(2) }}"
+
+      # =====================
+      # ERNÄHRUNG
+      # =====================
+      - name: "Health Gegessene Kalorien"
+        unique_id: health_gegessene_kalorien
+        unit_of_measurement: "kcal"
+        icon: mdi:food-apple
+        state: "{{ states('input_number.hae_nahrung_kalorien') | int(0) }}"
+
+      - name: "Health Protein"
+        unique_id: health_protein
+        unit_of_measurement: "g"
+        icon: mdi:food-steak
+        state: "{{ states('input_number.hae_protein') | float(0) | round(1) }}"
+
+      - name: "Health Kohlenhydrate"
+        unique_id: health_kohlenhydrate
+        unit_of_measurement: "g"
+        icon: mdi:bread-slice
+        state: "{{ states('input_number.hae_kohlenhydrate') | float(0) | round(1) }}"
+
+      - name: "Health Fett"
+        unique_id: health_fett
+        unit_of_measurement: "g"
+        icon: mdi:oil
+        state: "{{ states('input_number.hae_fett') | float(0) | round(1) }}"
+
+      - name: "Health Zucker"
+        unique_id: health_zucker
+        unit_of_measurement: "g"
+        icon: mdi:cube-outline
+        state: "{{ states('input_number.hae_zucker') | float(0) | round(1) }}"
+
+      - name: "Health Ballaststoffe"
+        unique_id: health_ballaststoffe
+        unit_of_measurement: "g"
+        icon: mdi:barley
+        state: "{{ states('input_number.hae_ballaststoffe') | float(0) | round(1) }}"
+
+      - name: "Health Wasser"
+        unique_id: health_wasser
+        unit_of_measurement: "ml"
+        icon: mdi:water
+        state: "{{ states('input_number.hae_wasser') | int(0) }}"
+
+      # =====================
+      # UMGEBUNG
+      # =====================
+      - name: "Health Tageslicht"
+        unique_id: health_tageslicht
+        unit_of_measurement: "min"
+        icon: mdi:weather-sunny
+        state: "{{ states('input_number.hae_tageslicht') | int(0) }}"
+
+      - name: "Health Kopfhörer-Lärm"
+        unique_id: health_kopfhoerer_laerm
+        unit_of_measurement: "dB"
+        icon: mdi:headphones
+        state: "{{ states('input_number.hae_kopfhoerer_laerm') | float(0) | round(1) }}"
+
+      - name: "Health Umgebungslärm"
+        unique_id: health_umgebungslaerm
+        unit_of_measurement: "dB"
+        icon: mdi:ear-hearing
+        state: "{{ states('input_number.hae_umgebungslaerm') | float(0) | round(1) }}"
+
+      # =====================
+      # BLUTDRUCK
+      # =====================
+      - name: "Health Blutdruck Systolisch"
+        unique_id: health_blutdruck_systolisch
+        unit_of_measurement: "mmHg"
+        icon: mdi:gauge
+        state: "{{ states('input_number.health_bp_systolisch') | int(0) }}"
+
+      - name: "Health Blutdruck Diastolisch"
+        unique_id: health_blutdruck_diastolisch
+        unit_of_measurement: "mmHg"
+        icon: mdi:gauge-low
+        state: "{{ states('input_number.health_bp_diastolisch') | int(0) }}"
+
+      - name: "Health Blutdruck Puls"
+        unique_id: health_bp_puls
+        unit_of_measurement: "bpm"
+        icon: mdi:heart
+        state: "{{ states('input_number.health_bp_puls') | int(0) }}"
+
+      # =====================
+      # BERECHNETE SENSOREN
+      # =====================
+      - name: "Health Schritte Prozent"
+        unique_id: health_schritte_prozent
+        unit_of_measurement: "%"
+        icon: mdi:shoe-print
+        state: >
+          {% set s = states('input_number.hae_schritte') | float(0) %}
+          {% set z = states('input_number.health_schritte_ziel') | float(10000) %}
+          {{ [(s / z * 100) | round(0), 100] | min }}
+
+      - name: "Health Gesamtkalorien"
+        unique_id: health_gesamtkalorien
+        unit_of_measurement: "kcal"
+        icon: mdi:fire
+        state: >
+          {{ (states('input_number.hae_aktive_kalorien') | float(0) +
+              states('input_number.hae_grundumsatz') | float(0)) | round(0) }}
+
+      - name: "Health Schlaf Qualität"
+        unique_id: health_schlaf_qualitaet
+        icon: mdi:sleep
+        state: >
+          {% set h = states('input_number.hae_schlafdauer') | float(0) %}
+          {% if h >= 8 %}Hervorragend
+          {% elif h >= 7 %}Gut
+          {% elif h >= 6 %}OK
+          {% elif h >= 5 %}Wenig
+          {% else %}Zu wenig{% endif %}
+        attributes:
+          farbe: >
+            {% set h = states('input_number.hae_schlafdauer') | float(0) %}
+            {% if h >= 8 %}green{% elif h >= 7 %}lime{% elif h >= 6 %}yellow{% elif h >= 5 %}orange{% else %}red{% endif %}
+
+      - name: "Health HRV Status"
+        unique_id: health_hrv_status
+        icon: mdi:heart-pulse
+        state: >
+          {% set v = states('input_number.hae_hrv') | float(0) %}
+          {% if v >= 60 %}Sehr gut
+          {% elif v >= 40 %}Gut
+          {% elif v >= 25 %}OK
+          {% elif v > 0 %}Erholt dich
+          {% else %}Kein Wert{% endif %}
+
+      - name: "Health BMI Status"
+        unique_id: health_bmi_status
+        icon: mdi:scale-balance
+        state: >
+          {% set b = states('input_number.hae_bmi') | float(0) %}
+          {% if b == 0 %}Kein Wert
+          {% elif b < 18.5 %}Untergewicht
+          {% elif b < 25 %}Normalgewicht
+          {% elif b < 30 %}Übergewicht
+          {% else %}Adipositas{% endif %}
+        attributes:
+          farbe: >
+            {% set b = states('input_number.hae_bmi') | float(0) %}
+            {% if b == 0 %}grey{% elif b < 18.5 %}blue{% elif b < 25 %}green{% elif b < 30 %}yellow{% else %}red{% endif %}
+
+      - name: "Health Blutdruck Status"
+        unique_id: health_blutdruck_status
+        icon: mdi:gauge
+        state: >
+          {% set sys = states('input_number.health_bp_systolisch') | int(0) %}
+          {% set dia = states('input_number.health_bp_diastolisch') | int(0) %}
+          {% if sys == 0 or dia == 0 %}Kein Wert
+          {% elif sys < 120 and dia < 80 %}Optimal
+          {% elif sys < 130 and dia < 85 %}Normal
+          {% elif sys < 140 and dia < 90 %}Hoch-Normal
+          {% elif sys < 160 or dia < 100 %}Grad 1
+          {% elif sys < 180 or dia < 110 %}Grad 2
+          {% else %}Grad 3{% endif %}
+        attributes:
+          farbe: >
+            {% set sys = states('input_number.health_bp_systolisch') | int(0) %}
+            {% set dia = states('input_number.health_bp_diastolisch') | int(0) %}
+            {% if sys == 0 %}grey{% elif sys < 120 and dia < 80 %}green{% elif sys < 130 and dia < 85 %}lime{% elif sys < 140 and dia < 90 %}yellow{% elif sys < 160 or dia < 100 %}orange{% else %}red{% endif %}
+
+automation:
+  # =====================
+  # KERN: hae.* → input_number (bei jedem App-Sync)
+  # =====================
+  - id: health_hae_sync
+    alias: "Health – hae.* in input_number speichern"
+    description: "Alle 5 Min: hae.* Werte in persistente input_number kopieren"
+    trigger:
+      - platform: time_pattern
+        minutes: "/5"
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('hae.health_step_count') not in ['unknown', 'unavailable', ''] }}
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_schritte
+        data:
+          value: "{{ states('hae.health_step_count') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_aktive_kalorien
+        data:
+          value: "{{ (states('hae.health_active_energy') | float(0) / 4.184) | round(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_grundumsatz
+        data:
+          value: "{{ (states('hae.health_basal_energy_burned') | float(0) / 4.184) | round(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_ruhepuls
+        data:
+          value: "{{ states('hae.health_resting_heart_rate') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_herzrate_min
+        data:
+          value: "{{ states('hae.health_heart_rate_min') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_herzrate_avg
+        data:
+          value: "{{ states('hae.health_heart_rate_avg') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_herzrate_max
+        data:
+          value: "{{ states('hae.health_heart_rate_max') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_hrv
+        data:
+          value: "{{ states('hae.health_heart_rate_variability') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_spo2
+        data:
+          value: "{{ states('hae.health_blood_oxygen_saturation') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_gewicht
+        data:
+          value: "{{ states('hae.health_weight_body_mass') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_bmi
+        data:
+          value: "{{ (states('hae.health_weight_body_mass') | float(0) / (1.72 ** 2)) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_bewegungsminuten
+        data:
+          value: "{{ states('hae.health_apple_exercise_time') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_stand_stunden
+        data:
+          value: "{{ states('hae.health_apple_stand_hour') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_gehstrecke
+        data:
+          value: "{{ states('hae.health_walking_running_distance') | float(0) | round(2) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_stockwerke
+        data:
+          value: "{{ states('hae.health_flights_climbed') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_radfahrstrecke
+        data:
+          value: "{{ states('hae.health_cycling_distance') | float(0) | round(2) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_vo2_max
+        data:
+          value: "{{ states('hae.health_vo2_max') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_gehgeschwindigkeit
+        data:
+          value: "{{ states('hae.health_walking_speed') | float(0) | round(2) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_schrittlaenge
+        data:
+          value: "{{ states('hae.health_walking_step_length') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_tageslicht
+        data:
+          value: "{{ states('hae.health_time_in_daylight') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_kopfhoerer_laerm
+        data:
+          value: "{{ states('hae.health_headphone_audio_exposure') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_umgebungslaerm
+        data:
+          value: "{{ states('hae.health_environmental_audio_exposure') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_nahrung_kalorien
+        data:
+          value: "{{ (states('hae.health_dietary_energy') | float(0) / 4.184) | round(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_protein
+        data:
+          value: "{{ states('hae.health_protein') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_kohlenhydrate
+        data:
+          value: "{{ states('hae.health_carbohydrates') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_fett
+        data:
+          value: "{{ states('hae.health_total_fat') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_zucker
+        data:
+          value: "{{ states('hae.health_dietary_sugar') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_ballaststoffe
+        data:
+          value: "{{ states('hae.health_fiber') | float(0) | round(1) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_wasser
+        data:
+          value: "{{ states('hae.health_dietary_water') | float(0) | round(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_schlafdauer
+        data:
+          value: "{{ states('hae.health_sleep_asleep') | float(0) | round(2) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hae_schlaf_in_bett
+        data:
+          value: "{{ states('hae.health_sleep_in_bed') | float(0) | round(2) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.health_bp_systolisch
+        data:
+          value: "{{ states('hae.health_blood_pressure_systolic') | int(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.health_bp_diastolisch
+        data:
+          value: "{{ states('hae.health_blood_pressure_diastolic') | int(0) }}"
+    mode: single
+
+  # =====================
+  # BLUTDRUCK WEBHOOK
+  # =====================
+  - id: health_blutdruck_import
+    alias: "Health – Blutdruck Import (Webhook)"
+    trigger:
+      - platform: webhook
+        webhook_id: blutdruck_import
+        allowed_methods:
+          - POST
+        local_only: false
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.health_bp_systolisch
+        data:
+          value: "{{ trigger.json.systolisch | int }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.health_bp_diastolisch
+        data:
+          value: "{{ trigger.json.diastolisch | int }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.health_bp_puls
+        data:
+          value: "{{ trigger.json.puls | int }}"
+    mode: single
+
+  # =====================
+  # BENACHRICHTIGUNGEN
+  # =====================
+  - id: health_schrittziel_erreicht
+    alias: "Health – Schrittziel erreicht"
+    trigger:
+      - platform: numeric_state
+        entity_id: input_number.hae_schritte
+        above: input_number.health_schritte_ziel
+    action:
+      - service: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "Schrittziel erreicht!"
+          message: "{{ states('input_number.hae_schritte') | int }} Schritte heute – gut gemacht!"
+          data:
+            push:
+              sound: default
+    mode: single
+
+  - id: health_wenig_schlaf
+    alias: "Health – Wenig Schlaf"
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    condition:
+      - condition: template
+        value_template: >
+          {% set dauer = states('input_number.hae_schlafdauer') | float(99) %}
+          {% set ziel = states('input_number.health_schlaf_ziel') | float(7.5) %}
+          {{ dauer > 0 and dauer < ziel - 1.5 }}
+    action:
+      - service: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "Wenig Schlaf letzte Nacht"
+          message: >
+            Nur {{ states('input_number.hae_schlafdauer') }} h Schlaf.
+            Ziel: {{ states('input_number.health_schlaf_ziel') }} h.
+    mode: single
+
+  - id: health_niedrige_hrv
+    alias: "Health – Niedrige HRV"
+    trigger:
+      - platform: numeric_state
+        entity_id: input_number.hae_hrv
+        below: 25
+        above: 0
+    condition:
+      - condition: time
+        after: "07:00:00"
+        before: "20:00:00"
+    action:
+      - service: notify.mobile_app_andreas_iphone_15pro_max
+        data:
+          title: "Niedrige HRV heute"
+          message: "HRV {{ states('input_number.hae_hrv') }} ms – schone dich heute etwas."
+    mode: single

@@ -3,6 +3,12 @@ default_config:
 lovelace:
   mode: storage
   dashboards:
+    home-overview:
+      mode: yaml
+      title: Home
+      icon: mdi:home
+      show_in_sidebar: true
+      filename: dashboards/home.yaml
     medikamente-verwaltung:
       mode: yaml
       title: Medikamente
@@ -15,6 +21,18 @@ lovelace:
       icon: mdi:washing-machine
       show_in_sidebar: true
       filename: dashboards/waschkueche.yaml
+    meine-gesundheit:
+      mode: yaml
+      title: Gesundheit
+      icon: mdi:heart-pulse
+      show_in_sidebar: true
+      filename: dashboards/health.yaml
+    karo-gesundheit:
+      mode: yaml
+      title: Gesundheit Karo
+      icon: mdi:heart-pulse
+      show_in_sidebar: true
+      filename: dashboards/karo_gesundheit.yaml
 
 influxdb:
   host: a0d7b954-influxdb
@@ -63,6 +81,35 @@ scene: !include scenes.yaml
 
 shell_command:
   restlos_update: "python3 /Users/andreasreinhard/.openclaw/workspace/restlos_html_generator_iphone.py && python3 /Users/andreasreinhard/.openclaw/workspace/restlos_shopping_list.py && python3 /Users/andreasreinhard/.openclaw/workspace/restlos_csv_export.py && python3 /Users/andreasreinhard/.openclaw/workspace/restlos_ha_sensors.py"
+  medikament_csv_log: 'echo "${ZEILE}" >> /config/www/medikamente_protokoll.csv'
+  medikament_csv_init: 'test -f /config/www/medikamente_protokoll.csv || echo "Datum,Wochentag,Uhrzeit,Medikament,Slot,Dosierung" > /config/www/medikamente_protokoll.csv'
+  medikament_wochenbericht: 'python3 /config/medikamente_wochenbericht.py'
+
+rest_command:
+  medikament_sheets_log:
+    url: "https://script.google.com/macros/s/AKfycbz7XcIcQbdor1BuuIC5i6omM_NsXGYgq27NiLfGVXvaVR2Qn5oRdD83uwdSM9l5EEwq/exec"
+    method: POST
+    headers:
+      Content-Type: application/json
+    payload: '{"datum":"{{ datum }}","wochentag":"{{ wochentag }}","uhrzeit":"{{ uhrzeit }}","medikament":"{{ medikament }}","slot":"{{ slot }}","dosierung":"{{ dosierung }}","menge":"{{ menge }}"}'
+  medikament_sheets_bestand:
+    url: "https://script.google.com/macros/s/AKfycbz7XcIcQbdor1BuuIC5i6omM_NsXGYgq27NiLfGVXvaVR2Qn5oRdD83uwdSM9l5EEwq/exec"
+    method: POST
+    headers:
+      Content-Type: application/json
+    payload: '{"type":"bestand","medikament":"{{ medikament }}","pzn":"{{ pzn }}","dosierung":"{{ dosierung }}","menge":"{{ menge }}","vorrat":{{ vorrat }},"dosen":{{ dosen }},"packung":{{ packung }},"warnung":{{ warnung }},"status":"{{ status }}"}'
+  magic_mirror_monitor_on:
+    url: "http://192.168.178.183:8080/api/notification/MONITORON?apiKey=magicmirror123"
+    method: GET
+  magic_mirror_monitor_off:
+    url: "http://192.168.178.183:8080/api/notification/MONITOROFF?apiKey=magicmirror123"
+    method: GET
+  magic_mirror_shutdown:
+    url: "http://192.168.178.183:8080/api/notification/SHUTDOWN?apiKey=magicmirror123"
+    method: GET
+  magic_mirror_reboot:
+    url: "http://192.168.178.183:8080/api/notification/REBOOT?apiKey=magicmirror123"
+    method: GET
 
 input_number:
   bestand_aktuell:
@@ -128,6 +175,9 @@ input_number:
     mode: slider
 
 input_boolean:
+  magic_mirror_monitor:
+    name: "Magic Mirror Monitor"
+    icon: mdi:mirror
   hund_gefuettert_morgens:
     name: "Hund gefüttert (Morgens)"
     icon: mdi:dog
@@ -153,59 +203,59 @@ input_boolean:
   medikament_1_aktiv:
     name: "Medikament 1 aktiv"
     icon: mdi:pill
-    initial: false
   medikament_2_aktiv:
     name: "Medikament 2 aktiv"
     icon: mdi:pill
-    initial: false
   medikament_3_aktiv:
     name: "Medikament 3 aktiv"
     icon: mdi:pill
-    initial: false
   medikament_1_offen:
     name: "Medikament 1 Erinnerung offen"
     icon: mdi:bell-ring
-    initial: false
   medikament_2_offen:
     name: "Medikament 2 Erinnerung offen"
     icon: mdi:bell-ring
-    initial: false
   medikament_3_offen:
     name: "Medikament 3 Erinnerung offen"
     icon: mdi:bell-ring
-    initial: false
 
 input_text:
   medikament_1_name:
     name: "Medikament 1 Name"
     icon: mdi:pill
     max: 50
-    initial: ""
   medikament_2_name:
     name: "Medikament 2 Name"
     icon: mdi:pill
     max: 50
-    initial: ""
   medikament_3_name:
     name: "Medikament 3 Name"
     icon: mdi:pill
     max: 50
-    initial: ""
   medikament_1_hinweis:
     name: "Medikament 1 Hinweis"
     icon: mdi:information-outline
     max: 100
-    initial: ""
   medikament_2_hinweis:
     name: "Medikament 2 Hinweis"
     icon: mdi:information-outline
     max: 100
-    initial: ""
   medikament_3_hinweis:
     name: "Medikament 3 Hinweis"
     icon: mdi:information-outline
     max: 100
-    initial: ""
+  medikament_1_pzn:
+    name: "Medikament 1 PZN"
+    icon: mdi:identifier
+    max: 20
+  medikament_2_pzn:
+    name: "Medikament 2 PZN"
+    icon: mdi:identifier
+    max: 20
+  medikament_3_pzn:
+    name: "Medikament 3 PZN"
+    icon: mdi:identifier
+    max: 20
   barcode_scan:
     name: "Barcode Scan"
     max: 255
@@ -241,6 +291,41 @@ input_datetime:
     has_date: true
     has_time: true
     icon: mdi:washing-machine
+  hund_erinnerung_morgens_wt:
+    name: "Hund Erinnerung Morgens (Wochentag)"
+    has_date: false
+    has_time: true
+    icon: mdi:dog
+  hund_erinnerung_morgens_we:
+    name: "Hund Erinnerung Morgens (Wochenende)"
+    has_date: false
+    has_time: true
+    icon: mdi:dog
+  hund_kritisch_morgens_wt:
+    name: "Hund Kritisch Morgens (Wochentag)"
+    has_date: false
+    has_time: true
+    icon: mdi:alert
+  hund_kritisch_morgens_we:
+    name: "Hund Kritisch Morgens (Wochenende)"
+    has_date: false
+    has_time: true
+    icon: mdi:alert
+  hund_erinnerung_abends:
+    name: "Hund Erinnerung Abends"
+    has_date: false
+    has_time: true
+    icon: mdi:dog
+  hund_kritisch_abends:
+    name: "Hund Kritisch Abends"
+    has_date: false
+    has_time: true
+    icon: mdi:alert
+  hund_reset_zeit:
+    name: "Hund Reset Zeit"
+    has_date: false
+    has_time: true
+    icon: mdi:refresh
 
 input_select:
   energie_ansicht:

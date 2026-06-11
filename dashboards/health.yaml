@@ -1,0 +1,402 @@
+title: Gesundheit
+views:
+  - title: Gesundheit
+    path: gesundheit
+    icon: mdi:heart-pulse
+    type: sections
+    sections:
+
+      ##############################################
+      # ÜBERSICHT
+      ##############################################
+      - title: "❤️ Gesundheit"
+        cards:
+          - type: custom:expander-card
+            title: "❤️ Gesundheitsübersicht"
+            subtitle: Health App · täglich aktualisiert
+            icon: mdi:heart-pulse
+            expanded: true
+            cards:
+              - type: custom:mushroom-chips-card
+                alignment: justify
+                chips:
+                  - type: entity
+                    entity: sensor.health_schritte
+                    icon: mdi:walk
+                    content_info: state
+                  - type: entity
+                    entity: sensor.health_ruhepuls
+                    icon: mdi:heart-pulse
+                    content_info: state
+                  - type: entity
+                    entity: sensor.health_hrv
+                    icon: mdi:sine-wave
+                    content_info: state
+                  - type: entity
+                    entity: sensor.health_spo2
+                    icon: mdi:water-percent
+                    content_info: state
+                  - type: entity
+                    entity: sensor.health_bewegungsminuten
+                    icon: mdi:lightning-bolt
+                    content_info: state
+
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_schritte
+                    name: Schritte
+                    icon: mdi:walk
+                    color: green
+                  - type: tile
+                    entity: sensor.health_ruhepuls
+                    name: Ruhepuls
+                    icon: mdi:heart-pulse
+                    color: red
+                  - type: tile
+                    entity: sensor.health_hrv
+                    name: HRV
+                    icon: mdi:sine-wave
+                    color: purple
+                  - type: tile
+                    entity: sensor.health_spo2
+                    name: SpO2
+                    icon: mdi:water-percent
+                    color: blue
+
+      ##############################################
+      # AKTIVITÄT
+      ##############################################
+      - title: "🏃 Aktivität"
+        cards:
+          - type: custom:expander-card
+            title: "🏃 Aktivität"
+            subtitle: Schritte, Bewegung & VO2 Max
+            icon: mdi:run
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_schritte
+                    name: Schritte
+                    icon: mdi:walk
+                    color: green
+                  - type: tile
+                    entity: sensor.health_bewegungsminuten
+                    name: Bewegungsminuten
+                    icon: mdi:lightning-bolt
+                    color: orange
+                  - type: tile
+                    entity: sensor.health_gehstrecke
+                    name: Gehstrecke
+                    icon: mdi:map-marker-distance
+                    color: teal
+                  - type: tile
+                    entity: sensor.health_stockwerke
+                    name: Stockwerke
+                    icon: mdi:stairs
+                    color: blue
+                  - type: tile
+                    entity: sensor.health_vo2_max
+                    name: VO2 Max
+                    icon: mdi:lungs
+                    color: green
+
+              - type: history-graph
+                title: Schritte – 7 Tage
+                hours_to_show: 168
+                entities:
+                  - entity: sensor.health_schritte
+                    name: Schritte
+
+      ##############################################
+      # HERZRATE & HRV
+      ##############################################
+      - title: "💓 Herzrate & HRV"
+        cards:
+          - type: custom:expander-card
+            title: "💓 Herzrate & HRV"
+            subtitle: Ruhepuls, Min/Max & HRV-Verlauf
+            icon: mdi:heart-pulse
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_ruhepuls
+                    name: Ruhepuls
+                    icon: mdi:heart-pulse
+                    color: red
+                  - type: tile
+                    entity: sensor.health_herzrate_min
+                    name: Herzrate Min
+                    icon: mdi:heart-minus
+                  - type: tile
+                    entity: sensor.health_herzrate_mittel
+                    name: Herzrate Mittel
+                    icon: mdi:heart
+                    color: pink
+                  - type: tile
+                    entity: sensor.health_herzrate_max
+                    name: Herzrate Max
+                    icon: mdi:heart-plus
+                    color: red
+                  - type: tile
+                    entity: sensor.health_hrv
+                    name: HRV
+                    icon: mdi:sine-wave
+                    color: purple
+
+              - type: history-graph
+                title: Ruhepuls & HRV – 14 Tage
+                hours_to_show: 336
+                entities:
+                  - entity: sensor.health_ruhepuls
+                    name: Ruhepuls
+                  - entity: sensor.health_hrv
+                    name: HRV
+
+      ##############################################
+      # KÖRPER
+      ##############################################
+      - title: "⚖️ Körper"
+        cards:
+          - type: custom:expander-card
+            title: "⚖️ Körper"
+            subtitle: Gewicht, BMI & Verlauf
+            icon: mdi:scale
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_gewicht
+                    name: Gewicht
+                    icon: mdi:scale
+                  - type: tile
+                    entity: sensor.health_bmi
+                    name: BMI
+                    icon: mdi:human
+                  - type: tile
+                    entity: sensor.health_bmi_status
+                    name: BMI Status
+                    icon: mdi:scale-balance
+                  - type: tile
+                    entity: sensor.health_korperfett
+                    name: Körperfett
+                    icon: mdi:human
+                    color: orange
+                  - type: tile
+                    entity: sensor.health_vo2_max
+                    name: VO2 Max
+                    icon: mdi:lungs
+                    color: green
+                  - type: tile
+                    entity: input_number.health_gewicht_ziel
+                    name: Zielgewicht
+                    icon: mdi:flag-checkered
+                    color: green
+
+              - type: history-graph
+                title: Gewicht & BMI – 90 Tage
+                hours_to_show: 2160
+                entities:
+                  - entity: sensor.health_gewicht
+                    name: Gewicht (kg)
+                  - entity: sensor.health_bmi
+                    name: BMI
+
+      ##############################################
+      # BLUTDRUCK (HAE)
+      ##############################################
+      - title: "🩺 Blutdruck"
+        cards:
+          - type: custom:expander-card
+            title: "🩺 Blutdruck (Health Auto Export)"
+            subtitle: "Export: {{ states.sensor.health_schritte.last_updated | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr"
+            icon: mdi:stethoscope
+            expanded: false
+            cards:
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_blutdruck_systolisch
+                    name: Systolisch
+                    icon: mdi:gauge-high
+                    color: red
+                  - type: tile
+                    entity: sensor.health_blutdruck_diastolisch
+                    name: Diastolisch
+                    icon: mdi:gauge
+                    color: orange
+                  - type: tile
+                    entity: sensor.health_blutdruck_status
+                    name: Bewertung
+                    icon: mdi:check-circle
+
+              - type: history-graph
+                title: Blutdruck Verlauf – 30 Tage
+                hours_to_show: 720
+                entities:
+                  - entity: sensor.health_blutdruck_systolisch
+                    name: Systolisch
+                  - entity: sensor.health_blutdruck_diastolisch
+                    name: Diastolisch
+
+      ##############################################
+      # VISOMAT BLUTDRUCK
+      ##############################################
+      - title: "💉 Visomat Blutdruck"
+        cards:
+          - type: custom:expander-card
+            title: "💉 Visomat Blutdruck"
+            subtitle: "Letzte Messung: {{ states('input_text.visomat_datum') }} · {{ states('input_text.visomat_uhrzeit') }} Uhr"
+            icon: mdi:gauge-high
+            expanded: false
+            cards:
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: tile
+                    entity: input_number.visomat_systolisch
+                    name: Systolisch
+                    icon: mdi:gauge-high
+                    color: red
+                  - type: tile
+                    entity: input_number.visomat_diastolisch
+                    name: Diastolisch
+                    icon: mdi:gauge
+                    color: orange
+                  - type: tile
+                    entity: input_number.visomat_puls
+                    name: Puls
+                    icon: mdi:heart
+                    color: pink
+
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.visomat_blutdruck_status
+                    name: WHO-Ampel
+                    icon: mdi:traffic-light
+                  - type: tile
+                    entity: input_boolean.visomat_arrhythmie
+                    name: Arrhythmie
+                    icon: mdi:heart-broken
+                    color: red
+
+              - type: tile
+                entity: input_button.visomat_jetzt_abrufen
+                name: Jetzt abrufen
+                icon: mdi:cloud-download
+                color: blue
+
+              - type: history-graph
+                title: Blutdruck Verlauf – 30 Tage
+                hours_to_show: 720
+                entities:
+                  - entity: input_number.visomat_systolisch
+                    name: Systolisch
+                  - entity: input_number.visomat_diastolisch
+                    name: Diastolisch
+
+      ##############################################
+      # SPO2
+      ##############################################
+      - title: "🫁 SpO2"
+        cards:
+          - type: custom:expander-card
+            title: "🫁 SpO2"
+            subtitle: Sauerstoffsättigung im Blut
+            icon: mdi:water-percent
+            expanded: false
+            cards:
+              - type: tile
+                entity: sensor.health_spo2
+                name: SpO2
+                icon: mdi:water-percent
+                color: blue
+
+      ##############################################
+      # ERNÄHRUNG
+      ##############################################
+      - title: "🥗 Ernährung"
+        cards:
+          - type: custom:expander-card
+            title: "🥗 Ernährung"
+            subtitle: Kalorien, Makros & Wasser
+            icon: mdi:food-apple
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_gegessene_kalorien
+                    name: Kalorien
+                    icon: mdi:fire
+                    color: orange
+                  - type: tile
+                    entity: sensor.health_protein
+                    name: Protein
+                    icon: mdi:food-steak
+                    color: red
+                  - type: tile
+                    entity: sensor.health_kohlenhydrate
+                    name: Kohlenhydrate
+                    icon: mdi:grain
+                    color: amber
+                  - type: tile
+                    entity: sensor.health_fett
+                    name: Fett
+                    icon: mdi:oil
+                    color: yellow
+                  - type: tile
+                    entity: sensor.health_wasser
+                    name: Wasser (ml)
+                    icon: mdi:cup-water
+                    color: blue
+
+      ##############################################
+      # UMGEBUNG
+      ##############################################
+      - title: "🌍 Umgebung"
+        cards:
+          - type: custom:expander-card
+            title: "🌍 Umgebung"
+            subtitle: Tageslicht, Lärm & Schlaf
+            icon: mdi:weather-sunny
+            expanded: false
+            cards:
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.health_tageslicht
+                    name: Tageslicht
+                    icon: mdi:weather-sunny
+                    color: yellow
+                  - type: tile
+                    entity: sensor.health_kopfhorer_larm
+                    name: Kopfhörer dB
+                    icon: mdi:headphones
+                  - type: tile
+                    entity: sensor.health_umgebungslarm
+                    name: Umgebung dB
+                    icon: mdi:volume-high

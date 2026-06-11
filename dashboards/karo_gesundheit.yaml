@@ -1,0 +1,539 @@
+title: Gesundheit Karo
+views:
+  - title: Gesundheit Karo
+    path: karo-gesundheit
+    icon: mdi:heart-pulse
+    type: sections
+    sections:
+
+      ##############################################
+      # ÜBERSICHT
+      ##############################################
+      - title: "❤️ Karo – Gesundheit"
+        cards:
+          - type: custom:expander-card
+            title: "❤️ Karo – Gesundheitsübersicht"
+            subtitle: Garmin Connect · täglich aktualisiert
+            icon: mdi:heart-pulse
+            expanded: true
+            cards:
+              - type: custom:mushroom-chips-card
+                alignment: justify
+                chips:
+                  - type: entity
+                    entity: sensor.garmin_connect_body_battery
+                    icon: mdi:battery-heart-variant
+                    content_info: state
+                  - type: entity
+                    entity: sensor.garmin_connect_steps
+                    icon: mdi:walk
+                    content_info: state
+                  - type: entity
+                    entity: sensor.garmin_connect_sleep_score
+                    icon: mdi:sleep
+                    content_info: state
+                  - type: entity
+                    entity: sensor.garmin_connect_resting_heart_rate
+                    icon: mdi:heart-pulse
+                    content_info: state
+                  - type: entity
+                    entity: sensor.garmin_connect_average_stress_level
+                    icon: mdi:brain
+                    content_info: state
+
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_body_battery
+                    name: Body Battery
+                    icon: mdi:battery-heart-variant
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_sleep_score
+                    name: Schlaf-Score
+                    icon: mdi:sleep
+                    color: purple
+                  - type: tile
+                    entity: sensor.garmin_connect_resting_heart_rate
+                    name: Ruhepuls
+                    icon: mdi:heart-pulse
+                    color: red
+                  - type: tile
+                    entity: sensor.garmin_connect_average_stress_level
+                    name: Stress Ø
+                    icon: mdi:brain
+                    color: orange
+
+      ##############################################
+      # AKTIVITÄT HEUTE
+      ##############################################
+      - title: "🏃 Aktivität heute"
+        cards:
+          - type: custom:expander-card
+            title: "🏃 Aktivität heute"
+            subtitle: Schritte, Distanz & Kalorien
+            icon: mdi:run
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_steps
+                    name: Schritte heute
+                    icon: mdi:walk
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_daily_step_goal
+                    name: Schrittziel
+                    icon: mdi:flag-checkered
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_yesterday_steps
+                    name: Schritte gestern
+                    icon: mdi:walk
+                  - type: tile
+                    entity: sensor.garmin_connect_weekly_step_average
+                    name: Schritte Ø Woche
+                    icon: mdi:chart-line
+                  - type: tile
+                    entity: sensor.garmin_connect_distance
+                    name: Distanz heute (m)
+                    icon: mdi:map-marker-distance
+                    color: teal
+                  - type: tile
+                    entity: sensor.garmin_connect_yesterday_distance
+                    name: Distanz gestern (m)
+                    icon: mdi:hiking
+                  - type: tile
+                    entity: sensor.garmin_connect_active_time
+                    name: Aktive Zeit (min)
+                    icon: mdi:timer
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_sedentary_time
+                    name: Sitzzeit (min)
+                    icon: mdi:seat-recline-normal
+                  - type: tile
+                    entity: sensor.garmin_connect_intensity_minutes
+                    name: Intensitätsminuten
+                    icon: mdi:lightning-bolt
+                    color: orange
+                  - type: tile
+                    entity: sensor.garmin_connect_intensity_minutes_goal
+                    name: Intensitätsziel
+                    icon: mdi:flag
+                  - type: tile
+                    entity: sensor.garmin_connect_calories
+                    name: Kalorien gesamt
+                    icon: mdi:fire
+                    color: orange
+                  - type: tile
+                    entity: sensor.garmin_connect_active_calories
+                    name: Aktive Kalorien
+                    icon: mdi:fire-circle
+                    color: red
+
+              - type: history-graph
+                title: Schritte – 7 Tage
+                hours_to_show: 168
+                entities:
+                  - entity: sensor.garmin_connect_steps
+                    name: Garmin Schritte
+                  - entity: sensor.iphone_von_karo_steps
+                    name: iPhone Schritte
+
+      ##############################################
+      # BODY BATTERY & STRESS
+      ##############################################
+      - title: "🔋 Body Battery & Stress"
+        cards:
+          - type: custom:expander-card
+            title: "🔋 Body Battery & Stress"
+            subtitle: Energie, Erholung & Stresslevel
+            icon: mdi:battery-heart-variant
+            expanded: false
+            cards:
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_body_battery
+                    name: Body Battery
+                    icon: mdi:battery-heart-variant
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_body_battery_highest
+                    name: Höchster Wert
+                    icon: mdi:battery-plus
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_body_battery_lowest
+                    name: Niedrigster Wert
+                    icon: mdi:battery-minus
+                    color: red
+                  - type: tile
+                    entity: sensor.garmin_connect_body_battery_charged
+                    name: Aufgeladen %
+                    icon: mdi:battery-charging
+                    color: teal
+                  - type: tile
+                    entity: sensor.garmin_connect_body_battery_drained
+                    name: Verbraucht %
+                    icon: mdi:battery-alert
+                    color: orange
+                  - type: tile
+                    entity: sensor.garmin_connect_stress_qualifier
+                    name: Stress-Typ
+                    icon: mdi:chart-bell-curve
+                  - type: tile
+                    entity: sensor.garmin_connect_average_stress_level
+                    name: Stress Ø
+                    icon: mdi:brain
+                    color: orange
+                  - type: tile
+                    entity: sensor.garmin_connect_max_stress_level
+                    name: Stress Max
+                    icon: mdi:alert-circle
+                    color: red
+                  - type: tile
+                    entity: sensor.garmin_connect_high_stress_duration
+                    name: Hoher Stress (min)
+                    icon: mdi:clock-alert
+
+              - type: history-graph
+                title: Body Battery – 7 Tage
+                hours_to_show: 168
+                entities:
+                  - entity: sensor.garmin_connect_body_battery
+                    name: Body Battery
+
+      ##############################################
+      # HERZRATE & HRV
+      ##############################################
+      - title: "💓 Herzrate & HRV"
+        cards:
+          - type: custom:expander-card
+            title: "💓 Herzrate & HRV"
+            subtitle: Ruhepuls, Min/Max & HRV-Verlauf
+            icon: mdi:heart-pulse
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_resting_heart_rate
+                    name: Ruhepuls
+                    icon: mdi:heart-pulse
+                    color: red
+                  - type: tile
+                    entity: sensor.garmin_connect_7_day_average_resting_heart_rate
+                    name: Ruhepuls 7 Tage Ø
+                    icon: mdi:heart-pulse
+                    color: pink
+                  - type: tile
+                    entity: sensor.garmin_connect_min_heart_rate
+                    name: Herzrate Min
+                    icon: mdi:heart-minus
+                  - type: tile
+                    entity: sensor.garmin_connect_max_heart_rate
+                    name: Herzrate Max
+                    icon: mdi:heart-plus
+                    color: red
+                  - type: tile
+                    entity: sensor.garmin_connect_hrv_status
+                    name: HRV Status
+                    icon: mdi:sine-wave
+                    color: purple
+                  - type: tile
+                    entity: sensor.garmin_connect_hrv_last_night_average
+                    name: HRV letzte Nacht (ms)
+                    icon: mdi:wave
+                    color: purple
+                  - type: tile
+                    entity: sensor.garmin_connect_hrv_weekly_average
+                    name: HRV 7-Tage Ø (ms)
+                    icon: mdi:chart-line
+                    color: indigo
+                  - type: tile
+                    entity: sensor.garmin_connect_hrv_baseline
+                    name: HRV Baseline (ms)
+                    icon: mdi:chart-areaspline
+
+              - type: history-graph
+                title: Ruhepuls & HRV – 14 Tage
+                hours_to_show: 336
+                entities:
+                  - entity: sensor.garmin_connect_resting_heart_rate
+                    name: Ruhepuls
+                  - entity: sensor.garmin_connect_hrv_last_night_average
+                    name: HRV letzte Nacht
+
+      ##############################################
+      # SCHLAF
+      ##############################################
+      - title: "😴 Schlaf"
+        cards:
+          - type: custom:expander-card
+            title: "😴 Schlaf"
+            subtitle: Score, Phasen & Zeiten
+            icon: mdi:sleep
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_sleep_score
+                    name: Schlaf-Score
+                    icon: mdi:star-circle
+                    color: indigo
+                  - type: tile
+                    entity: sensor.garmin_connect_sleep_need
+                    name: Schlafbedarf (min)
+                    icon: mdi:bed-clock
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_sleeping_time
+                    name: Schlafzeit (min)
+                    icon: mdi:clock-time-eight
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_total_sleep_duration
+                    name: Gesamtschlaf (min)
+                    icon: mdi:sleep
+                  - type: tile
+                    entity: sensor.garmin_connect_deep_sleep
+                    name: Tiefschlaf (min)
+                    icon: mdi:brain
+                    color: deep-purple
+                  - type: tile
+                    entity: sensor.garmin_connect_light_sleep
+                    name: Leichtschlaf (min)
+                    icon: mdi:weather-night
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_rem_sleep
+                    name: REM-Schlaf (min)
+                    icon: mdi:eye-plus
+                    color: purple
+                  - type: tile
+                    entity: sensor.garmin_connect_awake_time
+                    name: Wachzeit (min)
+                    icon: mdi:eye-off
+                  - type: tile
+                    entity: sensor.garmin_connect_bedtime
+                    name: Einschlafzeit
+                    icon: mdi:moon-waning-crescent
+                  - type: tile
+                    entity: sensor.garmin_connect_wake_time
+                    name: Aufwachzeit
+                    icon: mdi:weather-sunny
+
+              - type: history-graph
+                title: Schlaf-Score – 14 Tage
+                hours_to_show: 336
+                entities:
+                  - entity: sensor.garmin_connect_sleep_score
+                    name: Schlaf-Score
+                  - entity: sensor.garmin_connect_deep_sleep
+                    name: Tiefschlaf (min)
+
+      ##############################################
+      # KÖRPER & FITNESS
+      ##############################################
+      - title: "⚖️ Körper & Fitness"
+        cards:
+          - type: custom:expander-card
+            title: "⚖️ Körper & Fitness"
+            subtitle: Gewicht, BMI, Körperfett & VO2 Max
+            icon: mdi:scale
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_weight
+                    name: Gewicht (kg)
+                    icon: mdi:scale
+                  - type: tile
+                    entity: sensor.garmin_connect_bmi
+                    name: BMI
+                    icon: mdi:human
+                  - type: tile
+                    entity: sensor.garmin_connect_body_fat
+                    name: Körperfett %
+                    icon: mdi:percent
+                  - type: tile
+                    entity: sensor.garmin_connect_body_water
+                    name: Körperwasser %
+                    icon: mdi:water-percent
+                    color: cyan
+                  - type: tile
+                    entity: sensor.garmin_connect_bone_mass
+                    name: Knochenmasse (kg)
+                    icon: mdi:bone
+                  - type: tile
+                    entity: sensor.garmin_connect_visceral_fat
+                    name: Viszeralfett %
+                    icon: mdi:stomach
+                  - type: tile
+                    entity: sensor.garmin_connect_vo2_max
+                    name: VO2 Max
+                    icon: mdi:lungs
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_fitness_age
+                    name: Fitness-Alter
+                    icon: mdi:account-clock
+                  - type: tile
+                    entity: sensor.garmin_connect_achievable_fitness_age
+                    name: Erreichbares Alter
+                    icon: mdi:trending-down
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_metabolic_age
+                    name: Metabolisches Alter
+                    icon: mdi:fire
+
+              - type: history-graph
+                title: Gewicht – 30 Tage
+                hours_to_show: 720
+                entities:
+                  - entity: sensor.garmin_connect_weight
+                    name: Gewicht (kg)
+
+      ##############################################
+      # SPO2 & ATMUNG
+      ##############################################
+      - title: "🫁 SpO2 & Atmung"
+        cards:
+          - type: custom:expander-card
+            title: "🫁 SpO2 & Atmung"
+            subtitle: Sauerstoffsättigung & Atemfrequenz
+            icon: mdi:lungs
+            expanded: false
+            cards:
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_average_spo2
+                    name: SpO2 Ø %
+                    icon: mdi:water-percent
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_lowest_spo2
+                    name: SpO2 Min %
+                    icon: mdi:water-minus
+                    color: cyan
+                  - type: tile
+                    entity: sensor.garmin_connect_latest_spo2
+                    name: SpO2 Aktuell %
+                    icon: mdi:water
+                  - type: tile
+                    entity: sensor.garmin_connect_latest_respiration
+                    name: Atemfrequenz (brpm)
+                    icon: mdi:lungs
+                  - type: tile
+                    entity: sensor.garmin_connect_highest_respiration
+                    name: Atemfrequenz Max
+                    icon: mdi:arrow-up
+                  - type: tile
+                    entity: sensor.garmin_connect_lowest_respiration
+                    name: Atemfrequenz Min
+                    icon: mdi:arrow-down
+
+      ##############################################
+      # HYDRATION
+      ##############################################
+      - title: "💧 Hydration"
+        cards:
+          - type: custom:expander-card
+            title: "💧 Hydration"
+            subtitle: Wasseraufnahme & Schweißverlust
+            icon: mdi:cup-water
+            expanded: false
+            cards:
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_hydration
+                    name: Getrunken (mL)
+                    icon: mdi:cup-water
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_hydration_goal
+                    name: Tagesziel (mL)
+                    icon: mdi:flag
+                    color: cyan
+                  - type: tile
+                    entity: sensor.garmin_connect_hydration_sweat_loss
+                    name: Schweißverlust (mL)
+                    icon: mdi:water-minus
+                    color: orange
+
+      ##############################################
+      # TRAINING & WORKOUTS
+      ##############################################
+      - title: "🏋️ Training & Workouts"
+        cards:
+          - type: custom:expander-card
+            title: "🏋️ Training & Workouts"
+            subtitle: Bereitschaft, Erholung & letzte Aktivitäten
+            icon: mdi:dumbbell
+            expanded: false
+            cards:
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: tile
+                    entity: sensor.garmin_connect_last_activity
+                    name: Letzte Aktivität
+                    icon: mdi:run
+                    color: green
+                  - type: tile
+                    entity: sensor.garmin_connect_last_workout
+                    name: Letztes Workout
+                    icon: mdi:dumbbell
+                    color: blue
+                  - type: tile
+                    entity: sensor.garmin_connect_training_readiness
+                    name: Trainingsbereitschaft %
+                    icon: mdi:lightning-bolt
+                  - type: tile
+                    entity: sensor.garmin_connect_recovery_time
+                    name: Erholungszeit (h)
+                    icon: mdi:clock-check
+                  - type: tile
+                    entity: sensor.garmin_connect_vigorous_intensity_minutes
+                    name: Intensive Minuten
+                    icon: mdi:run-fast
+                    color: red
+                  - type: tile
+                    entity: sensor.garmin_connect_moderate_intensity_minutes
+                    name: Moderate Minuten
+                    icon: mdi:walk
+                    color: orange
+                  - type: tile
+                    entity: sensor.garmin_connect_badges
+                    name: Abzeichen
+                    icon: mdi:medal
+                    color: amber
+                  - type: tile
+                    entity: sensor.garmin_connect_last_synced
+                    name: Letzte Sync
+                    icon: mdi:sync
