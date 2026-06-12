@@ -932,6 +932,9 @@ script:
           seconds: 4
       - parallel:
           - sequence:
+              - condition: state
+                entity_id: input_boolean.sonos_tts_aktiv
+                state: "on"
               - repeat:
                   count: 15
                   sequence:
@@ -954,6 +957,9 @@ script:
                     - delay:
                         milliseconds: 700
           - sequence:
+              - condition: state
+                entity_id: input_boolean.sonos_tts_aktiv
+                state: "on"
               - service: tts.speak
                 target:
                   entity_id: tts.home_assistant_cloud

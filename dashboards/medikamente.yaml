@@ -21,6 +21,12 @@ views:
             icon: mdi:test-tube
             color: orange
 
+          - type: tile
+            entity: input_boolean.sonos_tts_aktiv
+            name: "🔊 TTS Sprachausgabe"
+            icon: mdi:text-to-speech
+            color: blue
+
           - type: custom:mushroom-template-card
             primary: "📖 Dashboard-Anleitung"
             secondary: Antippen für Erklärung & Hilfe
