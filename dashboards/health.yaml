@@ -7,6 +7,41 @@ views:
     sections:
 
       ##############################################
+      # NOTFALL BUTTON
+      ##############################################
+      - title: "🚨 Notfall"
+        cards:
+          - type: custom:button-card
+            name: "NOTFALL – MEDIKAMENTE"
+            label: "Tippen = Alarm senden · Halten = Anzeigen"
+            icon: mdi:pill-multiple
+            show_label: true
+            styles:
+              card:
+                - background: "linear-gradient(135deg, #cc0000, #880000)"
+                - border-radius: 16px
+                - padding: 24px 16px
+                - box-shadow: "0 4px 24px rgba(200, 0, 0, 0.5)"
+              icon:
+                - color: white
+                - width: 56px
+                - height: 56px
+              name:
+                - color: white
+                - font-size: 20px
+                - font-weight: bold
+                - letter-spacing: 1px
+              label:
+                - color: "rgba(255,255,255,0.75)"
+                - font-size: 13px
+            tap_action:
+              action: perform-action
+              perform_action: script.notfall_medikamente_benachrichtigung
+            hold_action:
+              action: navigate
+              navigation_path: /meine-gesundheit/notfall-medikamente
+
+      ##############################################
       # ÜBERSICHT
       ##############################################
       - title: "❤️ Gesundheit"
@@ -17,6 +52,14 @@ views:
             icon: mdi:heart-pulse
             expanded: true
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Sync:** {{ states.sensor.health_schritte.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: custom:mushroom-chips-card
                 alignment: justify
                 chips:
@@ -66,6 +109,17 @@ views:
                     icon: mdi:water-percent
                     color: blue
 
+              - type: tile
+                entity: script.gesundheit_telegram_bericht
+                name: Telegram Bericht jetzt senden
+                icon: mdi:telegram
+                color: blue
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.gesundheit_telegram_bericht
+
       ##############################################
       # AKTIVITÄT
       ##############################################
@@ -77,6 +131,14 @@ views:
             icon: mdi:run
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Schritte zuletzt geändert:** {{ states.sensor.health_schritte.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: grid
                 columns: 2
                 square: false
@@ -125,6 +187,14 @@ views:
             icon: mdi:heart-pulse
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Ruhepuls zuletzt geändert:** {{ states.sensor.health_ruhepuls.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: grid
                 columns: 2
                 square: false
@@ -174,6 +244,14 @@ views:
             icon: mdi:scale
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Gewicht zuletzt geändert:** {{ states.sensor.health_gewicht.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: grid
                 columns: 2
                 square: false
@@ -222,10 +300,18 @@ views:
         cards:
           - type: custom:expander-card
             title: "🩺 Blutdruck (Health Auto Export)"
-            subtitle: "Export: {{ states.sensor.health_schritte.last_updated | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr"
+            subtitle: Blutdruck via Apple Health
             icon: mdi:stethoscope
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Letzte Änderung:** {{ states.sensor.health_blutdruck_systolisch.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: grid
                 columns: 3
                 square: false
@@ -325,6 +411,14 @@ views:
             icon: mdi:water-percent
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Letzte Änderung:** {{ states.sensor.health_spo2.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: tile
                 entity: sensor.health_spo2
                 name: SpO2
@@ -342,6 +436,14 @@ views:
             icon: mdi:food-apple
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Kalorien zuletzt geändert:** {{ states.sensor.health_gegessene_kalorien.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: grid
                 columns: 2
                 square: false
@@ -383,6 +485,14 @@ views:
             icon: mdi:weather-sunny
             expanded: false
             cards:
+              - type: markdown
+                content: >
+                  🕐 **Tageslicht zuletzt geändert:** {{ states.sensor.health_tageslicht.last_changed | as_timestamp | timestamp_custom('%d.%m.%Y · %H:%M') }} Uhr
+                card_mod:
+                  style: |
+                    ha-card { background: transparent; box-shadow: none; border: none; padding: 4px 8px 0; }
+                    ha-markdown { color: var(--secondary-text-color); font-size: 13px; }
+
               - type: grid
                 columns: 3
                 square: false
@@ -400,3 +510,65 @@ views:
                     entity: sensor.health_umgebungslarm
                     name: Umgebung dB
                     icon: mdi:volume-high
+
+  ##############################################
+  # SUBVIEW: NOTFALL MEDIKAMENTE
+  ##############################################
+  - title: "Notfall Medikamente"
+    path: notfall-medikamente
+    subview: true
+    icon: mdi:pill-multiple
+    type: sections
+    sections:
+      - title: "🚨 Einnahmeplan"
+        cards:
+          - type: markdown
+            content: |
+              ## 🚨 Notfall – Meine Medikamente
+              *Was nehme ich wann?*
+
+              {% for i in [1,2,3,4,5,6] %}
+              {% set name = states('input_text.medikament_' ~ i ~ '_name') %}
+              {% if name not in ['unknown', '', 'unavailable', 'None'] %}
+
+              ---
+
+              ### 💊 {{ name }}
+
+              **Menge:** {{ states('input_select.medikament_' ~ i ~ '_menge') }}{% set mg = states('input_text.medikament_' ~ i ~ '_mg') %}{% if mg not in ['', 'unknown', 'unavailable', 'None'] %} · **{{ mg }} mg**{% endif %}
+
+              {% set mahlzeit = states('input_select.medikament_' ~ i ~ '_mahlzeit') %}
+              {% if mahlzeit not in ['Egal', 'unknown', 'unavailable'] %}
+              **Einnahme:** {{ mahlzeit }}
+              {% endif %}
+
+              {% if is_state('input_boolean.medikament_' ~ i ~ '_morgen_aktiv', 'on') %}
+              {% set zt = states('input_datetime.medikament_' ~ i ~ '_zeit') %}
+              {% if zt not in ['00:00:00', 'unknown', 'unavailable'] %}
+              🌅 **Morgens:** {{ zt[:5] }} Uhr
+              {% endif %}
+              {% endif %}
+
+              {% set zm = states('input_datetime.medikament_' ~ i ~ '_mittag_zeit') %}
+              {% if zm not in ['00:00:00', 'unknown', 'unavailable'] %}
+              ☀️ **Mittags:** {{ zm[:5] }} Uhr
+              {% endif %}
+
+              {% set za = states('input_datetime.medikament_' ~ i ~ '_abend_zeit') %}
+              {% if za not in ['00:00:00', 'unknown', 'unavailable'] %}
+              🌙 **Abends:** {{ za[:5] }} Uhr
+              {% endif %}
+
+              {% set h = states('input_text.medikament_' ~ i ~ '_hinweis') %}
+              {% if h not in ['', 'unknown', 'unavailable', 'None'] %}
+              📝 *{{ h }}*
+              {% endif %}
+
+              {% endif %}
+              {% endfor %}
+            card_mod:
+              style: |
+                ha-card {
+                  border-left: 6px solid #cc0000;
+                  background: var(--card-background-color);
+                }

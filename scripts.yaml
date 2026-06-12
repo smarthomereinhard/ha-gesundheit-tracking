@@ -1,3 +1,50 @@
+notfall_medikamente_benachrichtigung:
+  alias: "\U0001F6A8 Notfall – Medikamente senden"
+  icon: mdi:pill-multiple
+  mode: single
+  sequence:
+  - variables:
+      med_text: "{% set ns = namespace(text='') %} {% for i in [1,2,3,4,5,6] %} {%
+        set name = states('input_text.medikament_' ~ i ~ '_name') %} {% if name not
+        in ['unknown', '', 'unavailable', 'None'] and is_state('input_boolean.medikament_'
+        ~ i ~ '_aktiv', 'on') %} {% set menge = states('input_select.medikament_'
+        ~ i ~ '_menge') %} {% set mg = states('input_text.medikament_' ~ i ~ '_mg')
+        %} {% set mahlzeit = states('input_select.medikament_' ~ i ~ '_mahlzeit')
+        %} {% set morgen_aktiv = is_state('input_boolean.medikament_' ~ i ~ '_morgen_aktiv',
+        'on') %} {% set zt = states('input_datetime.medikament_' ~ i ~ '_zeit') %}
+        {% set zm = states('input_datetime.medikament_' ~ i ~ '_mittag_zeit') %} {%
+        set za = states('input_datetime.medikament_' ~ i ~ '_abend_zeit') %} {% set
+        h = states('input_text.medikament_' ~ i ~ '_hinweis') %} {% set z = '\U0001F48A
+        ' ~ name %} {% if mg not in ['', 'unknown', 'unavailable', 'None'] %}{% set
+        z = z ~ ' (' ~ mg ~ ' mg)' %}{% endif %} {% set z = z ~ '\\n   ' ~ menge %}
+        {% if mahlzeit not in ['Egal', 'unknown', 'unavailable'] %}{% set z = z ~
+        ' · ' ~ mahlzeit %}{% endif %} {% if morgen_aktiv and zt not in ['00:00:00',
+        'unknown', 'unavailable'] %}{% set z = z ~ '\\n   \U0001F305 ' ~ zt[:5] ~
+        ' Uhr' %}{% endif %} {% if zm not in ['00:00:00', 'unknown', 'unavailable']
+        %}{% set z = z ~ '\\n   ☀️ ' ~ zm[:5] ~ ' Uhr' %}{% endif %} {% if za not
+        in ['00:00:00', 'unknown', 'unavailable'] %}{% set z = z ~ '\\n   \U0001F319
+        ' ~ za[:5] ~ ' Uhr' %}{% endif %} {% if h not in ['', 'unknown', 'unavailable',
+        'None'] %}{% set z = z ~ '\\n   \U0001F4DD ' ~ h %}{% endif %} {% set ns.text
+        = ns.text ~ z ~ '\\n\\n' %} {% endif %} {% endfor %} {{ ns.text | trim }}"
+  - parallel:
+    - action: telegram_bot.send_message
+      data:
+        chat_id: 988178587
+        parse_mode: html
+        message: "\U0001F6A8 <b>NOTFALL – MEDIKAMENTE</b>\n\n{{ med_text }}"
+    - action: notify.mobile_app_andreas_iphone_15pro_max
+      data:
+        title: "\U0001F6A8 NOTFALL – MEDIKAMENTE"
+        message: '{{ med_text }}'
+        data:
+          push:
+            sound:
+              name: default
+              critical: 1
+              volume: 1.0
+    - action: browser_mod.navigate
+      data:
+        path: /meine-gesundheit/notfall-medikamente
 batterien_ansagen_low_liste:
   alias: Batterien ansagen (Low-Liste)
   mode: single
@@ -811,3 +858,29 @@ magic_mirror_neustart:
   sequence:
   - action: rest_command.magic_mirror_reboot
   mode: single
+gesundheit_telegram_bericht:
+  alias: Gesundheit – Telegram Bericht senden
+  description: Sendet manuell die Gesundheitsübersicht per Telegram. Keine Trigger-Abhängigkeit.
+  icon: mdi:telegram
+  mode: single
+  sequence:
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F3C3 <b>Gesundheitsdaten – Aktueller Stand</b>\n\U0001F4C5 {{
+        now().strftime('%d.%m.%Y · %H:%M') }} Uhr\n\n<b>\U0001F3C3 Aktivität</b>\n\U0001F463
+        Schritte: <b>{{ states('sensor.health_schritte') }}</b>\n⚡ Bewegungsmin.:
+        {{ states('sensor.health_bewegungsminuten') }} min\n\U0001F5FA Gehstrecke:
+        {{ states('sensor.health_gehstrecke') }} km\n\U0001F3E2 Stockwerke: {{ states('sensor.health_stockwerke')
+        }}\n\U0001FAC1 VO2 Max: {{ states('sensor.health_vo2_max') }}\n\n<b>\U0001F493
+        Herzrate &amp; HRV</b>\n❤️ Ruhepuls: {{ states('sensor.health_ruhepuls') }}
+        bpm\n\U0001F4CA HRV: {{ states('sensor.health_hrv') }}\n\U0001F4C9 Min: {{
+        states('sensor.health_herzrate_min') }} · \U0001F4C8 Max: {{ states('sensor.health_herzrate_max')
+        }} bpm\n\n<b>⚖️ Körper</b>\n\U0001F3CB Gewicht: {{ states('sensor.health_gewicht')
+        }} kg · BMI: {{ states('sensor.health_bmi') }} ({{ states('sensor.health_bmi_status')
+        }})\n\n<b>\U0001FAC1 SpO2</b>\n\U0001F4A7 SpO2: {{ states('sensor.health_spo2')
+        }} %\n\n<b>\U0001F34E Ernährung</b>\n\U0001F525 Kalorien: {{ states('sensor.health_gegessene_kalorien')
+        }} kcal\n\U0001F4AA Protein: {{ states('sensor.health_protein') }} g\n\U0001F4A7
+        Wasser: {{ states('sensor.health_wasser') }} ml\n\n☀️ Tageslicht: {{ states('sensor.health_tageslicht')
+        }} min"

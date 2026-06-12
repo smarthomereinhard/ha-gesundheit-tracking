@@ -1161,7 +1161,7 @@
           - light.unterschrank
           - light.schranke
         data:
-          brightness_pct: 15
+          brightness_pct: 60
           color_temp_kelvin: 3000
           transition: 2
   - alias: Warten bis keine Praesenz mehr und Dunstabzug aus
@@ -4400,4 +4400,44 @@
     to: 'off'
   actions:
   - action: rest_command.magic_mirror_monitor_off
+  mode: single
+- id: '1781241198192'
+  alias: Gesundheit – Telegram bei Health-App-Sync
+  description: Sendet Telegram-Übersicht wenn Health Auto Export neue Daten synchronisiert.
+    Nur zwischen 06:00 und 21:00 Uhr.
+  triggers:
+  - platform: state
+    entity_id: sensor.health_schritte
+    not_to:
+    - unavailable
+    - unknown
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.from_state is not none and trigger.to_state is not
+      none and trigger.from_state.state != trigger.to_state.state }}'
+  - condition: time
+    after: 06:00:00
+    before: '21:00:00'
+  actions:
+  - delay:
+      seconds: 5
+  - action: telegram_bot.send_message
+    data:
+      chat_id: 988178587
+      parse_mode: html
+      message: "\U0001F3C3 <b>Gesundheitsdaten aktualisiert</b>\n\U0001F4C5 {{ now().strftime('%d.%m.%Y
+        · %H:%M') }} Uhr\n\n<b>\U0001F3C3 Aktivität</b>\n\U0001F463 Schritte: {{ trigger.from_state.state
+        }} → <b>{{ trigger.to_state.state }}</b>\n⚡ Bewegungsmin.: {{ states('sensor.health_bewegungsminuten')
+        }} min\n\U0001F5FA Gehstrecke: {{ states('sensor.health_gehstrecke') }} km\n\U0001F3E2
+        Stockwerke: {{ states('sensor.health_stockwerke') }}\n\U0001FAC1 VO2 Max:
+        {{ states('sensor.health_vo2_max') }}\n\n<b>\U0001F493 Herzrate &amp; HRV</b>\n❤️
+        Ruhepuls: {{ states('sensor.health_ruhepuls') }} bpm\n\U0001F4CA HRV: {{ states('sensor.health_hrv')
+        }}\n\U0001F4C9 Min: {{ states('sensor.health_herzrate_min') }} · \U0001F4C8
+        Max: {{ states('sensor.health_herzrate_max') }} bpm\n\n<b>⚖️ Körper</b>\n\U0001F3CB
+        Gewicht: {{ states('sensor.health_gewicht') }} kg · BMI: {{ states('sensor.health_bmi')
+        }} ({{ states('sensor.health_bmi_status') }})\n\n<b>\U0001FAC1 SpO2</b>\n\U0001F4A7
+        SpO2: {{ states('sensor.health_spo2') }} %\n\n<b>\U0001F34E Ernährung</b>\n\U0001F525
+        Kalorien: {{ states('sensor.health_gegessene_kalorien') }} kcal\n\U0001F4AA
+        Protein: {{ states('sensor.health_protein') }} g\n\U0001F4A7 Wasser: {{ states('sensor.health_wasser')
+        }} ml\n\n☀️ Tageslicht: {{ states('sensor.health_tageslicht') }} min"
   mode: single
