@@ -1,0 +1,22 @@
+# Datenbank
+home-assistant_v2.db
+home-assistant_v2.db-shm
+home-assistant_v2.db-wal
+
+# Secrets
+secrets.yaml
+
+# Laufzeit / Cache
+.ha_run.lock
+.cache/
+.cloud/
+logs/
+tts/
+
+# Storage (Laufzeitstatus)
+.storage/
+
+# Große Binärdateien / Custom Components
+www/community/
+custom_components/
+image/
